@@ -187,7 +187,8 @@ footer a{color:var(--grey);text-decoration:none}
 /* === REVEAL ANIMATIONS === */
 .reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease}
 .reveal.visible{opacity:1;transform:translateY(0)}
-.reveal-stagger .reveal-item{opacity:0;transform:translateY(30px)}
+.reveal-stagger .reveal-item{opacity:0;transform:translateY(30px);transition:opacity .6s ease,transform .6s ease}
+.reveal-stagger .reveal-item.visible{opacity:1;transform:translateY(0)}
 
 /* === RESPONSIVE === */
 @media(max-width:1024px){
@@ -471,6 +472,11 @@ function setLang(l) {
   localStorage.setItem('skand-lang', lang);
   document.documentElement.lang = lang;
   applyLang();
+  // Re-trigger reveal for already-visible elements after lang switch
+  document.querySelectorAll('.reveal,.reveal-stagger .reveal-item').forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) el.classList.add('visible');
+  });
 }
 
 function q(sel) { return document.querySelector(sel); }
@@ -728,7 +734,11 @@ heroObserver.observe(heroTitle);
 const revealObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => { if(entry.isIntersecting){ entry.target.classList.add('visible'); revealObserver.unobserve(entry.target); } });
 }, {threshold:.1});
-document.querySelectorAll('.reveal,.reveal-stagger .reveal-item').forEach(el => revealObserver.observe(el));
+document.querySelectorAll('.reveal,.reveal-stagger .reveal-item').forEach(el => {
+  const rect = el.getBoundingClientRect();
+  if (rect.top < window.innerHeight && rect.bottom > 0) el.classList.add('visible');
+  revealObserver.observe(el);
+});
 
 /* === LANGUAGE TOGGLE BUTTON === */
 document.getElementById('langToggle').addEventListener('click', () => {
