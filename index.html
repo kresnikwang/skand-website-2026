@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKAND — Create For More</title>
+<link rel="stylesheet" href="fonts/local-fonts.css">
+<style>
+/* === RESET & BASE === */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --black:#0a0a0a;--white:#f0ede8;--blue:#4052B5;--coral:#E8563A;
+  --grey:#888;--dark:#131313;--card-bg:#1a1a1a;
+  --font-display:'Cormorant Garamond',Georgia,serif;
+  --font-body:'Outfit','Helvetica Neue',sans-serif;
+}
+html{scroll-behavior:smooth;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--coral) var(--black)}
+body{background:var(--black);color:var(--white);font-family:var(--font-body);font-weight:300;line-height:1.6;overflow-x:hidden;cursor:none}
+
+/* === GRAIN OVERLAY === */
+.grain{position:fixed;top:-50%;left:-50%;width:200%;height:200%;pointer-events:none;z-index:9999;opacity:.045;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@keyframes grainShift{0%{transform:translate(0,0)}10%{transform:translate(-2%,-3%)}20%{transform:translate(3%,1%)}30%{transform:translate(-1%,4%)}40%{transform:translate(4%,-2%)}50%{transform:translate(-3%,2%)}60%{transform:translate(2%,-4%)}70%{transform:translate(-4%,3%)}80%{transform:translate(1%,-1%)}90%{transform:translate(3%,4%)}100%{transform:translate(0,0)}}
+.grain{animation:grainShift 8s steps(10) infinite}
+
+/* === CUSTOM CURSOR === */
+.cursor-dot{position:fixed;width:8px;height:8px;background:var(--coral);border-radius:50%;pointer-events:none;z-index:10000;transition:transform .15s ease;mix-blend-mode:difference}
+.cursor-ring{position:fixed;width:40px;height:40px;border:1.5px solid var(--white);border-radius:50%;pointer-events:none;z-index:10000;transition:transform .3s ease,width .3s ease,height .3s ease,border-color .3s ease;mix-blend-mode:difference}
+.cursor-ring.hovering{width:60px;height:60px;border-color:var(--coral)}
+
+/* === NAVIGATION === */
+nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;display:flex;justify-content:space-between;align-items:center;mix-blend-mode:difference}
+.nav-logo{font-family:var(--font-body);font-weight:700;font-size:18px;letter-spacing:4px;text-transform:uppercase;color:var(--white)}
+.nav-links{display:flex;gap:32px;list-style:none}
+.nav-links a{color:var(--white);text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:400;position:relative;padding-bottom:2px}
+.nav-links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1px;background:var(--coral);transition:width .3s ease}
+.nav-links a:hover::after{width:100%}
+
+/* === DROPDOWN === */
+.nav-dropdown{position:relative}
+.nav-dropdown-toggle{color:var(--white);text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:400;position:relative;padding-bottom:2px;cursor:none;display:flex;align-items:center;gap:6px}
+.nav-dropdown-toggle::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1px;background:var(--coral);transition:width .3s ease}
+.nav-dropdown:hover .nav-dropdown-toggle::after{width:100%}
+.nav-dropdown-toggle .arrow{font-size:10px;transition:transform .3s ease}
+.nav-dropdown:hover .nav-dropdown-toggle .arrow{transform:rotate(180deg)}
+.nav-dropdown-menu{position:absolute;top:100%;right:0;margin-top:16px;min-width:180px;background:var(--dark);border:1px solid rgba(240,237,232,.1);border-radius:4px;opacity:0;visibility:hidden;transform:translateY(-10px);transition:all .3s ease;z-index:100}
+.nav-dropdown:hover .nav-dropdown-menu{opacity:1;visibility:visible;transform:translateY(0)}
+.nav-dropdown-menu a{display:block;padding:12px 20px;color:var(--white);text-decoration:none;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:400;transition:all .3s ease;border-bottom:1px solid rgba(240,237,232,.05)}
+.nav-dropdown-menu a:last-child{border-bottom:none}
+.nav-dropdown-menu a:hover{background:var(--coral);color:var(--black);padding-left:24px}
+.nav-dropdown-menu a span{display:block;font-size:10px;color:var(--grey);margin-top:2px;text-transform:none;letter-spacing:0}
+.nav-dropdown-menu a:hover span{color:rgba(0,0,0,.5)}
+
+/* === HERO === */
+.hero{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;overflow:hidden}
+.hero-bg-line{position:absolute;width:500px;height:500px;border:1px solid rgba(64,82,181,.15);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
+.hero-bg-line:nth-child(2){width:700px;height:700px;border-color:rgba(232,86,58,.1)}
+.hero-bg-line:nth-child(3){width:900px;height:900px;border-color:rgba(64,82,181,.07)}
+.hero-title{font-family:var(--font-display);font-size:clamp(60px,15vw,220px);font-weight:300;letter-spacing:clamp(4px,2vw,30px);line-height:.9;text-align:center;position:relative;white-space:nowrap}
+.hero-title .char{display:inline-block;opacity:0;transform:translateY(60px)}
+.hero-tagline{font-family:var(--font-display);font-size:clamp(20px,3vw,42px);font-weight:300;font-style:italic;color:var(--coral);margin-top:24px;letter-spacing:2px;opacity:0;transform:translateY(30px)}
+.hero-cn{font-size:clamp(14px,1.5vw,18px);color:var(--grey);margin-top:16px;letter-spacing:4px;opacity:0;transform:translateY(20px)}
+.hero-scroll{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0}
+.hero-scroll span{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--grey)}
+.hero-scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--coral),transparent);animation:scrollPulse 2s ease infinite}
+@keyframes scrollPulse{0%,100%{opacity:.3;transform:scaleY(.6)}50%{opacity:1;transform:scaleY(1)}}
+
+/* === SECTIONS SHARED === */
+section{padding:clamp(80px,12vw,160px) clamp(24px,5vw,80px)}
+.section-label{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--coral);margin-bottom:12px;font-weight:500}
+.section-heading{font-family:var(--font-display);font-size:clamp(36px,5vw,72px);font-weight:300;line-height:1.1;margin-bottom:40px}
+
+/* === ABOUT === */
+.about{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,6vw,100px);align-items:start}
+.about-left .section-heading{max-width:500px}
+.about-right{padding-top:20px}
+.about-text{font-size:clamp(16px,1.3vw,20px);line-height:1.8;color:rgba(240,237,232,.75);max-width:560px}
+.about-stats{display:flex;gap:60px;margin-top:60px}
+.stat-num{font-family:var(--font-display);font-size:clamp(40px,4vw,64px);font-weight:300;color:var(--coral)}
+.stat-label{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-top:4px}
+
+/* === SERVICES === */
+.services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2px;margin-top:60px}
+.service-card{background:var(--card-bg);padding:clamp(28px,3vw,48px);position:relative;overflow:hidden;transition:background .4s ease}
+.service-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:var(--coral);transform:scaleX(0);transform-origin:left;transition:transform .5s ease}
+.service-card:hover::before{transform:scaleX(1)}
+.service-card:hover{background:#222}
+.service-num{font-family:var(--font-display);font-size:48px;font-weight:300;color:rgba(64,82,181,.3);line-height:1;margin-bottom:16px}
+.service-name{font-family:var(--font-display);font-size:clamp(20px,1.8vw,28px);font-weight:400;margin-bottom:16px;line-height:1.2}
+.service-desc{font-size:13px;color:var(--grey);line-height:1.7}
+
+/* === WORK / PORTFOLIO === */
+.work-section{background:var(--dark)}
+.filter-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px}
+.filter-tab{padding:8px 20px;border:1px solid rgba(240,237,232,.15);border-radius:100px;background:transparent;color:var(--white);font-family:var(--font-body);font-size:13px;letter-spacing:1px;cursor:none;transition:all .3s ease}
+.filter-tab:hover,.filter-tab.active{background:var(--coral);border-color:var(--coral);color:var(--black)}
+.portfolio-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.project-card{position:relative;overflow:hidden;aspect-ratio:16/10;border-radius:4px;cursor:none}
+.project-card img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.25,.1,.25,1),filter .5s ease}
+.project-card:hover img{transform:scale(1.06);filter:brightness(.55)}
+.project-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(16px,2vw,32px);opacity:0;transition:opacity .4s ease;background:linear-gradient(to top,rgba(10,10,10,.85) 0%,transparent 60%)}
+.project-card:hover .project-overlay{opacity:1}
+.project-brand{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--coral);margin-bottom:6px;font-weight:500}
+.project-name{font-family:var(--font-display);font-size:clamp(16px,1.5vw,24px);font-weight:400;line-height:1.2}
+.project-card.hidden{display:none}
+
+/* === CLIENTS MARQUEE === */
+.clients-section{overflow:hidden;padding-top:clamp(60px,8vw,120px);padding-bottom:clamp(60px,8vw,120px)}
+.marquee-track{display:flex;animation:marqueeScroll 30s linear infinite;width:max-content}
+.marquee-track:hover{animation-play-state:paused}
+.marquee-item{font-family:var(--font-display);font-size:clamp(24px,3vw,48px);font-weight:300;white-space:nowrap;padding:0 clamp(20px,3vw,48px);color:rgba(240,237,232,.25);transition:color .3s ease}
+.marquee-item:hover{color:var(--coral)}
+.marquee-sep{color:var(--blue);padding:0 8px;font-size:clamp(16px,2vw,32px);opacity:.4}
+@keyframes marqueeScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* === CONTACT === */
+.contact-section{text-align:center;padding:clamp(100px,15vw,200px) clamp(24px,5vw,80px)}
+.contact-heading{font-family:var(--font-display);font-size:clamp(42px,7vw,100px);font-weight:300;line-height:1;margin-bottom:24px}
+.contact-heading em{color:var(--coral);font-style:italic}
+.contact-sub{font-size:clamp(14px,1.2vw,18px);color:var(--grey);max-width:500px;margin:0 auto 48px}
+.contact-cta{display:inline-block;padding:16px 48px;border:1px solid var(--white);color:var(--white);text-decoration:none;font-size:13px;letter-spacing:3px;text-transform:uppercase;transition:all .4s ease;border-radius:0}
+.contact-cta:hover{background:var(--coral);border-color:var(--coral);color:var(--black)}
+
+/* === FOOTER === */
+footer{padding:40px clamp(24px,5vw,80px);display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(240,237,232,.08);font-size:12px;color:var(--grey)}
+footer a{color:var(--grey);text-decoration:none}
+
+/* === LIGHTBOX === */
+.lightbox{position:fixed;inset:0;z-index:10001;background:rgba(10,10,10,.92);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .4s ease}
+.lightbox.active{opacity:1;pointer-events:all}
+.lightbox img{max-width:90vw;max-height:85vh;object-fit:contain;border-radius:4px;transform:scale(.92);transition:transform .4s cubic-bezier(.25,.1,.25,1);box-shadow:0 20px 80px rgba(0,0,0,.6)}
+.lightbox.active img{transform:scale(1)}
+.lightbox-info{position:absolute;bottom:clamp(24px,4vw,48px);left:50%;transform:translateX(-50%);text-align:center;opacity:0;transition:opacity .4s ease .15s}
+.lightbox.active .lightbox-info{opacity:1}
+.lightbox-brand{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--coral);margin-bottom:4px;font-weight:500}
+.lightbox-name{font-family:var(--font-display);font-size:clamp(18px,2vw,28px);font-weight:400}
+.lightbox-close{position:absolute;top:clamp(20px,3vw,40px);right:clamp(20px,3vw,40px);width:48px;height:48px;border:1px solid rgba(240,237,232,.2);border-radius:50%;background:transparent;color:var(--white);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:none;transition:all .3s ease;z-index:2}
+.lightbox-close:hover{background:var(--coral);border-color:var(--coral);color:var(--black)}
+.lightbox-arrow{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border:1px solid rgba(240,237,232,.2);border-radius:50%;background:transparent;color:var(--white);font-size:22px;display:flex;align-items:center;justify-content:center;cursor:none;transition:all .3s ease;z-index:2}
+.lightbox-arrow:hover{background:var(--coral);border-color:var(--coral);color:var(--black)}
+.lightbox-arrow.prev{left:clamp(16px,3vw,40px)}
+.lightbox-arrow.next{right:clamp(16px,3vw,40px)}
+
+/* === REVEAL ANIMATIONS === */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-stagger .reveal-item{opacity:0;transform:translateY(30px)}
+
+/* === RESPONSIVE === */
+@media(max-width:1024px){
+  .portfolio-grid{grid-template-columns:repeat(2,1fr)}
+  .about{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  nav{padding:16px 20px;mix-blend-mode:normal}
+  .nav-links{display:none}
+  .portfolio-grid{grid-template-columns:1fr}
+  .about-stats{gap:32px}
+  .cursor-dot,.cursor-ring{display:none}
+  body{cursor:auto}
+  .filter-tab,.contact-cta,.project-card,.nav-links a{cursor:pointer}
+}
+</style>
+</head>
+<body>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose">&times;</button>
+  <button class="lightbox-arrow prev" id="lightboxPrev">&#8249;</button>
+  <button class="lightbox-arrow next" id="lightboxNext">&#8250;</button>
+  <img src="" alt="" id="lightboxImg">
+  <div class="lightbox-info">
+    <div class="lightbox-brand" id="lightboxBrand"></div>
+    <div class="lightbox-name" id="lightboxName"></div>
+  </div>
+</div>
+
+<!-- GRAIN OVERLAY -->
+<div class="grain"></div>
+
+<!-- CUSTOM CURSOR -->
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+
+<!-- NAVIGATION -->
+<nav>
+  <div class="nav-logo"><img src="logo.png" alt="SKAND" style="height:28px;filter:invert(1)"></div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#work">Work</a></li>
+    <li><a href="#clients">Clients</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li class="nav-dropdown">
+      <a class="nav-dropdown-toggle">Tool <span class="arrow">▼</span></a>
+      <div class="nav-dropdown-menu">
+        <a href="https://expense.skandstudio.com/" target="_blank">神马报销 <span>Expense</span></a>
+        <a href="https://resource.skandstudio.com/" target="_blank">神马排班 <span>Resource</span></a>
+        <a href="https://payment.skandstudio.com/" target="_blank">神马付款 <span>Payment</span></a>
+        <a href="https://payment.skandstudio.com/supplier-form" target="_blank">供应商登记 <span>Supplier Form</span></a>
+      </div>
+    </li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-bg-line"></div>
+  <div class="hero-bg-line"></div>
+  <div class="hero-bg-line"></div>
+  <h1 class="hero-title" id="heroTitle">SKAND</h1>
+  <p class="hero-tagline">Create For More</p>
+  <p class="hero-cn">试试看看 &mdash; and be seen by the world</p>
+  <div class="hero-scroll">
+    <span>Scroll</span>
+    <div class="hero-scroll-line"></div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about" id="about">
+  <div class="about-left reveal">
+    <div class="section-label">About Us</div>
+    <h2 class="section-heading">An independent agency with storytelling woven into our&nbsp;fabric.</h2>
+  </div>
+  <div class="about-right reveal">
+    <p class="about-text">Grounded in versatile creative production, we are an independent agency with storytelling woven into our fabric. We are comfortable with not knowing what's happening next and leave space for the world to surprise us.<br><br>We embody a startup mentality, driven by a passion to create for more: to spark conversations, build connections, shape cultures, drive innovation, and generate growth and value — for ourselves and our partners.</p>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services" style="background:var(--dark)">
+  <div class="reveal">
+    <div class="section-label">What We Do</div>
+    <h2 class="section-heading">Seven pillars of <em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">creative</em> craft</h2>
+  </div>
+  <div class="services-grid reveal-stagger">
+    <!-- placeholder: services cards injected here -->
+  </div>
+</section>
+
+<!-- WORK -->
+<section class="work-section" id="work">
+  <div class="reveal">
+    <div class="section-label">Selected Work</div>
+    <h2 class="section-heading">Stories we've <em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">shaped</em></h2>
+  </div>
+  <div class="filter-tabs" id="filterTabs">
+    <!-- placeholder: filter buttons -->
+  </div>
+  <div class="portfolio-grid" id="portfolioGrid">
+    <!-- placeholder: project cards -->
+  </div>
+</section>
+
+<!-- CLIENTS -->
+<section class="clients-section" id="clients">
+  <div style="text-align:center;margin-bottom:48px" class="reveal">
+    <div class="section-label">Partners</div>
+    <h2 class="section-heading">Brands we <em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">collaborate</em> with</h2>
+  </div>
+  <div class="marquee-track" id="marqueeTrack">
+    <!-- placeholder: marquee items -->
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="reveal">
+    <div class="section-label">Get In Touch</div>
+    <h2 class="contact-heading">Let's <em>create</em><br>something together</h2>
+    <p class="contact-sub" style="margin-bottom:12px">Managing Director</p>
+    <p style="font-family:var(--font-display);font-size:clamp(20px,2.5vw,32px);font-weight:400;margin-bottom:8px">Kris Wang</p>
+    <p style="color:var(--coral);font-size:clamp(16px,1.5vw,22px);letter-spacing:1px;margin-top:4px">kris.wang@skandstudio.com</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span>&copy; 2025 SKAND Creative Studio</span>
+  <a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow" style="font-family:var(--font-body);font-size:11px;letter-spacing:1px">沪ICP备2026019644号</a>
+  <span style="font-family:var(--font-display);font-style:italic;letter-spacing:2px">Create For More</span>
+</footer>
+
+<script>
+/* === DATA === */
+const services = [
+  {num:'I',name:'IMC & Brand Voice',desc:'Campaign Strategy, Communication Plan, Film + KV + Visual Center, Assets & Experience Development'},
+  {num:'II',name:'Brand Visual Design',desc:'Brand Visual System, Typography Design, 3D / Animation / Illustration, Packaging & Seeding Pack Design'},
+  {num:'III',name:'Product Marketing',desc:'Product Go-To-Market Communication Plan, Product Assets Creation'},
+  {num:'IV',name:'Social Storytelling',desc:'Strategy Planning, Creative Concept & Production, Community Relation Management'},
+  {num:'V',name:'Digital Experience',desc:'Creative Concept & Ideation, UI/UX, Assets Creation, Tech Development & Operation'},
+  {num:'VI',name:'Consumer Connections',desc:'Offline Activation & Event Creation, Communication Plan & Content Creation'},
+  {num:'VII',name:'365 Social Management',desc:'Social Editorial Content Development'}
+];
+
+const projects = [
+  // === IMC & Brand Voice ===
+  {name:'The Fearless Ones — Double 11 Campaign',brand:'Jordan',cat:'imc',img:'pdf_images/page_07.jpg'},
+  {name:'Our Turn — Brand Voice & Family China Tour',brand:'Jordan',cat:'imc',img:'pdf_images/page_09.jpg'},
+  {name:'CNY Brand Voice Film',brand:'Jordan',cat:'imc',img:'pdf_images/page_10.jpg'},
+  {name:'CNY Brand Campaign',brand:'Converse',cat:'imc',img:'pdf_images/page_11.jpg'},
+  {name:'Next Stop Dong Dan Film',brand:'Jordan',cat:'imc',img:'pdf_images/page_12.jpg'},
+  {name:'Kobe Protro Brand Film',brand:'Nike',cat:'imc',img:'pdf_images/page_40.jpg'},
+  {name:'Kids Running Campaign',brand:'Nike',cat:'imc',img:'pdf_images/page_36.jpg'},
+  // === Brand Content (Product Marketing) ===
+  {name:'Genesis 2025',brand:'Salomon',cat:'content',img:'pdf_images/page_16.jpg'},
+  {name:'Winter Campaign',brand:'Decathlon',cat:'content',img:'pdf_images/page_17.jpg'},
+  {name:'3-in-1 Product Campaign',brand:'Moose Knuckles',cat:'content',img:'pdf_images/page_18.jpg'},
+  {name:'Air Max 95 Family Reunion — Hong Kong',brand:'Nike',cat:'content',img:'pdf_images/page_20.jpg'},
+  {name:'Yoga Zenvy Collection',brand:'Nike',cat:'content',img:'pdf_images/page_21.jpg'},
+  {name:'V-Day Campaign',brand:'Jordan',cat:'content',img:'pdf_images/page_22.jpg'},
+  {name:'Kids Drips',brand:'Jordan',cat:'content',img:'pdf_images/page_23.jpg'},
+  {name:'Remix Series',brand:'Jordan',cat:'content',img:'pdf_images/page_24.jpg'},
+  {name:'Air Peg 2K5 Retro Styling',brand:'Nike',cat:'content',img:'pdf_images/page_25.jpg'},
+  {name:'Sneakers Art Creative',brand:'Nike / Jordan / Converse',cat:'content',img:'pdf_images/page_26.jpg'},
+  {name:'Styles of All Seasons',brand:'UGG',cat:'content',img:'pdf_images/page_27.jpg'},
+  {name:'Snowboard CNY Campaign',brand:'Salomon',cat:'content',img:'pdf_images/page_28.jpg'},
+  {name:'Urban Styles',brand:'Samsonite',cat:'content',img:'pdf_images/page_29.jpg'},
+  {name:'Urban Girls\' Escape',brand:'Apede Mod',cat:'content',img:'pdf_images/page_30.jpg'},
+  {name:'Pets Collection',brand:'Le Creuset',cat:'content',img:'pdf_images/page_31.jpg'},
+  // === Social Storytelling ===
+  {name:'Portraits of Runners Series',brand:'Nike Running',cat:'social',img:'pdf_images/page_33.jpg'},
+
+  {name:'24 Solar Terms',brand:'Jack Wolfskin',cat:'social',img:'pdf_images/page_39.jpg'},
+  {name:'Basketball CHBL Social',brand:'Nike',cat:'social',img:'pdf_images/page_41.jpg'},
+  // === Digital Experience ===
+  {name:'Tmall Kids Engagement',brand:'Nike',cat:'digital',img:'pdf_images/page_45.jpg'},
+  {name:'Tmall Store Digital Retainer',brand:'Jordan',cat:'digital',img:'pdf_images/page_46.jpg'},
+  {name:'World of Flight — AR Experience',brand:'Jordan',cat:'digital',img:'pdf_images/page_47.jpg'},
+  {name:'Member Days Engagement Hub',brand:'Nike',cat:'digital',img:'pdf_images/page_48.jpg'},
+  {name:'Olympics "Road to Paris" Air Hub',brand:'Nike',cat:'digital',img:'pdf_images/page_49.jpg'},
+  {name:'Monitor II ANC Launch',brand:'Marshall',cat:'digital',img:'pdf_images/page_50.jpg'},
+  {name:'Family Tour Mini Program',brand:'Jordan',cat:'digital',img:'pdf_images/page_51.jpg'},
+  {name:'Nike Training Club',brand:'Nike',cat:'digital',img:'pdf_images/page_55.jpg'},
+  // === Brand Visual Design ===
+  {name:'Luka 4 OOH',brand:'Jordan',cat:'visual',img:'pdf_images/page_57.jpg'},
+  {name:'Retail Design',brand:'Jordan',cat:'visual',img:'pdf_images/page_58.jpg'},
+  {name:'Release Design',brand:'Nike',cat:'visual',img:'pdf_images/page_59.jpg'},
+  {name:'Brand Design',brand:'La Mer',cat:'visual',img:'pdf_images/page_62.jpg'},
+  {name:'Campaign Release',brand:'Estée Lauder',cat:'visual',img:'pdf_images/page_63.jpg'},
+  {name:'D11 KV Design',brand:'YSL',cat:'visual',img:'pdf_images/page_64.jpg'},
+  {name:'Running Magazine "Fresh Off"',brand:'Nike',cat:'visual',img:'pdf_images/page_65.jpg'},
+  // === Consumer Connections ===
+  {name:'Ambassador Announcement — Harbin Beer x NBA',brand:'Harbin Beer',cat:'connections',img:'pdf_images/page_68.jpg'},
+  {name:'Mini Music Talent Show',brand:'Converse',cat:'connections',img:'pdf_images/page_69.jpg'},
+  {name:'Basketball Community Building',brand:'Converse',cat:'connections',img:'pdf_images/page_70.jpg'},
+  {name:'Summer Street Fit Fest',brand:'Nike NTC',cat:'connections',img:'pdf_images/page_71.jpg'},
+  {name:'Snowboard Day',brand:'Salomon',cat:'connections',img:'pdf_images/page_72.jpg'},
+];
+
+const clients = ['Nike','Jordan','Converse','Salomon','Marshall','Decathlon','Moose Knuckles','UGG','Samsonite','La Mer','Estée Lauder','YSL','Le Creuset','Jack Wolfskin','Apede Mod','Harbin Beer','Genesis'];
+
+/* === RENDER SERVICES === */
+document.querySelector('.services-grid').innerHTML = services.map(s =>
+  `<div class="service-card reveal-item"><div class="service-num">${s.num}</div><div class="service-name">${s.name}</div><div class="service-desc">${s.desc}</div></div>`
+).join('');
+
+/* === RENDER FILTERS + PROJECTS === */
+const cats = ['all','imc','content','social','digital','visual','connections'];
+const catLabels = {all:'All',imc:'IMC & Brand Voice',content:'Brand Content',social:'Social Storytelling',digital:'Digital Experience',visual:'Brand Visual Design',connections:'Consumer Connections'};
+document.getElementById('filterTabs').innerHTML = cats.map(c =>
+  `<button class="filter-tab${c==='all'?' active':''}" data-cat="${c}">${catLabels[c]}</button>`
+).join('');
+
+document.getElementById('portfolioGrid').innerHTML = projects.map(p =>
+  `<div class="project-card" data-cat="${p.cat}"><img src="${p.img}" alt="${p.brand} — ${p.name}" loading="lazy"><div class="project-overlay"><div class="project-brand">${p.brand}</div><div class="project-name">${p.name}</div></div></div>`
+).join('');
+
+/* === RENDER MARQUEE (duplicated for seamless loop) === */
+const mItems = clients.map(c => `<span class="marquee-item">${c}</span><span class="marquee-sep">◆</span>`).join('');
+document.getElementById('marqueeTrack').innerHTML = mItems + mItems;
+
+/* === FILTER LOGIC === */
+document.querySelectorAll('.filter-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const cat = btn.dataset.cat;
+    document.querySelectorAll('.project-card').forEach(card => {
+      card.classList.toggle('hidden', cat !== 'all' && card.dataset.cat !== cat);
+    });
+  });
+});
+
+/* === LIGHTBOX === */
+const lightbox = document.getElementById('lightbox');
+const lbImg = document.getElementById('lightboxImg');
+const lbBrand = document.getElementById('lightboxBrand');
+const lbName = document.getElementById('lightboxName');
+const lbClose = document.getElementById('lightboxClose');
+const lbPrev = document.getElementById('lightboxPrev');
+const lbNext = document.getElementById('lightboxNext');
+let currentLbIndex = -1;
+let lightboxScrollY = 0;
+
+// 手机端触摸滑动切换图片
+let touchStartX = 0;
+let touchStartY = 0;
+let touchSwiped = false;
+
+lightbox.addEventListener('touchstart', (e) => {
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+  touchSwiped = false;
+}, {passive: true});
+
+lightbox.addEventListener('touchend', (e) => {
+  if(touchSwiped) return;
+  const dx = e.changedTouches[0].screenX - touchStartX;
+  const dy = e.changedTouches[0].screenY - touchStartY;
+  if(Math.abs(dx) > 80 && Math.abs(dx) > Math.abs(dy) * 1.5){
+    e.preventDefault();
+    navigateLightbox(dx > 0 ? -1 : 1);
+    touchSwiped = true;
+  }
+}, {passive: false});
+
+function getVisibleCards(){
+  return Array.from(document.querySelectorAll('.project-card:not(.hidden)'));
+}
+
+function showLightbox(index){
+  const cards = getVisibleCards();
+  if(index < 0 || index >= cards.length) return;
+  currentLbIndex = index;
+  const card = cards[index];
+  const img = card.querySelector('img');
+  const brand = card.querySelector('.project-brand').textContent;
+  const name = card.querySelector('.project-name').textContent;
+  lbImg.src = img.src;
+  lbImg.alt = img.alt;
+  lbBrand.textContent = brand;
+  lbName.textContent = name;
+  lightbox.classList.add('active');
+  // 禁止背景滚动（桌面 + 手机）
+  document.body.style.position = 'fixed';
+  document.body.style.top = '-' + lightboxScrollY + 'px';
+  document.body.style.left = '0';
+  document.body.style.right = '0';
+  document.body.style.overflow = 'hidden';
+  // 提升自定义光标层级
+  dot.style.zIndex = '10002';
+  ring.style.zIndex = '10002';
+}
+
+document.querySelectorAll('.project-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const cards = getVisibleCards();
+    const idx = cards.indexOf(card);
+    if(idx !== -1) {
+      lightboxScrollY = window.scrollY || window.pageYOffset;
+      showLightbox(idx);
+    }
+  });
+});
+
+function navigateLightbox(dir){
+  const cards = getVisibleCards();
+  let next = currentLbIndex + dir;
+  if(next < 0) next = cards.length - 1;
+  if(next >= cards.length) next = 0;
+  showLightbox(next);
+}
+
+function closeLightbox(){
+  lightbox.classList.remove('active');
+  // 临时禁用平滑滚动，避免滚回原位时有动画
+  const htmlEl = document.documentElement;
+  const prevSB = htmlEl.style.scrollBehavior;
+  htmlEl.style.scrollBehavior = 'auto';
+  // 恢复背景滚动
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.left = '';
+  document.body.style.right = '';
+  document.body.style.overflow = '';
+  // 立即跳回原位（无动画）
+  window.scrollTo(0, lightboxScrollY);
+  htmlEl.style.scrollBehavior = prevSB;
+  currentLbIndex = -1;
+  // 恢复自定义光标层级
+  dot.style.zIndex = '';
+  ring.style.zIndex = '';
+}
+lbClose.addEventListener('click', closeLightbox);
+lbPrev.addEventListener('click', (e) => { e.stopPropagation(); navigateLightbox(-1); });
+lbNext.addEventListener('click', (e) => { e.stopPropagation(); navigateLightbox(1); });
+lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', (e) => {
+  if(!lightbox.classList.contains('active')) return;
+  if(e.key === 'Escape') closeLightbox();
+  if(e.key === 'ArrowLeft') navigateLightbox(-1);
+  if(e.key === 'ArrowRight') navigateLightbox(1);
+});
+
+/* === CUSTOM CURSOR === */
+const dot = document.querySelector('.cursor-dot');
+const ring = document.querySelector('.cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+function animCursor(){
+  if(document.hidden){ requestAnimationFrame(animCursor); return; }
+  rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+  dot.style.left=mx-4+'px'; dot.style.top=my-4+'px';
+  ring.style.left=rx-20+'px'; ring.style.top=ry-20+'px';
+  requestAnimationFrame(animCursor);
+}
+animCursor();
+document.querySelectorAll('a,.filter-tab,.project-card,.contact-cta,.nav-links a').forEach(el => {
+  el.addEventListener('mouseenter', () => ring.classList.add('hovering'));
+  el.addEventListener('mouseleave', () => ring.classList.remove('hovering'));
+});
+
+/* === HERO ANIMATION === */
+function animateHero(){
+  const title = document.getElementById('heroTitle');
+  const text = title.textContent;
+  title.innerHTML = text.split('').map(c => `<span class="char">${c}</span>`).join('');
+  const chars = title.querySelectorAll('.char');
+  chars.forEach((ch,i) => {
+    setTimeout(() => { ch.style.transition='opacity .6s ease, transform .6s ease'; ch.style.opacity='1'; ch.style.transform='translateY(0)'; }, 300 + i*90);
+  });
+  const tagline = document.querySelector('.hero-tagline');
+  const cn = document.querySelector('.hero-cn');
+  const scroll = document.querySelector('.hero-scroll');
+  setTimeout(() => { tagline.style.transition='opacity .8s ease, transform .8s ease'; tagline.style.opacity='1'; tagline.style.transform='translateY(0)'; }, 900);
+  setTimeout(() => { cn.style.transition='opacity .8s ease, transform .8s ease'; cn.style.opacity='1'; cn.style.transform='translateY(0)'; }, 1200);
+  setTimeout(() => { scroll.style.transition='opacity 1s ease'; scroll.style.opacity='1'; }, 1800);
+}
+animateHero();
+
+/* === SCROLL REVEAL === */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); observer.unobserve(e.target); }});
+}, {threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+/* Stagger reveal for service cards */
+const sObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      const items = e.target.querySelectorAll('.reveal-item');
+      items.forEach((item,i) => {
+        setTimeout(() => {
+          item.style.transition='opacity .6s ease, transform .6s ease';
+          item.style.opacity='1'; item.style.transform='translateY(0)';
+        }, i*100);
+      });
+      sObserver.unobserve(e.target);
+    }
+  });
+}, {threshold:0.1});
+document.querySelectorAll('.reveal-stagger').forEach(el => sObserver.observe(el));
+
+/* === PARALLAX on hero bg lines === */
+const heroLines = document.querySelectorAll('.hero-bg-line');
+window.addEventListener('scroll', () => {
+  const sy = window.scrollY;
+  heroLines.forEach((line,i) => {
+    line.style.transform = `translate(-50%,-50%) scale(${1 + sy*0.0003*(i+1)}) rotate(${sy*0.01*(i+1)}deg)`;
+  });
+});
+</script>
+</body>
+</html>
