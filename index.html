@@ -1,9 +1,20 @@
 <!DOCTYPE html>
-<html lang="zh-Hans">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SKAND — Create For More</title>
+<meta name="description" content="SKAND is an independent creative agency with storytelling woven into our fabric. Specializing in IMC, Brand Voice, Social Storytelling, Digital Experience, and more.">
+<meta property="og:title" content="SKAND — Create For More">
+<meta property="og:description" content="Independent creative agency with storytelling woven into our fabric. We spark conversations, build connections, shape cultures, and drive innovation.">
+<meta property="og:image" content="https://skandstudio.com/logo.png">
+<meta property="og:url" content="https://skandstudio.com/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SKAND — Create For More">
+<meta name="twitter:description" content="Independent creative agency with storytelling woven into our fabric.">
+<meta name="twitter:image" content="https://skandstudio.com/logo.png">
+<link rel="canonical" href="https://skandstudio.com/">
 <link rel="stylesheet" href="fonts/local-fonts.css">
 <style>
 /* === RESET & BASE === */
@@ -18,13 +29,24 @@ html{scroll-behavior:smooth;overflow-x:hidden;scrollbar-width:thin;scrollbar-col
 body{background:var(--black);color:var(--white);font-family:var(--font-body);font-weight:300;line-height:1.6;overflow-x:hidden;cursor:none}
 
 /* === GRAIN OVERLAY === */
-.grain{position:fixed;top:-50%;left:-50%;width:200%;height:200%;pointer-events:none;z-index:9999;opacity:.045;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+@media (prefers-reduced-motion: no-preference) {
+  .grain{position:fixed;top:-50%;left:-50%;width:200%;height:200%;pointer-events:none;z-index:9999;opacity:.045;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    will-change:transform;
+  }
+  @keyframes grainShift{0%{transform:translate(0,0)}10%{transform:translate(-2%,-3%)}20%{transform:translate(3%,1%)}30%{transform:translate(-1%,4%)}40%{transform:translate(4%,-2%)}50%{transform:translate(-3%,2%)}60%{transform:translate(2%,-4%)}70%{transform:translate(-4%,3%)}80%{transform:translate(1%,-1%)}90%{transform:translate(3%,4%)}100%{transform:translate(0,0)}}
+  .grain{animation:grainShift 8s steps(10) infinite}
 }
-@keyframes grainShift{0%{transform:translate(0,0)}10%{transform:translate(-2%,-3%)}20%{transform:translate(3%,1%)}30%{transform:translate(-1%,4%)}40%{transform:translate(4%,-2%)}50%{transform:translate(-3%,2%)}60%{transform:translate(2%,-4%)}70%{transform:translate(-4%,3%)}80%{transform:translate(1%,-1%)}90%{transform:translate(3%,4%)}100%{transform:translate(0,0)}}
-.grain{animation:grainShift 8s steps(10) infinite}
+@media (prefers-reduced-motion: reduce) {
+  .grain{animation:none;opacity:.03}
+}
 
 /* === CUSTOM CURSOR === */
+/* Hide custom cursor on touch devices — use native cursor */
+@media (pointer: coarse), (max-width: 768px) {
+  body { cursor: auto; }
+  .cursor-dot, .cursor-ring { display: none !important; }
+}
 .cursor-dot{position:fixed;width:8px;height:8px;background:var(--coral);border-radius:50%;pointer-events:none;z-index:10000;transition:transform .15s ease;mix-blend-mode:difference}
 .cursor-ring{position:fixed;width:40px;height:40px;border:1.5px solid var(--white);border-radius:50%;pointer-events:none;z-index:10000;transition:transform .3s ease,width .3s ease,height .3s ease,border-color .3s ease;mix-blend-mode:difference}
 .cursor-ring.hovering{width:60px;height:60px;border-color:var(--coral)}
@@ -92,12 +114,32 @@ section{padding:clamp(80px,12vw,160px) clamp(24px,5vw,80px)}
 
 /* === WORK / PORTFOLIO === */
 .work-section{background:var(--dark)}
+
+/* === BLUR-UP LAZY LOADING === */
+/* Blur placeholder background */
+.project-card{
+  position:relative;overflow:hidden;aspect-ratio:16/10;border-radius:4px;cursor:none;
+  background-color:#1a1a1a;
+  background-image:var(--blur-bg);
+  background-size:cover;
+  background-position:center;
+}
+/* WebP image: hidden until loaded */
+.project-card img{
+  width:100%;height:100%;object-fit:cover;
+  opacity:0;
+  transition:opacity .5s ease;
+}
+/* When img loads, reveal it with fade */
+.project-card img.loaded,
+.project-card.loaded img{opacity:1}
+.project-card.loaded{background-image:none}
 .filter-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px}
 .filter-tab{padding:8px 20px;border:1px solid rgba(240,237,232,.15);border-radius:100px;background:transparent;color:var(--white);font-family:var(--font-body);font-size:13px;letter-spacing:1px;cursor:none;transition:all .3s ease}
 .filter-tab:hover,.filter-tab.active{background:var(--coral);border-color:var(--coral);color:var(--black)}
 .portfolio-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.project-card{position:relative;overflow:hidden;aspect-ratio:16/10;border-radius:4px;cursor:none}
-.project-card img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.25,.1,.25,1),filter .5s ease}
+/* .project-card is defined in BLUR-UP section above — don't duplicate */
+.project-card img{transition:transform .7s cubic-bezier(.25,.1,.25,1),filter .5s ease,opacity .5s ease}
 .project-card:hover img{transform:scale(1.06);filter:brightness(.55)}
 .project-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(16px,2vw,32px);opacity:0;transition:opacity .4s ease;background:linear-gradient(to top,rgba(10,10,10,.85) 0%,transparent 60%)}
 .project-card:hover .project-overlay{opacity:1}
@@ -186,22 +228,23 @@ footer a{color:var(--grey);text-decoration:none}
 
 <!-- NAVIGATION -->
 <nav>
-  <div class="nav-logo"><img src="logo.png" alt="SKAND" style="height:28px;filter:invert(1)"></div>
+  <div class="nav-logo"><a href="#hero" style="display:flex;align-items:center"><img src="logo.png" alt="SKAND" style="height:28px;filter:invert(1)"></a></div>
   <ul class="nav-links">
-    <li><a href="#about">About</a></li>
-    <li><a href="#services">Services</a></li>
-    <li><a href="#work">Work</a></li>
-    <li><a href="#clients">Clients</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a href="#about" data-t="nav" data-tk="about">About</a></li>
+    <li><a href="#services" data-t="nav" data-tk="services">Services</a></li>
+    <li><a href="#work" data-t="nav" data-tk="work">Work</a></li>
+    <li><a href="#clients" data-t="nav" data-tk="clients">Clients</a></li>
+    <li><a href="#contact" data-t="nav" data-tk="contact">Contact</a></li>
     <li class="nav-dropdown">
-      <a class="nav-dropdown-toggle">Tool <span class="arrow">▼</span></a>
-      <div class="nav-dropdown-menu">
+      <a class="nav-dropdown-toggle" aria-expanded="false" aria-haspopup="true">Tool <span class="arrow">▼</span></a>
+      <div class="nav-dropdown-menu" role="menu">
         <a href="https://expense.skandstudio.com/" target="_blank">神马报销 <span>Expense</span></a>
         <a href="https://resource.skandstudio.com/" target="_blank">神马排班 <span>Resource</span></a>
         <a href="https://payment.skandstudio.com/" target="_blank">神马付款 <span>Payment</span></a>
         <a href="https://payment.skandstudio.com/supplier-form" target="_blank">供应商登记 <span>Supplier Form</span></a>
       </div>
     </li>
+    <li><button id="langToggle" aria-label="Toggle language" style="background:none;border:1px solid rgba(240,237,232,.3);color:var(--white);font-family:var(--font-body);font-size:12px;letter-spacing:2px;padding:6px 14px;cursor:none;border-radius:100px;transition:all .3s ease;line-height:1">EN</button></li>
   </ul>
 </nav>
 
@@ -211,10 +254,10 @@ footer a{color:var(--grey);text-decoration:none}
   <div class="hero-bg-line"></div>
   <div class="hero-bg-line"></div>
   <h1 class="hero-title" id="heroTitle">SKAND</h1>
-  <p class="hero-tagline">Create For More</p>
-  <p class="hero-cn">试试看看 &mdash; and be seen by the world</p>
+  <p class="hero-tagline" data-tk="tagline">Create For More</p>
+  <p class="hero-cn" data-tk="subtitle">and be seen by the world</p>
   <div class="hero-scroll">
-    <span>Scroll</span>
+    <span data-tk="scroll">Scroll</span>
     <div class="hero-scroll-line"></div>
   </div>
 </section>
@@ -222,19 +265,20 @@ footer a{color:var(--grey);text-decoration:none}
 <!-- ABOUT -->
 <section class="about" id="about">
   <div class="about-left reveal">
-    <div class="section-label">About Us</div>
-    <h2 class="section-heading">An independent agency with storytelling woven into our&nbsp;fabric.</h2>
+    <div class="section-label" data-t="about-label">About Us</div>
+    <h2 class="section-heading" data-t="about-heading">An independent agency with storytelling woven into our fabric.</h2>
   </div>
   <div class="about-right reveal">
-    <p class="about-text">Grounded in versatile creative production, we are an independent agency with storytelling woven into our fabric. We are comfortable with not knowing what's happening next and leave space for the world to surprise us.<br><br>We embody a startup mentality, driven by a passion to create for more: to spark conversations, build connections, shape cultures, drive innovation, and generate growth and value — for ourselves and our partners.</p>
+    <p class="about-text" data-t="about-text1">Grounded in versatile creative production, we are an independent agency with storytelling woven into our fabric. We are comfortable with not knowing what's happening next and leave space for the world to surprise us.</p>
+    <p class="about-text" style="margin-top:20px" data-t="about-text2">We embody a startup mentality, driven by a passion to create for more: to spark conversations, build connections, shape cultures, drive innovation, and generate growth and value — for ourselves and our partners.</p>
   </div>
 </section>
 
 <!-- SERVICES -->
 <section id="services" style="background:var(--dark)">
   <div class="reveal">
-    <div class="section-label">What We Do</div>
-    <h2 class="section-heading">Seven pillars of <em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">creative</em> craft</h2>
+    <div class="section-label" data-t="services-label">What We Do</div>
+    <h2 class="section-heading" data-t="services-heading">Seven pillars of <em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">creative</em> craft</h2>
   </div>
   <div class="services-grid reveal-stagger">
     <!-- placeholder: services cards injected here -->
@@ -244,8 +288,8 @@ footer a{color:var(--grey);text-decoration:none}
 <!-- WORK -->
 <section class="work-section" id="work">
   <div class="reveal">
-    <div class="section-label">Selected Work</div>
-    <h2 class="section-heading">Stories we've <em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">shaped</em></h2>
+    <div class="section-label" data-t="work-label">Selected Work</div>
+    <h2 class="section-heading" data-t="work-heading">Stories we've <em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">shaped</em></h2>
   </div>
   <div class="filter-tabs" id="filterTabs">
     <!-- placeholder: filter buttons -->
@@ -258,8 +302,8 @@ footer a{color:var(--grey);text-decoration:none}
 <!-- CLIENTS -->
 <section class="clients-section" id="clients">
   <div style="text-align:center;margin-bottom:48px" class="reveal">
-    <div class="section-label">Partners</div>
-    <h2 class="section-heading">Brands we <em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">collaborate</em> with</h2>
+    <div class="section-label" data-t="clients-label">Partners</div>
+    <h2 class="section-heading" data-t="clients-heading">Brands we <em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">collaborate</em> with</h2>
   </div>
   <div class="marquee-track" id="marqueeTrack">
     <!-- placeholder: marquee items -->
@@ -269,9 +313,9 @@ footer a{color:var(--grey);text-decoration:none}
 <!-- CONTACT -->
 <section class="contact-section" id="contact">
   <div class="reveal">
-    <div class="section-label">Get In Touch</div>
-    <h2 class="contact-heading">Let's <em>create</em><br>something together</h2>
-    <p class="contact-sub" style="margin-bottom:12px">Managing Director</p>
+    <div class="section-label" data-t="contact-label">Get In Touch</div>
+    <h2 class="contact-heading" data-t="contact-heading">Let's <em>create</em><br>something together</h2>
+    <p class="contact-sub" style="margin-bottom:12px" data-t="contact-sub">Managing Director</p>
     <p style="font-family:var(--font-display);font-size:clamp(20px,2.5vw,32px);font-weight:400;margin-bottom:8px">Kris Wang</p>
     <p style="color:var(--coral);font-size:clamp(16px,1.5vw,22px);letter-spacing:1px;margin-top:4px">kris.wang@skandstudio.com</p>
   </div>
@@ -279,25 +323,44 @@ footer a{color:var(--grey);text-decoration:none}
 
 <!-- FOOTER -->
 <footer>
-  <span>&copy; 2025 SKAND Creative Studio</span>
-  <a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow" style="font-family:var(--font-body);font-size:11px;letter-spacing:1px">沪ICP备2026019644号</a>
-  <span style="font-family:var(--font-display);font-style:italic;letter-spacing:2px">Create For More</span>
+  <span data-t="footer-copy">&copy; 2025 SKAND Creative Studio</span>
+  <a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="font-family:var(--font-body);font-size:11px;letter-spacing:1px">沪ICP备2026019644号</a>
+  <span style="font-family:var(--font-display);font-style:italic;letter-spacing:2px" data-t="footer-tagline">Create For More</span>
 </footer>
 
 <script>
-/* === DATA === */
-const services = [
-  {num:'I',name:'IMC & Brand Voice',desc:'Campaign Strategy, Communication Plan, Film + KV + Visual Center, Assets & Experience Development'},
-  {num:'II',name:'Brand Visual Design',desc:'Brand Visual System, Typography Design, 3D / Animation / Illustration, Packaging & Seeding Pack Design'},
-  {num:'III',name:'Product Marketing',desc:'Product Go-To-Market Communication Plan, Product Assets Creation'},
-  {num:'IV',name:'Social Storytelling',desc:'Strategy Planning, Creative Concept & Production, Community Relation Management'},
-  {num:'V',name:'Digital Experience',desc:'Creative Concept & Ideation, UI/UX, Assets Creation, Tech Development & Operation'},
-  {num:'VI',name:'Consumer Connections',desc:'Offline Activation & Event Creation, Communication Plan & Content Creation'},
-  {num:'VII',name:'365 Social Management',desc:'Social Editorial Content Development'}
+/* === i18n DATA === */
+const T = {
+  nav: { about:{en:'About',zh:'关于'}, services:{en:'Services',zh:'服务'}, work:{en:'Work',zh:'作品'}, clients:{en:'Clients',zh:'客户'}, contact:{en:'Contact',zh:'联系'}, tool:{en:'Tool',zh:'工具'} },
+  hero: { tagline:{en:'Create For More',zh:'创造更多'}, subtitle:{en:'and be seen by the world',zh:'让世界看见你的光芒'}, scroll:{en:'Scroll',zh:'向下'} },
+  about: { label:{en:'About Us',zh:'关于我们'}, heading:{en:'An independent agency with storytelling woven into our fabric.',zh:'我们是独立创意机构，讲故事是我们的基因。'}, text1:{en:'Grounded in versatile creative production, we are an independent agency with storytelling woven into our fabric. We are comfortable with not knowing what\'s happening next and leave space for the world to surprise us.',zh:'植根于多元创意制作，我们是一家以讲故事为核心的独立创意机构。我们享受未知，为世界的惊喜留白。'}, text2:{en:'We embody a startup mentality, driven by a passion to create for more: to spark conversations, build connections, shape cultures, drive innovation, and generate growth and value — for ourselves and our partners.',zh:'我们拥有创业心态，源自对"创造更多"的渴望：激发对话、建立连接、塑造文化、推动创新，为自身和合作伙伴创造增长与价值。'} },
+  services: { label:{en:'What We Do',zh:'我们的服务'}, heading:{en:'Seven pillars of creative craft',zh:'七大创意支柱'} },
+  work: { label:{en:'Selected Work',zh:'精选作品'}, heading:{en:"Stories we've shaped",zh:'我们讲述的故事'} },
+  clients: { label:{en:'Partners',zh:'合作伙伴'}, heading:{en:'Brands we collaborate with',zh:'与我们同行的品牌'} },
+  contact: { label:{en:'Get In Touch',zh:'联系我们'}, heading:{en:"Let's create something together",zh:'让我们一起创造非凡'}, sub:{en:'Managing Director',zh:'管理合伙人'} },
+  footer: { copy:{en:'© 2025 SKAND Creative Studio',zh:'© 2025 SKAND 创意工作室'}, tagline:{en:'Create For More',zh:'创造更多'} },
+};
+
+const SERVICE_DATA = [
+  {num:'I',  name:{en:'IMC & Brand Voice',      zh:'整合营销与品牌声量'},      desc:{en:'Campaign Strategy, Communication Plan, Film + KV + Visual Center, Assets & Experience Development',          zh:'营销策略、传播规划、影片+主视觉+视觉中心、资产与体验开发'} },
+  {num:'II', name:{en:'Brand Visual Design',     zh:'品牌视觉设计'},            desc:{en:'Brand Visual System, Typography Design, 3D / Animation / Illustration, Packaging & Seeding Pack Design', zh:'品牌视觉系统、字体设计、3D/动画/插画、包装与种草包设计'} },
+  {num:'III',name:{en:'Product Marketing',       zh:'产品营销'},                desc:{en:'Product Go-To-Market Communication Plan, Product Assets Creation',                                     zh:'产品上市传播规划、产品物料制作'} },
+  {num:'IV', name:{en:'Social Storytelling',     zh:'社交内容叙事'},            desc:{en:'Strategy Planning, Creative Concept & Production, Community Relation Management',                           zh:'策略规划、创意策划与制作、社区关系管理'} },
+  {num:'V',  name:{en:'Digital Experience',      zh:'数字体验'},                desc:{en:'Creative Concept & Ideation, UI/UX, Assets Creation, Tech Development & Operation',                          zh:'创意概念与构思、UI/UX、资产制作、技术开发与运营'} },
+  {num:'VI', name:{en:'Consumer Connections',    zh:'消费者连接'},              desc:{en:'Offline Activation & Event Creation, Communication Plan & Content Creation',                              zh:'线下激活与事件创意、传播规划与内容制作'} },
+  {num:'VII',name:{en:'365 Social Management',   zh:'全年社交运营'},            desc:{en:'Social Editorial Content Development',                                                                  zh:'社交编辑内容策划与执行'} },
 ];
 
-const projects = [
-  // === IMC & Brand Voice ===
+const FILTER_LABELS = {
+  all:{en:'All',zh:'全部'}, imc:{en:'IMC & Brand Voice',zh:'整合营销'},
+  content:{en:'Brand Content',zh:'品牌内容'}, social:{en:'Social Storytelling',zh:'社交叙事'},
+  digital:{en:'Digital Experience',zh:'数字体验'}, visual:{en:'Brand Visual Design',zh:'视觉设计'},
+  connections:{en:'Consumer Connections',zh:'消费者连接'},
+};
+
+const CLIENTS = ['Nike','Jordan','Converse','Salomon','Marshall','Decathlon','Moose Knuckles','UGG','Samsonite','La Mer','Estée Lauder','YSL','Le Creuset','Jack Wolfskin','Apede Mod','Harbin Beer','Genesis'];
+
+const PROJECTS = [
   {name:'The Fearless Ones — Double 11 Campaign',brand:'Jordan',cat:'imc',img:'pdf_images/page_07.jpg'},
   {name:'Our Turn — Brand Voice & Family China Tour',brand:'Jordan',cat:'imc',img:'pdf_images/page_09.jpg'},
   {name:'CNY Brand Voice Film',brand:'Jordan',cat:'imc',img:'pdf_images/page_10.jpg'},
@@ -305,7 +368,6 @@ const projects = [
   {name:'Next Stop Dong Dan Film',brand:'Jordan',cat:'imc',img:'pdf_images/page_12.jpg'},
   {name:'Kobe Protro Brand Film',brand:'Nike',cat:'imc',img:'pdf_images/page_40.jpg'},
   {name:'Kids Running Campaign',brand:'Nike',cat:'imc',img:'pdf_images/page_36.jpg'},
-  // === Brand Content (Product Marketing) ===
   {name:'Genesis 2025',brand:'Salomon',cat:'content',img:'pdf_images/page_16.jpg'},
   {name:'Winter Campaign',brand:'Decathlon',cat:'content',img:'pdf_images/page_17.jpg'},
   {name:'3-in-1 Product Campaign',brand:'Moose Knuckles',cat:'content',img:'pdf_images/page_18.jpg'},
@@ -319,14 +381,11 @@ const projects = [
   {name:'Styles of All Seasons',brand:'UGG',cat:'content',img:'pdf_images/page_27.jpg'},
   {name:'Snowboard CNY Campaign',brand:'Salomon',cat:'content',img:'pdf_images/page_28.jpg'},
   {name:'Urban Styles',brand:'Samsonite',cat:'content',img:'pdf_images/page_29.jpg'},
-  {name:'Urban Girls\' Escape',brand:'Apede Mod',cat:'content',img:'pdf_images/page_30.jpg'},
+  {name:"Urban Girls' Escape",brand:'Apede Mod',cat:'content',img:'pdf_images/page_30.jpg'},
   {name:'Pets Collection',brand:'Le Creuset',cat:'content',img:'pdf_images/page_31.jpg'},
-  // === Social Storytelling ===
   {name:'Portraits of Runners Series',brand:'Nike Running',cat:'social',img:'pdf_images/page_33.jpg'},
-
   {name:'24 Solar Terms',brand:'Jack Wolfskin',cat:'social',img:'pdf_images/page_39.jpg'},
   {name:'Basketball CHBL Social',brand:'Nike',cat:'social',img:'pdf_images/page_41.jpg'},
-  // === Digital Experience ===
   {name:'Tmall Kids Engagement',brand:'Nike',cat:'digital',img:'pdf_images/page_45.jpg'},
   {name:'Tmall Store Digital Retainer',brand:'Jordan',cat:'digital',img:'pdf_images/page_46.jpg'},
   {name:'World of Flight — AR Experience',brand:'Jordan',cat:'digital',img:'pdf_images/page_47.jpg'},
@@ -335,7 +394,6 @@ const projects = [
   {name:'Monitor II ANC Launch',brand:'Marshall',cat:'digital',img:'pdf_images/page_50.jpg'},
   {name:'Family Tour Mini Program',brand:'Jordan',cat:'digital',img:'pdf_images/page_51.jpg'},
   {name:'Nike Training Club',brand:'Nike',cat:'digital',img:'pdf_images/page_55.jpg'},
-  // === Brand Visual Design ===
   {name:'Luka 4 OOH',brand:'Jordan',cat:'visual',img:'pdf_images/page_57.jpg'},
   {name:'Retail Design',brand:'Jordan',cat:'visual',img:'pdf_images/page_58.jpg'},
   {name:'Release Design',brand:'Nike',cat:'visual',img:'pdf_images/page_59.jpg'},
@@ -343,7 +401,6 @@ const projects = [
   {name:'Campaign Release',brand:'Estée Lauder',cat:'visual',img:'pdf_images/page_63.jpg'},
   {name:'D11 KV Design',brand:'YSL',cat:'visual',img:'pdf_images/page_64.jpg'},
   {name:'Running Magazine "Fresh Off"',brand:'Nike',cat:'visual',img:'pdf_images/page_65.jpg'},
-  // === Consumer Connections ===
   {name:'Ambassador Announcement — Harbin Beer x NBA',brand:'Harbin Beer',cat:'connections',img:'pdf_images/page_68.jpg'},
   {name:'Mini Music Talent Show',brand:'Converse',cat:'connections',img:'pdf_images/page_69.jpg'},
   {name:'Basketball Community Building',brand:'Converse',cat:'connections',img:'pdf_images/page_70.jpg'},
@@ -351,38 +408,197 @@ const projects = [
   {name:'Snowboard Day',brand:'Salomon',cat:'connections',img:'pdf_images/page_72.jpg'},
 ];
 
-const clients = ['Nike','Jordan','Converse','Salomon','Marshall','Decathlon','Moose Knuckles','UGG','Samsonite','La Mer','Estée Lauder','YSL','Le Creuset','Jack Wolfskin','Apede Mod','Harbin Beer','Genesis'];
+const IMAGE_MANIFEST = {
+  'page_01':{webp:'images/page_01.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAECBAX/xAAjEAEAAgEDAgcAAAAAAAAAAAABAAIDERIhBFETMUFSkrHB/8QAFgEBAQEAAAAAAAAAAAAAAAAABAED/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAEDEQIiMv/aAAwDAQACEQMRAD8A4uRMuHxaG1ohavodklYattq11O+v5F0gWrlHkdo/Imqzrkvr7n7mkHTRZVqshQkVsrbnyYRlh6P/2Q=='},
+  'page_02':{webp:'images/page_02.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAUGBP/EACMQAAIBBAEDBQAAAAAAAAAAAAECAAMEBREhEiIxJEFRYZH/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABcRAAMBAAAAAAAAAAAAAAAAAAABETH/2gAMAwEAAhEDEQA/AENO3t3113apsA8oTo+4jvHPbtjrf15t3pBu3fnbE/upNTVQJFLj5lTawSlxTy2PKlql1SDNzot4+oSFckmEUH//2Q=='},
+  'page_06':{webp:'images/page_06.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAIFBP/EACMQAAEEAgEDBQAAAAAAAAAAAAEAAgMREiEFEzFBBCJhgaL/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAv/EABgRAQADAQAAAAAAAAAAAAAAAAABAhES/9oADAMBAAIRAxEAPwCKSCQS39pGenglLupJi9x1W9JngDGh4WKV7mTuxNdlFVSoRRZxtaRfT9lhl9vtCocS4u4+Imr34+UJ0Y//2Q=='},
+  'page_07':{webp:'images/page_07.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAIBAwQG/8QAIxAAAgEDAwQDAAAAAAAAAAAAAQIDAAQREiExBRMVQSIyYf/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAVEQEBAAAAAAAAAAAAAAAAAAAAIf/aAAwDAQACEQMRAD8A5yQrlC032zsufif2t3i7ksFheN1KghzxzVUEUb3USsgKmQAgjkZpZ5pNWgOQqFlULtgZz6oGaKKLSl00glA37YBBoqepsy3WFYqNC7A49UUpH//Z'},
+  'page_08':{webp:'images/page_08.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAAAAUEBv/EACIQAAICAQMEAwAAAAAAAAAAAAECAAMEERMhBSMxUmHB8P/EABUBAQEAAAAAAAAAAAAAAAAAAAID/8QAGhEBAAIDAQAAAAAAAAAAAAAAAQACAxEhIv/aAAwDAQACEQMRAD8A5LX9rL+EK36StW2WsaqxgR8EyBNtTMFxACQNz7hVCMqWew1T8dphx6mIy7rEy7UVyqq2gA8CICuzcpbJ6eT/2Q=='},
+  'page_09':{webp:'images/page_09.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQCAwX/xAAjEAACAQMDBAMAAAAAAAAAAAABAgMABBEFIUESMXGREyIz/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQL/xAAXEQEBAQEAAAAAAAAAAAAAAAARAAED/9oADAMBAAIRAxEAPwBbRYpJLSYmxhmUMcvI26fXjNZsETSH5IpFDIocDPccnyKZTVLxEdVmOG75UHjxV1oAdFu16VxvwM9hzRUuFOEqY1Mlq0jndmMWcn1RSialeBf2PoUUO15zcb//2Q=='},
+  'page_10':{webp:'images/page_10.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAMEAgX/xAAhEAEAAQMEAgMAAAAAAAAAAAABAgADEQQSITETYRRxgf/EABYBAQEBAAAAAAAAAAAAAAAAAAQDBf/EABoRAQEAAgMAAAAAAAAAAAAAAAEAAgMEEkH/2gAMAwEAAhEDEQA/AOeaG8RbTcs7WIqycL6rWlsx0pMvXItuZl8aKfdNA2/lInJhJ2uM8Ufu2njxDxq/lhxBzE6fVFSPOF7e6Kkko1AX/9k='},
+  'page_11':{webp:'images/page_11.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAgP/xAAjEAEBAAIBAgYDAAAAAAAAAAABAgADERIhBBMiMUFCUWHB/8QAFgEBAQEAAAAAAAAAAAAAAAAAAwQF/8QAGhEBAAMBAQEAAAAAAAAAAAAAAQACEQMxQf/aAAwDAQACEQMRAD8Aj7InbQarIAOeo/uajR5n2KV4H8uUDTrvxCVEoNfH6zg0yBPpKkUOwvGFbAl/E6Xtg/Irv1VpsjqKOBGfbhwx2dUMSs98MLZoFAMfZ//Z'},
+  'page_12':{webp:'images/page_12.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAMFBAb/xAAfEAACAwEAAQUAAAAAAAAAAAABAgADERJRBCIxMnL/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABYRAQEBAAAAAAAAAAAAAAAAAAAREv/aAAwDAQACEQMRAD8A5c859m38xtPpzYoYkAbmGb7KqwTiAb85GkDlfapwYNUGWJpHvrau90ccspwjxCUbD25LKpPnkQiGn//Z'},
+  'page_16':{webp:'images/page_16.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAECBAUG/8QAIxAAAgEDAwUBAQAAAAAAAAAAAQIDAAQRBSExEyJBYYEyM//EABQBAQAAAAAAAAAAAAAAAAAAAAL/xAAZEQACAwEAAAAAAAAAAAAAAAAAEQISIQH/2gAMAwEAAhEDEQA/AFZalMlp0VvoWl/KkuNh6qTm6iuYluHEidDuUPlpNt8fa5Yk4B845q5pcjy6hBHI7MgbABPAxQ2OjfJYjSfVdZjmkS1jYQhu1WiBKjwD8opNCpubjd/6Hh2Hge6Kd2Ch/9k='},
+  'page_17':{webp:'images/page_17.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAQGAf/EACMQAAIBAwMEAwAAAAAAAAAAAAECAwAEERITIQUiUWExQtH/xAAWAQEBAQAAAAAAAAAAAAAAAAABAwT/xAAZEQEAAwEBAAAAAAAAAAAAAAABAAIRIjH/2gAMAwEAAhEDEQA/AE4+nRTINO6r44DYwePPukbq3it7hY9t9QYgmTGlj6wKoJpXM9shPaUOQABn5/KzYiuLyKOaNZEV3ADDPihto7Gp0ZJi82kkVVRBhBnJ5J80VWR9LsXQFrWInn60VESaGrvs/9k='},
+  'page_18':{webp:'images/page_18.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQBAgX/xAAeEAACAgIDAQEAAAAAAAAAAAABAwACESEEEjFR8P/EABUBAQEAAAAAAAAAAAAAAAAAAAEC/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AwFrsV5NaYBFe2R6ZbilKeWu7qdl7PXPv4xUE49kEk3oCdS0muc5Tm0utQXmg7Vzne4RJ+r6+QgX/2Q=='},
+  'page_20':{webp:'images/page_20.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQCAwX/xAAhEAEAAgEEAQUAAAAAAAAAAAABAgMABBESIWEiIzGBkf/EABQBAQAAAAAAAAAAAAAAAAAAAAP/xAAZEQEBAQADAAAAAAAAAAAAAAABACECETH/2gAMAwEAAhEDEQA/AMeyuimcY1BJknKS7p18GQjGVkpHWwcg4fmK12TLq0exEcfsusubmybJ477+TDO/GdR0ldX7dpEhE9I9+frDKdV3e74YgZC8tv/Z'},
+  'page_21':{webp:'images/page_21.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQBAgP/xAAgEAABBAICAwEAAAAAAAAAAAABAAIDESExBBMSQVHR/8QAFgEBAQEAAAAAAAAAAAAAAAAAAwEC/8QAFREBAQAAAAAAAAAAAAAAAAAAAAH/2gAMAwEAAhEDEQA/AGY53QTuLXnrORe6OKWwojeh8SbJH8jg8Z0x8y6UNJPsUfxM9bDtoObyjPFiKrINoUa0hRp//9k='},
+  'page_22':{webp:'images/page_22.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAUGAwT/xAAiEAACAQQBBAMAAAAAAAAAAAABAgMABBESIQUGMUETIpH/xAAWAQEBAQAAAAAAAAAAAAAAAAABAgP/xAAZEQACAwEAAAAAAAAAAAAAAAAAAQIDETH/2gAMAwEAAhEDEQA/AGAurszrj5QpBGCp/a4eqi5mtdbopFE0i6vryTnwfdUWBvS/uRFbpXKg5lXPFOj0hZWEErxnnBOCDRWskSbt9B5PqitFbJLCXBH/2Q=='},
+  'page_23':{webp:'images/page_23.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAQFAv/EACEQAAIBBAEFAQAAAAAAAAAAAAECAwAEETEhEhRhcaGx/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAEC/8QAGxEAAgIDAQAAAAAAAAAAAAAAAAECAxESITH/2gAMAwEAAhEDEQA/ANNbRwvEzKijq4OjVMS2/blg+HAOCM7x9pSRVlgAkUMN8jXFMQ28TKoK5G8ZNJWNrojWl4TxcXcYwLl28uwB/KKfNhaxkhIEA9UVNkawz//Z'},
+  'page_24':{webp:'images/page_24.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAgP/xAAlEAABBAECBQUAAAAAAAAAAAABAAIDESEEEhMUMYHBQUJRcZL/xAAUAQEAAAAAAAAAAAAAAAAAAAAB/8QAFREBAQAAAAAAAAAAAAAAAAAAABH/2gAMAwEAAhEDEQA/AHJWzc7NU7xG8kCnHHQjyuj4JWmeRj2gF5LGNyQL8pzT6aIwRjbih6lbIp1CwL+UQ1GdFPdO0Es5AA4m8Ddj67dkKoBfud+ihIf/2Q=='},
+  'page_25':{webp:'images/page_25.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAQb/xAAiEAACAQQCAQUAAAAAAAAAAAABAgMABRESEyFxBDFhgbH/xAAVAQEBAAAAAAAAAAAAAAAAAAACAf/EABgRAQEAAwAAAAAAAAAAAAAAAAABERIx/9oADAMBAAIRAxEAPwB8zOLxBlQg5NWBcDo5x1Tk9yhgncMjHD6k69efFZLDG1xRive6n7qLcJH5pxscc7ftHhLaXqJwTxv7/HdFc+PUTIAqyEACiptSxH//2Q=='},
+  'page_26':{webp:'images/page_26.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAUCAwQG/8QAIxAAAQMEAQQDAAAAAAAAAAAAAQIDEQAEBSESFDFhkUFxsf/EABQBAQAAAAAAAAAAAAAAAAAAAAH/xAAXEQEBAQEAAAAAAAAAAAAAAAAAATER/9oADAMBAAIRAxEAPwDNbW7yXVOtBDKhoL4Ezrfx+1B5zIs3KOL60lajKzsDz9brqiIJO/dKs8tQ6UTolRM+IouGaR3GbyjTnBN3MDctjv6oqt51aVjiQJEnQoo6a//Z'},
+  'page_27':{webp:'images/page_27.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAYBAwQF/8QAIxAAAQMDBAIDAAAAAAAAAAAAAQIDEQAEIQUSE1EUMUFxkv/EABUBAQEAAAAAAAAAAAAAAAAAAAAB/8QAGBEAAwEBAAAAAAAAAAAAAAAAAAEREiH/2gAMAwEAAhEDEQA/ALrLVHLm84nONAKigCTO4H76zFY3LRFpbFbIbuDuCQIwMxHXdTaMNjUmiE55iffzNd1tpuUp40R1tFR9KlkV7q5cUtEKAATEEDGTiim3xmD7Yb/AopBT/9k='},
+  'page_28':{webp:'images/page_28.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABQAC/8QAHxAAAgIBBQEBAAAAAAAAAAAAAQIAEQMEEiExkUJx/8QAFAEBAAAAAAAAAAAAAAAAAAAAAv/EABkRAQEBAAMAAAAAAAAAAAAAAAEAEgITMf/aAAwDAQACEQMRAD8APZ2x4ku3LXur5qL6J8L6TEpsPR46sgwsOwAAPRavZiyXo8gEwnLPkEGdS2Wyqg9EbwZQE/g8lF2scF//2Q=='},
+  'page_29':{webp:'images/page_29.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAEEAwX/xAAhEAACAQQCAgMAAAAAAAAAAAABAhEAAwQSIUEFIiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAEC/8QAFREBAQAAAAAAAAAAAAAAAAAAAEH/2gAMAwEAAhEDEQA/AOdhO6+IfBDhbjs3xsDzIFSZ1gLl3WyQq3Vj0RpWIHZ5rDGdt7bbHaSJnqKT3HulmuNs31JqaYehf2IHP5FFS3mJfk9UVQf/2Q=='},
+  'page_30':{webp:'images/page_30.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAQCAwUG/8QAJBAAAgICAAQHAAAAAAAAAAAAAQIDEQAEEiEiYRMUMTJxgaH/xAAWAQEBAQAAAAAAAAAAAAAAAAACAQP/xAAaEQACAgMAAAAAAAAAAAAAAAAAAQIREiFB/9oADAMBAAIRAxEAPwBLRO5IvC8kkRWvcrc/vJwbe3rvL5kzeGRRY30/GdNEi16fuLb8aSQvG6Ky2DRGKUK6V6M1TuMqmNw6V0l3pq798MrQc3FtStQHEeQww0Z5o//Z'},
+  'page_31':{webp:'images/page_31.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAMBBAX/xAAhEAACAgICAQUAAAAAAAAAAAABAgADEiERQQQFImFxkf/EABcBAAMBAAAAAAAAAAAAAAAAAAACAwT/xAAaEQEBAAIDAAAAAAAAAAAAAAABAAIDERMh/9oADAMBAAIRAxEAPwBl3pt6WqAiBAgy5fjfe+ppeNUPFoWtiAobLZ3+iX7KkJC46Y8n5irakK4FRiOpMx4bV3OzxoV6yPax4+zCFe1JPZhHhC//2Q=='},
+  'page_33':{webp:'images/page_33.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAUBBAb/xAAiEAABAwIGAwAAAAAAAAAAAAABAAIDBCEFERIiMUEjUWH/xAAVAQEBAAAAAAAAAAAAAAAAAAABAP/EABcRAQEBAQAAAAAAAAAAAAAAAAABEVH/2gAMAwEAAhEDEQA/AMkSTl5Lj7wmmElokaXQl50XOuyUu6Tii208RbYmM55d3REmeZ9VM58jXEt2i/Q4QrGhvoITs4X/2Q=='},
+  'page_36':{webp:'images/page_36.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAABQADBv/EACEQAAICAgIBBQAAAAAAAAAAAAECABEDIQQSQRMiMTJh/8QAFwEAAwEAAAAAAAAAAAAAAAAAAAIDBP/EABoRAQADAQEBAAAAAAAAAAAAAAEAAhEDElH/2gAMAwEAAhEDEQA/AOWwdTl99sKPmowWVsQTtt1oUboUBUEEeXEi4+JS/YG/3Ujdw2aOQrn2avk6OR6igfABNaAqUN5LE52vxoSgVum+ozfmOeZ//9k='},
+  'page_37':{webp:'images/page_37.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAQFA//EACUQAAEDAQYHAAAAAAAAAAAAAAEAAgMhBRESMUGRBBQiMlFhwf/EABYBAQEBAAAAAAAAAAAAAAAAAAMCBP/EABkRAQADAQEAAAAAAAAAAAAAAAEAAgMhEv/aAAwDAQACEQMRAD8A0mkdGzsdITSmqRtVnN8LDiaWkvyOlFZnY1pGEXXjRIWqAGREUOMKLcI+QWuCSMbG8ybOu+IVWU9WQ29oR+ma651ToT//2Q=='},
+  'page_38':{webp:'images/page_38.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAgP/xAAgEAACAgICAgMAAAAAAAAAAAABAgMRACEEBRITIjFB/8QAFgEBAQEAAAAAAAAAAAAAAAAABAID/8QAGhEAAwADAQAAAAAAAAAAAAAAAAERAgMhEv/aAAwDAQACEQMRAD8AmQ8VpEllV1AiHkd7rNzGAdSzoEEhjG6F3nNpG9Q2B5JuhV0dZGBJlr83mfjlFZbKhnuYxHzAoQJ8BoCsMTlkeVy0jFj9WcMtWdDN1n//2Q=='},
+  'page_39':{webp:'images/page_39.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQBAgX/xAAgEAEAAgIBBAMAAAAAAAAAAAABAgMAERIEITFxIlGh/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAED/8QAFREBAQAAAAAAAAAAAAAAAAAAAAH/2gAMAwEAAhEDEQA/AMwjZOPJtEPqDhUjGW5c9OhDQ5Fd9qA2S17yvULNhyV138+szSmb3p65kYkp9j5Fnn8wxOztN0GGB//Z'},
+  'page_40':{webp:'images/page_40.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAIDBf/EACEQAAIBBAEFAQAAAAAAAAAAAAECAwAEESExEyJBUVKR/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAEC/8QAFxEAAwEAAAAAAAAAAAAAAAAAAAECEf/aAAwDAQACEQMRAD8ARLWJ51tzIOtjITzioXlq8DOggdygHA95rJtppHnMzOxlUjDZ2K0FvLlj3TyHX1WndEUoibcMThG1rjFFO88pbcjftFFVDEf/2Q=='},
+  'page_41':{webp:'images/page_41.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAQF/8QAIRAAAgEEAQUBAAAAAAAAAAAAAQMCAAQRITESEyIyUWH/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABURAQEAAAAAAAAAAAAAAAAAAAAR/9oADAMBAAIRAxEAPwDEaGJtkvZpbfU5NFdy6bBcNdZIzLQGOc1nsuXTtVqlMlcD4x+UVdvTOElsMTEkg4GieaVVTiVsMZk5H7SpnvYxmZyyRrgUoj//2Q=='},
+  'page_44':{webp:'images/page_44.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAMBAgQG/8QAIRABAAICAQMFAAAAAAAAAAAAAQACAxEhEhMiMjNBgaH/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8A5atcSHVnTjk7a6/ZVAt42bV+HWt/UZkpUqIRVeGBux+ghJxe2Qgf/9k='},
+  'page_45':{webp:'images/page_45.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAEEAgP/xAAgEAEAAgIBBAMAAAAAAAAAAAABAAIDIREEEjFREzJx/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQX/xAAbEQADAAIDAAAAAAAAAAAAAAAAAQIDITFRcf/aAAwDAQACEQMRAD8AafFRyd52cu/yPpusxZFKZBSZyPOW9XZx4nMpWlLtKlXXiR5mKW+S01T8LXLddIHp3CR/TVdHohBz0E401s//2Q=='},
+  'page_46':{webp:'images/page_46.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAMBAgQF/8QAJBAAAgEDAwMFAAAAAAAAAAAAAQIDAAQREiExEyNhNEFxobH/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AOCbSWQJ006meFUb8b/VRDavFLG8sHbDDOSMEZ8UyP1K/B/K2ySFELIEU6huEA4I8UCLmSAyDRaqi6fY80Va8u5pJQWYHC4GFA2oor//2Q=='},
+  'page_47':{webp:'images/page_47.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAUGAv/EACAQAAIBBAIDAQAAAAAAAAAAAAECAwAEERIFIRMjUTH/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABURAQEAAAAAAAAAAAAAAAAAAAAB/9oADAMBAAIRAxEAPwChhRDIddcNkE75pe3sgmA3mUOB45VIBP0HNSgu7iFvVKybPg69dYqjikeRVidiyeNW1J6z9qwpzx0kcdqFLLHgnCj8FFa42NIrQJGoVcnoUUo//9k='},
+  'page_48':{webp:'images/page_48.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQBAwX/xAAhEAACAQQCAgMAAAAAAAAAAAABAwIABBExEyEFQWFxsf/EABUBAQEAAAAAAAAAAAAAAAAAAAIE/8QAGREAAgMBAAAAAAAAAAAAAAAAAAECEiEx/9oADAMBAAIRAxEAPwDcF7b8U3RbmA9gbqDdJcvEXYMj0fqkERBVrWAPgVYqEYiWIgd1K5cGtFrnxyrlxY+9TyaOV5/TRTawDHsD3RS0V5LD/9k='},
+  'page_49':{webp:'images/page_49.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAUBAgME/8QAJxAAAQMDAgQHAAAAAAAAAAAAAQIDEQAEIRIxBRNRgRQjQUJxkbH/xAAWAQEBAQAAAAAAAAAAAAAAAAAFAgP/xAAZEQEAAwEBAAAAAAAAAAAAAAABAAIDESH/2gAMAwEAAhEDEQA/ANkv205fSDtE9qXcTdtRcNr8Q4kLbjyzgiTn7roZs7c5LYmZ3PWf2lvGHDZXDTdulCUcrZSAr1PUGjca1dPOxLZvU6yWXGw2Alyy0jA1pM96KrbPLLCZ04A9g6fFFbrxlVybAz//2Q=='},
+  'page_50':{webp:'images/page_50.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAMCBAb/xAAmEAABAwAIBwAAAAAAAAAAAAABAAIDBAURISIxMlESEyMzYXLB/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQL/xAAWEQEBAQAAAAAAAAAAAAAAAAAAAQL/2gAMAwEAAhEDEQA/AGCtKE0luLVf03ZrPUrlmWRzS60vOY8p0k0gLwHu17qvL3JPb6ozmQ2lvHCbDchTE8keFhAG1gQrD//Z'},
+  'page_51':{webp:'images/page_51.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAMEAQX/xAAgEAACAgEEAwEAAAAAAAAAAAABAgMRAAQSITEFFFFS/8QAFQEBAQAAAAAAAAAAAAAAAAAAAwT/xAAcEQACAgIDAAAAAAAAAAAAAAAAAQIRA/ASEyH/2gAMAwEAAhEDEQA/AOXu3ijIbqsf68sOkecwMYzQVnela/mbptXNFp9iPSg8WAe8b5NyfFrNwJGK2wUAnvJ4JNluST8ICZdzXEl3+jhkW42eT39wxOG0F2bZ/9k='},
+  'page_55':{webp:'images/page_55.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAgP/xAAgEAACAgICAwEBAAAAAAAAAAABAgMRAAQFIRITMSLR/8QAFgEBAQEAAAAAAAAAAAAAAAAAAgAB/8QAGBEBAQADAAAAAAAAAAAAAAAAABEBQWH/2gAMAwEAAhEDEQA/AK0nJQx/oKz2xXxUi7xfktnUn14GldkBY0CRYPV3mZlWOSFUUKDJ3Q+9Zz5HT1/TAnqBUeZAPdfMO4XVHX0I2hVvOQXZoMP5hjeqK10AwymGP//Z'},
+  'page_57':{webp:'images/page_57.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAMBBAb/xAAiEAACAQQBBAMAAAAAAAAAAAABAgMABBEhEhMUIjFBUbH/xAAWAQEBAQAAAAAAAAAAAAAAAAABAAP/xAAYEQEBAAMAAAAAAAAAAAAAAAAAARESMf/aAAwDAQACEQMRAD8AziWspjVhG3DAIJGKbDbFXDuocY9ZpjXEyWMYWRgMD5qv3UzEBpCwI2DulSCS26rc0UqPoboqJ5pC48iND1r8ooaTXHH/2Q=='},
+  'page_58':{webp:'images/page_58.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAIDBAX/xAAgEAACAQUAAwEBAAAAAAAAAAABAgMABBESIRMiYQUx/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQD/xAAXEQEBAQEAAAAAAAAAAAAAAAAAAREh/9oADAMBAAIRAxEAPwDgNACoFrJ5cdI16o+0ptpFmRZwUX+5GOCqI7LH681TmBV7E+WznL91UkfKYsNL+zc27aQPGyYzkxg0VjmkbfHMAAD1FFHTkf/Z'},
+  'page_59':{webp:'images/page_59.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQCBQb/xAAhEAACAgEEAgMAAAAAAAAAAAABAgARAwQhIjESQVFhkf/EABYBAQEBAAAAAAAAAAAAAAAAAAIDBP/EABsRAQACAgMAAAAAAAAAAAAAAAEAAhEhAwQS/9oADAMBAAIRAxEAPwDOLj4hQpar2qBXTDDyR2y736C/HXcf06gMHA5eXf5IYkXIMjOoJ+hXqH1qazrtrASpy0zWFraEYdFVyAoAhEWMSNuJy7n/2Q=='},
+  'page_62':{webp:'images/page_62.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAAAwAEBf/EACMQAAICAgEDBQEAAAAAAAAAAAECAwQAESESMXEFIkFRYWL/xAAVAQEBAAAAAAAAAAAAAAAAAAABAv/EABYRAQEBAAAAAAAAAAAAAAAAAAABEf/aAAwDAQACEQMRAD8A7ly/FWiVZSwaQhU43o77+MD1Gc13CGUsjL7iF/fsYtyvFLariReoDeuf6zRfrRWICkq7UsDwSOR4xRdoq73EVupo3BYlTITsD4HAyx0UMvOzrjvlgcf/2Q=='},
+  'page_63':{webp:'images/page_63.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAQFA//EACIQAAIBAwQCAwAAAAAAAAAAAAECAwAEEQUSITETQRQjgf/EABYBAQEBAAAAAAAAAAAAAAAAAAECA//EABcRAAMBAAAAAAAAAAAAAAAAAAABEQL/2gAMAwEAAhEDEQA/AK2qu8dqDasFlaVFyAD2eaWtL2RtL3NKfMAwJCjghiM1SvI1eBQwyN6mpPx4lsZQEA4bn32fdRXYaZg1a3DTxli7syttJOO/yistGQC1k7P2Hs59CikdNU//2Q=='},
+  'page_64':{webp:'images/page_64.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAIBAwQF/8QAIhAAAQMEAgIDAAAAAAAAAAAAAQIREgADBCExURNBcZGh/8QAFQEBAQAAAAAAAAAAAAAAAAAAAgP/xAAXEQEBAQEAAAAAAAAAAAAAAAAAEQEh/9oADAMBAAIRAxEAPwDuXMhU1eMI5IDnT9H9qbeTkySlZQNOpjwPWujWhOLYtgwthMjIt7PdKcKxOcDJmeZ4+6HVri90q2C/xRTUUgr/2Q=='},
+  'page_65':{webp:'images/page_65.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAMEAv/EAB8QAAICAwEAAwEAAAAAAAAAAAECAxEABCESMnGh0f/EABYBAQEBAAAAAAAAAAAAAAAAAAEAAv/EABcRAQEBAQAAAAAAAAAAAAAAAAABEVH/2gAMAwEAAhEDEQA/AGa2ns7cLpvtPQKlb4Qe46TSbUSJdR5AAxI9C6r+5akKsUZvRJkCklz0V9/uVywpHE8iDyyKSpBPMFEMctrZ1nLHpNVZwzEuxMr0s0gFA/I4YbW8nH//2Q=='},
+  'page_68':{webp:'images/page_68.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAgP/xAAkEAACAQQBAgcAAAAAAAAAAAABAgMABBESMRMhFCJRYXGBsf/EABcBAAMBAAAAAAAAAAAAAAAAAAABAwT/xAAYEQEBAAMAAAAAAAAAAAAAAAAAAREhQf/aAAwDAQACEQMRAD8Am9UeHI6Z3wMPvx9YpmOKboxM1t5AocMCvA5/amZPrTIuJXADOSFj0AxwK03PENOd5G8Ny6yLq2c49j3FFYmmkuJDJM2zkAZ+O1FOB//Z'},
+  'page_69':{webp:'images/page_69.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAMEBf/EABwQAAIDAQEBAQAAAAAAAAAAAAECAAMSESEFIv/EABYBAQEBAAAAAAAAAAAAAAAAAAABAv/EABgRAQEAAwAAAAAAAAAAAAAAAAABAhEh/9oADAMBAAIRAxEAPwDAV6EU662mHMt6BEMNIG0DkHwSckkDpPkt+XWltli2KGXg8gx7SLrjoAYIUAdCchLLqKtn8CEjWq//2Q=='},
+  'page_70':{webp:'images/page_70.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAMEAQX/xAAhEAEAAgIBAwUAAAAAAAAAAAABAhEAAxIEEyEiMUFx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAIB/8QAFREBAQAAAAAAAAAAAAAAAAAAAAH/2gAMAwEAAhEDEQA/AOH25bQOPGQUKuSxiQ6hlsWhR4tPt+43YpGFKfTi47dkdnib5HHRidg36pF/NuGbOcpNqrWGFX//2Q=='},
+  'page_71':{webp:'images/page_71.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABQAE/8QAHhAAAgEFAQEBAAAAAAAAAAAAAQIAAwQREiEiMWH/xAAWAQEBAQAAAAAAAAAAAAAAAAAEAgP/xAAcEQEAAgEFAAAAAAAAAAAAAAABAAIRExQhIjH/2gAMAwEAAhEDEQA/AEXrttTcLSLr9z9A/JhrIKyNo4bY9wMAGYr1Q6Wzkewx9Dh4YpaMatqpfp4Mww2D2QdjEDe2qhiNScc5KNIiqCFGMkmUdvrnGJjpk//Z'},
+  'page_72':{webp:'images/page_72.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAUGBP/EACMQAAIBBAEDBQAAAAAAAAAAAAECAwAEERIhBRNRFCIxQWH/xAAVAQEBAAAAAAAAAAAAAAAAAAABAv/EABkRAAIDAQAAAAAAAAAAAAAAAAABAhETEv/aAAwDAQACEQMRAD8AoXmiTO8iqM8++pu7a7fqM6QbkdxtQq/PimsFtDcZaaNXYjJJH5W2cD1PawNHhGw881SdESXQkTpHUmXLFVJ+i4zRTy0UNG2wBwxHPNFOjDJH/9k='}
+};
+/* === LANGUAGE SYSTEM === */
+let lang = localStorage.getItem('skand-lang') || 'en';
+document.documentElement.lang = lang;
 
-/* === RENDER SERVICES === */
-document.querySelector('.services-grid').innerHTML = services.map(s =>
-  `<div class="service-card reveal-item"><div class="service-num">${s.num}</div><div class="service-name">${s.name}</div><div class="service-desc">${s.desc}</div></div>`
-).join('');
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('skand-lang', lang);
+  document.documentElement.lang = lang;
+  applyLang();
+}
 
-/* === RENDER FILTERS + PROJECTS === */
-const cats = ['all','imc','content','social','digital','visual','connections'];
-const catLabels = {all:'All',imc:'IMC & Brand Voice',content:'Brand Content',social:'Social Storytelling',digital:'Digital Experience',visual:'Brand Visual Design',connections:'Consumer Connections'};
-document.getElementById('filterTabs').innerHTML = cats.map(c =>
-  `<button class="filter-tab${c==='all'?' active':''}" data-cat="${c}">${catLabels[c]}</button>`
-).join('');
+function q(sel) { return document.querySelector(sel); }
 
-document.getElementById('portfolioGrid').innerHTML = projects.map(p =>
-  `<div class="project-card" data-cat="${p.cat}"><img src="${p.img}" alt="${p.brand} — ${p.name}" loading="lazy"><div class="project-overlay"><div class="project-brand">${p.brand}</div><div class="project-name">${p.name}</div></div></div>`
-).join('');
+function applyLang() {
+  // Nav
+  q('[data-t="nav"]').textContent = T.nav[q('[data-t="nav"]').dataset.tk]?.[lang];
+  document.querySelectorAll('[data-t="nav"]').forEach(el => el.textContent = T.nav[el.dataset.tk]?.[lang]);
+  // Hero
+  document.querySelectorAll('[data-tk="tagline"]').forEach(el => el.textContent = T.hero.tagline[lang]);
+  document.querySelectorAll('[data-tk="subtitle"]').forEach(el => el.textContent = T.hero.subtitle[lang]);
+  document.querySelectorAll('[data-tk="scroll"]').forEach(el => el.textContent = T.hero.scroll[lang]);
+  // About
+  q('[data-t="about-label"]').textContent = T.about.label[lang];
+  q('[data-t="about-heading"]').textContent = T.about.heading[lang];
+  q('[data-t="about-text1"]').textContent = T.about.text1[lang];
+  q('[data-t="about-text2"]').textContent = T.about.text2[lang];
+  // Services
+  q('[data-t="services-label"]').textContent = T.services.label[lang];
+  q('[data-t="services-heading"]').textContent = T.services.heading[lang];
+  // Work
+  q('[data-t="work-label"]').textContent = T.work.label[lang];
+  q('[data-t="work-heading"]').textContent = T.work.heading[lang];
+  // Clients
+  q('[data-t="clients-label"]').textContent = T.clients.label[lang];
+  q('[data-t="clients-heading"]').textContent = T.clients.heading[lang];
+  // Contact
+  q('[data-t="contact-label"]').textContent = T.contact.label[lang];
+  q('[data-t="contact-heading"]').innerHTML = T.contact.heading[lang];
+  q('[data-t="contact-sub"]').textContent = T.contact.sub[lang];
+  // Footer
+  q('[data-t="footer-copy"]').textContent = T.footer.copy[lang];
+  q('[data-t="footer-tagline"]').textContent = T.footer.tagline[lang];
+  // Service cards
+  document.querySelectorAll('.service-card').forEach((card, i) => {
+    card.querySelector('.service-name').textContent = SERVICE_DATA[i]?.name[lang] || '';
+    card.querySelector('.service-desc').textContent = SERVICE_DATA[i]?.desc[lang] || '';
+  });
+  // Filter tabs
+  document.querySelectorAll('.filter-tab').forEach(btn => {
+    btn.textContent = FILTER_LABELS[btn.dataset.cat]?.[lang] || btn.dataset.cat;
+  });
+  // Marquee
+  document.getElementById('marqueeTrack').innerHTML = CLIENTS.map(c => `<span class="marquee-item">${c}</span><span class="marquee-sep">◆</span>`).join('') + CLIENTS.map(c => `<span class="marquee-item">${c}</span><span class="marquee-sep">◆</span>`).join('');
+  // Lang toggle button
+  q('#langToggle').textContent = lang === 'en' ? '中文' : 'EN';
+}
+
+/* === INIT === */
+(function init() {
+  // Render services
+  document.querySelector('.services-grid').innerHTML = SERVICE_DATA.map((s, i) =>
+    `<div class="service-card reveal-item">
+       <div class="service-num">${s.num}</div>
+       <div class="service-name">${s.name[lang]}</div>
+       <div class="service-desc">${s.desc[lang]}</div>
+     </div>`
+  ).join('');
+
+  // Render filter tabs
+  const cats = ['all','imc','content','social','digital','visual','connections'];
+  document.getElementById('filterTabs').innerHTML = cats.map(c =>
+    `<button class="filter-tab${c==='all'?' active':''}" data-cat="${c}">${FILTER_LABELS[c][lang]}</button>`
+  ).join('');
+
+  // Render projects with WebP + lazy load + blur-up
+  document.getElementById('portfolioGrid').innerHTML = PROJECTS.map((p, idx) => {
+    const base = p.img.replace('pdf_images/', '').replace('.jpg', '');
+    const info = IMAGE_MANIFEST[base] || {};
+    const webpSrc = info.webp || p.img;
+    const blurData = info.blur || '';
+    return `<div class="project-card" data-cat="${p.cat}" data-idx="${idx}" style="--blur-bg:url(${blurData})">
+       <img src="${webpSrc}" alt="${p.brand} — ${p.name}" loading="lazy" decoding="async">
+       <div class="project-overlay">
+         <div class="project-brand">${p.brand}</div>
+         <div class="project-name">${p.name}</div>
+       </div>
+     </div>`;
+  }).join('');
+
+  // Lazy load: trigger visible cards immediately, rest via IntersectionObserver
+  const lazyImgs = document.querySelectorAll('.project-card img[loading="lazy"]');
+  let loadedCount = 0;
+  function onImgLoad() {
+    this.closest('.project-card').classList.add('loaded');
+    loadedCount++;
+  }
+  lazyImgs.forEach(img => {
+    if (img.complete) { onImgLoad.call(img); return; }
+    img.addEventListener('load', onImgLoad);
+    // Trigger if already in viewport
+    const rect = img.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      img.dispatchEvent(new Event('load'));
+    }
+  });
+
+  // Render marquee
+  const mItems = CLIENTS.map(c => `<span class="marquee-item">${c}</span><span class="marquee-sep">◆</span>`).join('');
+  document.getElementById('marqueeTrack').innerHTML = mItems + mItems;
+
+  applyLang();
+})();
 
 /* === RENDER MARQUEE (duplicated for seamless loop) === */
-const mItems = clients.map(c => `<span class="marquee-item">${c}</span><span class="marquee-sep">◆</span>`).join('');
-document.getElementById('marqueeTrack').innerHTML = mItems + mItems;
+/* (merged into init above) */
 
 /* === FILTER LOGIC === */
-document.querySelectorAll('.filter-tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const cat = btn.dataset.cat;
-    document.querySelectorAll('.project-card').forEach(card => {
-      card.classList.toggle('hidden', cat !== 'all' && card.dataset.cat !== cat);
-    });
+function applyFilter(cat) {
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll(`.filter-tab[data-cat="${cat}"]`).forEach(b => b.classList.add('active'));
+  document.querySelectorAll('.project-card').forEach(card => {
+    const visible = cat === 'all' || card.dataset.cat === cat;
+    card.classList.toggle('hidden', !visible);
+    if (visible) {
+      // Trigger lazy load for newly visible cards
+      const img = card.querySelector('img');
+      if (img && !img.classList.contains('loaded') && !img.complete) {
+        const rect = img.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          img.dispatchEvent(new Event('load'));
+        }
+      }
+    }
   });
+}
+document.querySelectorAll('.filter-tab').forEach(btn => {
+  btn.addEventListener('click', () => applyFilter(btn.dataset.cat));
 });
 
 /* === LIGHTBOX === */
@@ -396,68 +612,43 @@ const lbNext = document.getElementById('lightboxNext');
 let currentLbIndex = -1;
 let lightboxScrollY = 0;
 
-// 手机端触摸滑动切换图片
-let touchStartX = 0;
-let touchStartY = 0;
-let touchSwiped = false;
-
-lightbox.addEventListener('touchstart', (e) => {
-  touchStartX = e.changedTouches[0].screenX;
-  touchStartY = e.changedTouches[0].screenY;
-  touchSwiped = false;
-}, {passive: true});
-
-lightbox.addEventListener('touchend', (e) => {
+let touchStartX = 0, touchStartY = 0, touchSwiped = false;
+lightbox.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; touchSwiped = false; }, {passive:true});
+lightbox.addEventListener('touchend', e => {
   if(touchSwiped) return;
   const dx = e.changedTouches[0].screenX - touchStartX;
   const dy = e.changedTouches[0].screenY - touchStartY;
-  if(Math.abs(dx) > 80 && Math.abs(dx) > Math.abs(dy) * 1.5){
-    e.preventDefault();
-    navigateLightbox(dx > 0 ? -1 : 1);
-    touchSwiped = true;
-  }
-}, {passive: false});
+  if(Math.abs(dx) > 80 && Math.abs(dx) > Math.abs(dy) * 1.5){ e.preventDefault(); navigateLightbox(dx > 0 ? -1 : 1); touchSwiped = true; }
+}, {passive:false});
 
-function getVisibleCards(){
-  return Array.from(document.querySelectorAll('.project-card:not(.hidden)'));
-}
+function getVisibleCards() { return Array.from(document.querySelectorAll('.project-card:not(.hidden)')); }
 
-function showLightbox(index){
+function showLightbox(index) {
   const cards = getVisibleCards();
   if(index < 0 || index >= cards.length) return;
   currentLbIndex = index;
   const card = cards[index];
   const img = card.querySelector('img');
-  const brand = card.querySelector('.project-brand').textContent;
-  const name = card.querySelector('.project-name').textContent;
-  lbImg.src = img.src;
-  lbImg.alt = img.alt;
-  lbBrand.textContent = brand;
-  lbName.textContent = name;
+  lbImg.src = img.src; lbImg.alt = img.alt;
+  document.getElementById('lightboxBrand').textContent = card.querySelector('.project-brand').textContent;
+  document.getElementById('lightboxName').textContent = card.querySelector('.project-name').textContent;
   lightbox.classList.add('active');
-  // 禁止背景滚动（桌面 + 手机）
   document.body.style.position = 'fixed';
   document.body.style.top = '-' + lightboxScrollY + 'px';
-  document.body.style.left = '0';
-  document.body.style.right = '0';
+  document.body.style.left = '0'; document.body.style.right = '0';
   document.body.style.overflow = 'hidden';
-  // 提升自定义光标层级
-  dot.style.zIndex = '10002';
-  ring.style.zIndex = '10002';
+  dot.style.zIndex = '10002'; ring.style.zIndex = '10002';
 }
 
 document.querySelectorAll('.project-card').forEach(card => {
   card.addEventListener('click', () => {
     const cards = getVisibleCards();
     const idx = cards.indexOf(card);
-    if(idx !== -1) {
-      lightboxScrollY = window.scrollY || window.pageYOffset;
-      showLightbox(idx);
-    }
+    if(idx !== -1) { lightboxScrollY = window.scrollY || window.pageYOffset; showLightbox(idx); }
   });
 });
 
-function navigateLightbox(dir){
+function navigateLightbox(dir) {
   const cards = getVisibleCards();
   let next = currentLbIndex + dir;
   if(next < 0) next = cards.length - 1;
@@ -465,36 +656,35 @@ function navigateLightbox(dir){
   showLightbox(next);
 }
 
-function closeLightbox(){
+function closeLightbox() {
   lightbox.classList.remove('active');
-  // 临时禁用平滑滚动，避免滚回原位时有动画
   const htmlEl = document.documentElement;
   const prevSB = htmlEl.style.scrollBehavior;
   htmlEl.style.scrollBehavior = 'auto';
-  // 恢复背景滚动
-  document.body.style.position = '';
-  document.body.style.top = '';
-  document.body.style.left = '';
-  document.body.style.right = '';
-  document.body.style.overflow = '';
-  // 立即跳回原位（无动画）
+  document.body.style.position = ''; document.body.style.top = ''; document.body.style.left = ''; document.body.style.right = ''; document.body.style.overflow = '';
   window.scrollTo(0, lightboxScrollY);
   htmlEl.style.scrollBehavior = prevSB;
   currentLbIndex = -1;
-  // 恢复自定义光标层级
-  dot.style.zIndex = '';
-  ring.style.zIndex = '';
+  dot.style.zIndex = ''; ring.style.zIndex = '';
 }
 lbClose.addEventListener('click', closeLightbox);
-lbPrev.addEventListener('click', (e) => { e.stopPropagation(); navigateLightbox(-1); });
-lbNext.addEventListener('click', (e) => { e.stopPropagation(); navigateLightbox(1); });
-lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
-document.addEventListener('keydown', (e) => {
+lbPrev.addEventListener('click', e => { e.stopPropagation(); navigateLightbox(-1); });
+lbNext.addEventListener('click', e => { e.stopPropagation(); navigateLightbox(1); });
+lightbox.addEventListener('click', e => { if(e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', e => {
   if(!lightbox.classList.contains('active')) return;
   if(e.key === 'Escape') closeLightbox();
   if(e.key === 'ArrowLeft') navigateLightbox(-1);
   if(e.key === 'ArrowRight') navigateLightbox(1);
 });
+
+/* === ARIA DROPDOWN ACCESSIBILITY === */
+const dropdown = document.querySelector('.nav-dropdown');
+const dropdownToggle = dropdown?.querySelector('.nav-dropdown-toggle');
+if (dropdown && dropdownToggle) {
+  dropdown.addEventListener('mouseenter', () => dropdownToggle.setAttribute('aria-expanded', 'true'));
+  dropdown.addEventListener('mouseleave', () => dropdownToggle.setAttribute('aria-expanded', 'false'));
+}
 
 /* === CUSTOM CURSOR === */
 const dot = document.querySelector('.cursor-dot');
@@ -509,59 +699,47 @@ function animCursor(){
   requestAnimationFrame(animCursor);
 }
 animCursor();
-document.querySelectorAll('a,.filter-tab,.project-card,.contact-cta,.nav-links a').forEach(el => {
+document.querySelectorAll('a,.filter-tab,.project-card,.contact-cta,.nav-links a,.lightbox-close,.lightbox-arrow').forEach(el => {
   el.addEventListener('mouseenter', () => ring.classList.add('hovering'));
   el.addEventListener('mouseleave', () => ring.classList.remove('hovering'));
 });
 
 /* === HERO ANIMATION === */
-function animateHero(){
-  const title = document.getElementById('heroTitle');
-  const text = title.textContent;
-  title.innerHTML = text.split('').map(c => `<span class="char">${c}</span>`).join('');
-  const chars = title.querySelectorAll('.char');
-  chars.forEach((ch,i) => {
-    setTimeout(() => { ch.style.transition='opacity .6s ease, transform .6s ease'; ch.style.opacity='1'; ch.style.transform='translateY(0)'; }, 300 + i*90);
-  });
-  const tagline = document.querySelector('.hero-tagline');
-  const cn = document.querySelector('.hero-cn');
-  const scroll = document.querySelector('.hero-scroll');
-  setTimeout(() => { tagline.style.transition='opacity .8s ease, transform .8s ease'; tagline.style.opacity='1'; tagline.style.transform='translateY(0)'; }, 900);
-  setTimeout(() => { cn.style.transition='opacity .8s ease, transform .8s ease'; cn.style.opacity='1'; cn.style.transform='translateY(0)'; }, 1200);
-  setTimeout(() => { scroll.style.transition='opacity 1s ease'; scroll.style.opacity='1'; }, 1800);
-}
-animateHero();
+const heroTitle = document.getElementById('heroTitle');
+const chars = heroTitle.textContent.split('');
+heroTitle.innerHTML = chars.map(c => `<span class="char">${c}</span>`).join('');
+const charEls = heroTitle.querySelectorAll('.char');
+const tagline = document.querySelector('.hero-tagline');
+const heroSub = document.querySelector('.hero-cn');
+const heroScroll = document.querySelector('.hero-scroll');
+let heroDone = false;
+const heroObserver = new IntersectionObserver(entries => {
+  if(entries[0].isIntersecting && !heroDone){
+    heroDone = true;
+    charEls.forEach((el,i) => { el.style.transition = `opacity .6s ease ${i*0.06}s, transform .6s ease ${i*0.06}s`; el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+    setTimeout(() => { tagline.style.transition = 'opacity .6s ease, transform .6s ease'; tagline.style.opacity = '1'; tagline.style.transform = 'translateY(0)'; }, 400);
+    setTimeout(() => { heroSub.style.transition = 'opacity .6s ease, transform .6s ease'; heroSub.style.opacity = '1'; heroSub.style.transform = 'translateY(0)'; }, 550);
+    setTimeout(() => { heroScroll.style.transition = 'opacity .8s ease'; heroScroll.style.opacity = '1'; }, 700);
+  }
+}, {threshold:.1});
+heroObserver.observe(heroTitle);
 
-/* === SCROLL REVEAL === */
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); observer.unobserve(e.target); }});
-}, {threshold:0.15});
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+/* === REVEAL ON SCROLL === */
+const revealObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => { if(entry.isIntersecting){ entry.target.classList.add('visible'); revealObserver.unobserve(entry.target); } });
+}, {threshold:.1});
+document.querySelectorAll('.reveal,.reveal-stagger .reveal-item').forEach(el => revealObserver.observe(el));
 
-/* Stagger reveal for service cards */
-const sObserver = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if(e.isIntersecting){
-      const items = e.target.querySelectorAll('.reveal-item');
-      items.forEach((item,i) => {
-        setTimeout(() => {
-          item.style.transition='opacity .6s ease, transform .6s ease';
-          item.style.opacity='1'; item.style.transform='translateY(0)';
-        }, i*100);
-      });
-      sObserver.unobserve(e.target);
-    }
-  });
-}, {threshold:0.1});
-document.querySelectorAll('.reveal-stagger').forEach(el => sObserver.observe(el));
+/* === LANGUAGE TOGGLE BUTTON === */
+document.getElementById('langToggle').addEventListener('click', () => {
+  setLang(lang === 'en' ? 'zh' : 'en');
+});
 
-/* === PARALLAX on hero bg lines === */
+/* === HERO BG PARALLAX === */
 const heroLines = document.querySelectorAll('.hero-bg-line');
 window.addEventListener('scroll', () => {
   const sy = window.scrollY;
-  heroLines.forEach((line,i) => {
-    line.style.transform = `translate(-50%,-50%) scale(${1 + sy*0.0003*(i+1)}) rotate(${sy*0.01*(i+1)}deg)`;
-  });
+  heroLines.forEach((line,i) => { line.style.transform = `translate(-50%,-50%) scale(${1 + sy*0.0003*(i+1)}) rotate(${sy*0.01*(i+1)}deg)`; });
 });
 </script>
 </body>
