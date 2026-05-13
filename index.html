@@ -165,7 +165,8 @@ section{padding:clamp(80px,12vw,160px) clamp(24px,5vw,80px)}
 .contact-cta:hover{background:var(--coral);border-color:var(--coral);color:var(--black)}
 
 /* === FOOTER === */
-footer{padding:40px clamp(24px,5vw,80px);display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(240,237,232,.08);font-size:12px;color:var(--grey)}
+footer{padding:40px clamp(24px,5vw,80px);display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(240,237,232,.08);font-size:12px;color:var(--grey);flex-wrap:wrap;gap:16px}
+@media(max-width:480px){footer{justify-content:center;text-align:center}}
 footer a{color:var(--grey);text-decoration:none}
 
 /* === LIGHTBOX === */
@@ -344,8 +345,10 @@ footer a{color:var(--grey);text-decoration:none}
 
 <!-- FOOTER -->
 <footer>
-  <span data-t="footer-copy">&copy; 2025 SKAND Creative Studio</span>
-  <a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="font-family:var(--font-body);font-size:11px;letter-spacing:1px">沪ICP备2026019644号</a>
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <span data-t="footer-copy">&copy; 2025 SKAND Creative Studio</span>
+    <a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="font-family:var(--font-body);font-size:11px;letter-spacing:1px">沪ICP备2026019644号</a>
+  </div>
   <span style="font-family:var(--font-display);font-style:italic;letter-spacing:2px" data-t="footer-tagline">Create For More</span>
 </footer>
 
