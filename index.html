@@ -76,14 +76,15 @@ nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;displa
 
 /* === HERO === */
 .hero{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;overflow:hidden}
+#heroCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none}
 .hero-bg-line{position:absolute;width:500px;height:500px;border:1px solid rgba(64,82,181,.15);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
 .hero-bg-line:nth-child(2){width:700px;height:700px;border-color:rgba(232,86,58,.1)}
 .hero-bg-line:nth-child(3){width:900px;height:900px;border-color:rgba(64,82,181,.07)}
-.hero-title{font-family:var(--font-display);font-size:clamp(60px,15vw,220px);font-weight:300;letter-spacing:clamp(4px,2vw,30px);line-height:.9;text-align:center;position:relative;white-space:nowrap}
-.hero-title .char{display:inline-block;opacity:0;transform:translateY(60px)}
+.hero-title{font-family:var(--font-display);font-size:clamp(60px,15vw,220px);font-weight:500;letter-spacing:clamp(4px,2vw,30px);line-height:.9;text-align:center;position:relative;white-space:nowrap;background:linear-gradient(to right,var(--coral) 20%,var(--white) 30%,var(--white) 70%,var(--coral) 80%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:moonshotShine 5s linear infinite;opacity:0;transform:translateY(20px) scale(0.95);filter:blur(12px);transition:opacity .8s ease, transform .8s cubic-bezier(0.2, 0, 0.2, 1), filter .8s ease}
+@keyframes moonshotShine{0%{background-position:0% center}100%{background-position:200% center}}
 .hero-tagline{font-family:var(--font-display);font-size:clamp(20px,3vw,42px);font-weight:300;font-style:italic;color:var(--coral);margin-top:24px;letter-spacing:2px;opacity:0;transform:translateY(30px)}
 .hero-cn{font-size:clamp(14px,1.5vw,18px);color:var(--grey);margin-top:16px;letter-spacing:4px;opacity:0;transform:translateY(20px)}
-.hero-scroll{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0}
+.hero-scroll{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;z-index:3}
 .hero-scroll span{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--grey)}
 .hero-scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--coral),transparent);animation:scrollPulse 2s ease infinite}
 @keyframes scrollPulse{0%,100%{opacity:.3;transform:scaleY(.6)}50%{opacity:1;transform:scaleY(1)}}
@@ -272,6 +273,7 @@ footer a{color:var(--grey);text-decoration:none}
 
 <!-- HERO -->
 <section class="hero" id="hero">
+  <canvas id="heroCanvas"></canvas>
   <div class="hero-bg-line"></div>
   <div class="hero-bg-line"></div>
   <div class="hero-bg-line"></div>
@@ -495,6 +497,9 @@ function setLang(l) {
   localStorage.setItem('skand-lang', lang);
   document.documentElement.lang = lang;
   applyLang();
+  if (window.refreshHeroCanvas) {
+    window.refreshHeroCanvas();
+  }
   // Re-trigger reveal for already-visible elements after lang switch
   document.querySelectorAll('.reveal,.reveal-stagger .reveal-item').forEach(el => {
     const rect = el.getBoundingClientRect();
@@ -733,25 +738,439 @@ document.querySelectorAll('a,.filter-tab,.project-card,.contact-cta,.nav-links a
   el.addEventListener('mouseleave', () => ring.classList.remove('hovering'));
 });
 
-/* === HERO ANIMATION === */
-const heroTitle = document.getElementById('heroTitle');
-const chars = heroTitle.textContent.split('');
-heroTitle.innerHTML = chars.map(c => `<span class="char">${c}</span>`).join('');
-const charEls = heroTitle.querySelectorAll('.char');
-const tagline = document.querySelector('.hero-tagline');
-const heroSub = document.querySelector('.hero-cn');
-const heroScroll = document.querySelector('.hero-scroll');
-let heroDone = false;
-const heroObserver = new IntersectionObserver(entries => {
-  if(entries[0].isIntersecting && !heroDone){
-    heroDone = true;
-    charEls.forEach((el,i) => { el.style.transition = `opacity .6s ease ${i*0.06}s, transform .6s ease ${i*0.06}s`; el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
-    setTimeout(() => { tagline.style.transition = 'opacity .6s ease, transform .6s ease'; tagline.style.opacity = '1'; tagline.style.transform = 'translateY(0)'; }, 400);
-    setTimeout(() => { heroSub.style.transition = 'opacity .6s ease, transform .6s ease'; heroSub.style.opacity = '1'; heroSub.style.transform = 'translateY(0)'; }, 550);
-    setTimeout(() => { heroScroll.style.transition = 'opacity .8s ease'; heroScroll.style.opacity = '1'; }, 700);
+/* === HERO CANVAS ANIMATION (Moonshot-inspired Lens) === */
+(function() {
+  const canvas = document.getElementById('heroCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  
+  const offscreenCanvas = document.createElement('canvas');
+  const offscreenCtx = offscreenCanvas.getContext('2d');
+  
+  const heroSection = document.getElementById('hero');
+  const heroScroll = document.querySelector('.hero-scroll');
+  
+  // Hide original HTML text elements visually but keep for SEO/Accessibility
+  const hideStyle = 'position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;';
+  const titleEl = document.getElementById('heroTitle');
+  const taglineEl = document.querySelector('.hero-tagline');
+  const subtitleEl = document.querySelector('.hero-cn');
+  
+  if (titleEl) titleEl.style.cssText = hideStyle;
+  if (taglineEl) taglineEl.style.cssText = hideStyle;
+  if (subtitleEl) subtitleEl.style.cssText = hideStyle;
+  document.querySelectorAll('.hero-bg-line').forEach(line => line.style.display = 'none');
+  
+  let scale = 1;
+  let targetX = 0;
+  let targetY = 0;
+  let lx = 0;
+  let ly = 0;
+  let introProgress = 0;
+  let mouseInHero = false;
+  let lastMouseMoveTime = Date.now();
+  const radius = 135;
+  
+  function resizeCanvas() {
+    const rect = heroSection.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    scale = dpr;
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    
+    offscreenCanvas.width = rect.width * dpr;
+    offscreenCanvas.height = rect.height * dpr;
+    
+    // Set initial position
+    if (lx === 0 && ly === 0) {
+      lx = rect.width / 2;
+      ly = rect.height / 2;
+      targetX = lx;
+      targetY = ly;
+    }
   }
-}, {threshold:.1});
-heroObserver.observe(heroTitle);
+  
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+  
+  // Track mouse movements relative to hero section
+  window.addEventListener('mousemove', e => {
+    const rect = heroSection.getBoundingClientRect();
+    // Check if mouse is within hero bounds
+    if (e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top && e.clientY <= rect.bottom) {
+      if (!mouseInHero) {
+        mouseInHero = true;
+        // Fade out normal custom cursor
+        const dotEl = document.querySelector('.cursor-dot');
+        const ringEl = document.querySelector('.cursor-ring');
+        if (dotEl) dotEl.style.opacity = '0';
+        if (ringEl) ringEl.style.opacity = '0';
+      }
+      targetX = e.clientX - rect.left;
+      targetY = e.clientY - rect.top;
+      lastMouseMoveTime = Date.now();
+    } else {
+      if (mouseInHero) {
+        mouseInHero = false;
+        // Restore custom cursor
+        const dotEl = document.querySelector('.cursor-dot');
+        const ringEl = document.querySelector('.cursor-ring');
+        if (dotEl) dotEl.style.opacity = '1';
+        if (ringEl) ringEl.style.opacity = '1';
+      }
+    }
+  });
+  
+  // Support touch events on mobile
+  heroSection.addEventListener('touchmove', e => {
+    if (e.touches.length > 0) {
+      const rect = heroSection.getBoundingClientRect();
+      targetX = e.touches[0].clientX - rect.left;
+      targetY = e.touches[0].clientY - rect.top;
+      lastMouseMoveTime = Date.now();
+      mouseInHero = true;
+    }
+  }, { passive: true });
+  
+  heroSection.addEventListener('touchend', () => {
+    mouseInHero = false;
+  }, { passive: true });
+  
+  function renderOffscreen() {
+    offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+    offscreenCtx.fillStyle = '#0a0a0a';
+    offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+    
+    offscreenCtx.save();
+    offscreenCtx.scale(scale, scale);
+    
+    const w = offscreenCanvas.width / scale;
+    const h = offscreenCanvas.height / scale;
+    const centerX = w / 2;
+    const centerY = h / 2;
+    
+    // 1. Draw animated background rings
+    const sy = window.scrollY;
+    offscreenCtx.lineWidth = 1.0;
+    
+    // Ring 1
+    offscreenCtx.save();
+    offscreenCtx.translate(centerX, centerY);
+    offscreenCtx.scale(1 + sy * 0.0003, 1 + sy * 0.0003);
+    offscreenCtx.rotate((sy * 0.01) * Math.PI / 180);
+    offscreenCtx.beginPath();
+    offscreenCtx.arc(0, 0, 250, 0, Math.PI * 2);
+    offscreenCtx.strokeStyle = 'rgba(64, 82, 181, 0.18)';
+    offscreenCtx.stroke();
+    offscreenCtx.restore();
+    
+    // Ring 2
+    offscreenCtx.save();
+    offscreenCtx.translate(centerX, centerY);
+    offscreenCtx.scale(1 + sy * 0.0003 * 2, 1 + sy * 0.0003 * 2);
+    offscreenCtx.rotate((sy * 0.01 * 2) * Math.PI / 180);
+    offscreenCtx.beginPath();
+    offscreenCtx.arc(0, 0, 350, 0, Math.PI * 2);
+    offscreenCtx.strokeStyle = 'rgba(232, 86, 58, 0.12)';
+    offscreenCtx.stroke();
+    offscreenCtx.restore();
+    
+    // Ring 3
+    offscreenCtx.save();
+    offscreenCtx.translate(centerX, centerY);
+    offscreenCtx.scale(1 + sy * 0.0003 * 3, 1 + sy * 0.0003 * 3);
+    offscreenCtx.rotate((sy * 0.01 * 3) * Math.PI / 180);
+    offscreenCtx.beginPath();
+    offscreenCtx.arc(0, 0, 450, 0, Math.PI * 2);
+    offscreenCtx.strokeStyle = 'rgba(64, 82, 181, 0.08)';
+    offscreenCtx.stroke();
+    offscreenCtx.restore();
+    
+    // 2. Draw CRT horizontal scanlines
+    offscreenCtx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+    offscreenCtx.lineWidth = 0.5;
+    for (let y = 0; y < h; y += 3) {
+      offscreenCtx.beginPath();
+      offscreenCtx.moveTo(0, y);
+      offscreenCtx.lineTo(w, y);
+      offscreenCtx.stroke();
+    }
+    
+    // 3. Render content blocks
+    let introScale = 0.95 + introProgress * 0.05;
+    offscreenCtx.globalAlpha = introProgress;
+    
+    let titleSize = Math.max(60, Math.min(w * 0.15, 220));
+    let taglineSize = Math.max(20, Math.min(w * 0.03, 42));
+    let subtitleSize = Math.max(14, Math.min(w * 0.015, 18));
+    let titleSpacing = Math.max(4, Math.min(w * 0.02, 30));
+    
+    // Title
+    offscreenCtx.save();
+    offscreenCtx.translate(centerX, centerY - 25);
+    offscreenCtx.scale(introScale, introScale);
+    offscreenCtx.font = "500 " + titleSize + "px 'Cormorant Garamond', Georgia, serif";
+    offscreenCtx.textAlign = 'center';
+    offscreenCtx.textBaseline = 'middle';
+    offscreenCtx.letterSpacing = titleSpacing + 'px';
+    
+    let titleText = "SKAND";
+    let titleWidth = offscreenCtx.measureText(titleText).width;
+    
+    // Animate gradient shine
+    let gradX = (Date.now() / 3000) % 1;
+    let grad = offscreenCtx.createLinearGradient(
+      -titleWidth/2 - titleWidth + gradX * titleWidth * 2, 0,
+      -titleWidth/2 + gradX * titleWidth * 2, 0
+    );
+    grad.addColorStop(0.2, '#E8563A');
+    grad.addColorStop(0.3, '#f0ede8');
+    grad.addColorStop(0.7, '#f0ede8');
+    grad.addColorStop(0.8, '#E8563A');
+    
+    offscreenCtx.fillStyle = grad;
+    offscreenCtx.fillText(titleText, 0, 0);
+    offscreenCtx.restore();
+    
+    // Tagline
+    offscreenCtx.save();
+    offscreenCtx.translate(centerX, centerY + titleSize * 0.5 + 15);
+    offscreenCtx.font = "italic 300 " + taglineSize + "px 'Cormorant Garamond', Georgia, serif";
+    offscreenCtx.fillStyle = '#E8563A';
+    offscreenCtx.textAlign = 'center';
+    offscreenCtx.textBaseline = 'middle';
+    offscreenCtx.letterSpacing = '2px';
+    offscreenCtx.fillText(T.hero.tagline[lang], 0, 0);
+    offscreenCtx.restore();
+    
+    // Subtitle
+    offscreenCtx.save();
+    offscreenCtx.translate(centerX, centerY + titleSize * 0.5 + taglineSize + 35);
+    offscreenCtx.font = "300 " + subtitleSize + "px 'Outfit', 'Helvetica Neue', sans-serif";
+    offscreenCtx.fillStyle = '#888';
+    offscreenCtx.textAlign = 'center';
+    offscreenCtx.textBaseline = 'middle';
+    offscreenCtx.letterSpacing = '4px';
+    offscreenCtx.fillText(T.hero.subtitle[lang], 0, 0);
+    offscreenCtx.restore();
+    
+    offscreenCtx.restore();
+  }
+  
+  function applyLensDistortion() {
+    const pxLX = lx * scale;
+    const pxLY = ly * scale;
+    const pxRadius = radius * scale;
+    const pxRadiusSq = pxRadius * pxRadius;
+    
+    const boxX = Math.floor(pxLX - pxRadius);
+    const boxY = Math.floor(pxLY - pxRadius);
+    const boxW = Math.floor(pxRadius * 2);
+    const boxH = Math.floor(pxRadius * 2);
+    
+    const screenW = canvas.width;
+    const screenH = canvas.height;
+    
+    const srcXStart = Math.max(0, boxX);
+    const srcYStart = Math.max(0, boxY);
+    const srcXEnd = Math.min(screenW - 1, boxX + boxW);
+    const srcYEnd = Math.min(screenH - 1, boxY + boxH);
+    
+    if (srcXEnd <= srcXStart || srcYEnd <= srcYStart) return;
+    
+    const dstW = srcXEnd - srcXStart;
+    const dstH = srcYEnd - srcYStart;
+    
+    // Capture offscreen clean content and main blurred content
+    const srcData = offscreenCtx.getImageData(srcXStart, srcYStart, dstW, dstH);
+    const dstData = ctx.getImageData(srcXStart, srcYStart, dstW, dstH);
+    
+    const srcPixels = srcData.data;
+    const dstPixels = dstData.data;
+    
+    const time = Date.now() * 0.0035;
+    
+    for (let dyIndex = 0; dyIndex < dstH; dyIndex++) {
+      const y = srcYStart + dyIndex;
+      const dy = y - pxLY;
+      
+      for (let dxIndex = 0; dxIndex < dstW; dxIndex++) {
+        const x = srcXStart + dxIndex;
+        const dx = x - pxLX;
+        
+        const distSq = dx*dx + dy*dy;
+        if (distSq < pxRadiusSq) {
+          const dist = Math.sqrt(distSq);
+          const normDist = dist / pxRadius;
+          
+          // Magnification + Chromatic Aberration mapping
+          const factorR = 1.0 - 0.40 * (1.0 - normDist * normDist);
+          const factorG = 1.0 - 0.33 * (1.0 - normDist * normDist);
+          const factorB = 1.0 - 0.26 * (1.0 - normDist * normDist);
+          
+          // Wavy ripple displacement
+          const waveX = Math.sin(dy * 0.035 + time) * 5 * scale * (1.0 - normDist);
+          const waveY = Math.cos(dx * 0.035 + time) * 5 * scale * (1.0 - normDist);
+          
+          let rx = Math.floor(pxLX + dx * factorR + waveX);
+          let ry = Math.floor(pxLY + dy * factorR + waveY);
+          
+          let gx = Math.floor(pxLX + dx * factorG + waveX);
+          let gy = Math.floor(pxLY + dy * factorG + waveY);
+          
+          let bx = Math.floor(pxLX + dx * factorB + waveX);
+          let by = Math.floor(pxLY + dy * factorB + waveY);
+          
+          rx = Math.min(Math.max(rx, srcXStart), srcXEnd - 1);
+          ry = Math.min(Math.max(ry, srcYStart), srcYEnd - 1);
+          
+          gx = Math.min(Math.max(gx, srcXStart), srcXEnd - 1);
+          gy = Math.min(Math.max(gy, srcYStart), srcYEnd - 1);
+          
+          bx = Math.min(Math.max(bx, srcXStart), srcXEnd - 1);
+          by = Math.min(Math.max(by, srcYStart), srcYEnd - 1);
+          
+          const rIdx = ((ry - srcYStart) * dstW + (rx - srcXStart)) * 4;
+          const gIdx = ((gy - srcYStart) * dstW + (gx - srcXStart)) * 4;
+          const bIdx = ((by - srcYStart) * dstW + (bx - srcXStart)) * 4;
+          
+          const dstIdx = (dyIndex * dstW + dxIndex) * 4;
+          
+          const globalY = Math.floor(y / scale);
+          const scanline = (globalY % 3 === 0) ? 0.76 : 1.0;
+          
+          dstPixels[dstIdx]     = Math.floor(srcPixels[rIdx] * scanline);
+          dstPixels[dstIdx + 1] = Math.floor(srcPixels[gIdx + 1] * scanline);
+          dstPixels[dstIdx + 2] = Math.floor(srcPixels[bIdx + 2] * scanline);
+          dstPixels[dstIdx + 3] = 255;
+        }
+      }
+    }
+    
+    ctx.putImageData(dstData, srcXStart, srcYStart);
+  }
+  
+  function drawLensBorder() {
+    const w = canvas.width / scale;
+    const h = canvas.height / scale;
+    const centerX = w / 2;
+    const centerY = h / 2;
+    
+    let angle = Math.atan2(ly - centerY, lx - centerX);
+    
+    ctx.save();
+    ctx.scale(scale, scale);
+    
+    // 1. Draw a soft directional chromatic light leak (Photographic Flare)
+    // Offset leak center slightly opposite to screen center to create a realistic refracted light leak
+    let leakOffsetX = -Math.cos(angle) * 12;
+    let leakOffsetY = -Math.sin(angle) * 12;
+    
+    // Use 'screen' composite mode to blend organically
+    ctx.globalCompositeOperation = 'screen';
+    
+    // We set the inner radius to radius * 0.85 and start stop 0.0 at transparent
+    // This ensures the inside of the lens remains completely clear and empty!
+    let radialGrad = ctx.createRadialGradient(
+      lx + leakOffsetX, ly + leakOffsetY, radius * 0.85,
+      lx + leakOffsetX, ly + leakOffsetY, radius * 1.45
+    );
+    // Coral (#E8563A) peaks at the border (approx 0.95-1.0), then bleeds into a soft blue flare (#4052B5)
+    radialGrad.addColorStop(0.0, 'rgba(0, 0, 0, 0)');           // Transparent inside
+    radialGrad.addColorStop(0.2, 'rgba(232, 86, 58, 0.45)');   // Warm coral bleed peaks at the edge
+    radialGrad.addColorStop(0.6, 'rgba(232, 86, 58, 0.15)');   // Fade out
+    radialGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');          // Fully transparent outside
+    
+    ctx.fillStyle = radialGrad;
+    ctx.beginPath();
+    ctx.arc(lx + leakOffsetX, ly + leakOffsetY, radius * 1.45, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Restore normal composition
+    ctx.globalCompositeOperation = 'source-over';
+    
+    // 2. Draw the lens border (clean white crescent ring, color dispersion removed)
+    let grad = ctx.createLinearGradient(
+      lx - Math.cos(angle) * radius, ly - Math.sin(angle) * radius,
+      lx + Math.cos(angle) * radius, ly + Math.sin(angle) * radius
+    );
+    grad.addColorStop(0.0, 'rgba(255, 255, 255, 0.95)');       // Clean white crescent highlight
+    grad.addColorStop(0.3, 'rgba(255, 255, 255, 0.4)');
+    grad.addColorStop(1.0, 'rgba(255, 255, 255, 0.05)');       // Faded side
+    
+    ctx.beginPath();
+    ctx.arc(lx, ly, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1.8;
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';              // Clean white shadow
+    ctx.shadowBlur = 14;
+    ctx.stroke();
+    
+    // 3. Draw Center Dot & Inner Ring (Pure white cursor matching Moonshot)
+    ctx.beginPath();
+    ctx.arc(lx, ly, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 8;
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.arc(lx, ly, 9, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.lineWidth = 1.0;
+    ctx.shadowBlur = 0;
+    ctx.stroke();
+    
+    ctx.restore();
+  }
+  
+  window.refreshHeroCanvas = function() {
+    renderOffscreen();
+  };
+  
+  function animLoop() {
+    if (introProgress < 1.0) {
+      introProgress += (1.0 - introProgress) * 0.05;
+      if (1.0 - introProgress < 0.001) {
+        introProgress = 1.0;
+        if (heroScroll) {
+          heroScroll.style.transition = 'opacity .8s ease';
+          heroScroll.style.opacity = '1';
+        }
+      }
+    }
+    
+    const now = Date.now();
+    if (!mouseInHero || (now - lastMouseMoveTime > 3000)) {
+      const t = now * 0.0006;
+      const w = canvas.width / scale;
+      const h = canvas.height / scale;
+      targetX = w / 2 + Math.cos(t * 0.8) * (w * 0.22);
+      targetY = h / 2 + Math.sin(t * 0.5) * (h * 0.12);
+    }
+    
+    lx += (targetX - lx) * 0.09;
+    ly += (targetY - ly) * 0.09;
+    
+    renderOffscreen();
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.filter = 'blur(5px) brightness(0.35)';
+    ctx.drawImage(offscreenCanvas, 0, 0);
+    ctx.filter = 'none';
+    
+    applyLensDistortion();
+    drawLensBorder();
+    
+    requestAnimationFrame(animLoop);
+  }
+  
+  animLoop();
+})();
 
 /* === REVEAL ON SCROLL === */
 const revealObserver = new IntersectionObserver(entries => {

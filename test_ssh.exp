@@ -1,0 +1,6 @@
+#!/usr/bin/expect -f
+set timeout 10
+spawn ssh -o StrictHostKeyChecking=no root@123.57.167.97 "ls -la /opt/1panel/apps/openresty/1panel/www/sites/ || ls -la /opt/1panel/"
+expect "*assword:*"
+send "ABab123.\r"
+expect eof
