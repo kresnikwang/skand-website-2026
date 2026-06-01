@@ -37,6 +37,10 @@ body{background:var(--black);color:var(--white);font-family:var(--font-body);fon
   @keyframes grainShift{0%{transform:translate(0,0)}10%{transform:translate(-2%,-3%)}20%{transform:translate(3%,1%)}30%{transform:translate(-1%,4%)}40%{transform:translate(4%,-2%)}50%{transform:translate(-3%,2%)}60%{transform:translate(2%,-4%)}70%{transform:translate(-4%,3%)}80%{transform:translate(1%,-1%)}90%{transform:translate(3%,4%)}100%{transform:translate(0,0)}}
   .grain{animation:grainShift 8s steps(10) infinite}
 }
+/* Mobile: disable grain animation, use static reduced opacity */
+@media (max-width: 768px), (pointer: coarse) {
+  .grain{animation:none !important;opacity:.025;will-change:auto}
+}
 @media (prefers-reduced-motion: reduce) {
   .grain{animation:none;opacity:.03}
 }
@@ -66,13 +70,13 @@ nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;displa
 .nav-dropdown:hover .nav-dropdown-toggle::after{width:100%}
 .nav-dropdown-toggle .arrow{font-size:10px;transition:transform .3s ease}
 .nav-dropdown:hover .nav-dropdown-toggle .arrow{transform:rotate(180deg)}
-.nav-dropdown-menu{position:absolute;top:100%;right:0;margin-top:16px;min-width:180px;background:var(--dark);border:1px solid rgba(240,237,232,.1);border-radius:4px;opacity:0;visibility:hidden;transform:translateY(-10px);transition:all .3s ease;z-index:100}
+.nav-dropdown-menu{position:absolute;top:100%;right:0;margin-top:16px;min-width:180px;background:var(--dark);border:1px solid rgba(240,237,232,.15);border-radius:4px;opacity:0;visibility:hidden;transform:translateY(-10px);transition:all .3s ease;z-index:100;mix-blend-mode:normal}
 .nav-dropdown:hover .nav-dropdown-menu{opacity:1;visibility:visible;transform:translateY(0)}
 .nav-dropdown-menu a{display:block;padding:12px 20px;color:var(--white);text-decoration:none;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:400;transition:all .3s ease;border-bottom:1px solid rgba(240,237,232,.05)}
 .nav-dropdown-menu a:last-child{border-bottom:none}
 .nav-dropdown-menu a:hover{background:var(--coral);color:var(--black);padding-left:24px}
 .nav-dropdown-menu a span{display:block;font-size:10px;color:var(--grey);margin-top:2px;text-transform:none;letter-spacing:0}
-.nav-dropdown-menu a:hover span{color:rgba(0,0,0,.5)}
+.nav-dropdown-menu a:hover span{color:rgba(0,0,0,.6)}
 
 /* === HERO === */
 .hero{height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;overflow:hidden}
@@ -107,8 +111,10 @@ section{padding:clamp(80px,12vw,160px) clamp(24px,5vw,80px)}
 .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2px;margin-top:60px}
 .service-card{background:var(--card-bg);padding:clamp(28px,3vw,48px);position:relative;overflow:hidden;transition:background .4s ease}
 .service-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:var(--coral);transform:scaleX(0);transform-origin:left;transition:transform .5s ease}
-.service-card:hover::before{transform:scaleX(1)}
-.service-card:hover{background:#222}
+@media (hover: hover) {
+  .service-card:hover::before{transform:scaleX(1)}
+  .service-card:hover{background:#222}
+}
 .service-num{font-family:var(--font-display);font-size:48px;font-weight:300;color:rgba(64,82,181,.3);line-height:1;margin-bottom:16px}
 .service-name{font-family:var(--font-display);font-size:clamp(20px,1.8vw,28px);font-weight:400;margin-bottom:16px;line-height:1.2}
 .service-desc{font-size:13px;color:var(--grey);line-height:1.7}
@@ -141,9 +147,11 @@ section{padding:clamp(80px,12vw,160px) clamp(24px,5vw,80px)}
 .portfolio-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 /* .project-card is defined in BLUR-UP section above — don't duplicate */
 .project-card img{transition:transform .7s cubic-bezier(.25,.1,.25,1),filter .5s ease,opacity .5s ease}
-.project-card:hover img{transform:scale(1.06);filter:brightness(.55)}
+@media (hover: hover) {
+  .project-card:hover img{transform:scale(1.06);filter:brightness(.55)}
+  .project-card:hover .project-overlay{opacity:1}
+}
 .project-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:clamp(16px,2vw,32px);opacity:0;transition:opacity .4s ease;background:linear-gradient(to top,rgba(10,10,10,.85) 0%,transparent 60%)}
-.project-card:hover .project-overlay{opacity:1}
 .project-brand{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--coral);margin-bottom:6px;font-weight:500}
 .project-name{font-family:var(--font-display);font-size:clamp(16px,1.5vw,24px);font-weight:400;line-height:1.2}
 .project-card.hidden{display:none}
@@ -721,12 +729,13 @@ if (dropdown && dropdownToggle) {
 }
 
 /* === CUSTOM CURSOR === */
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches;
 const dot = document.querySelector('.cursor-dot');
 const ring = document.querySelector('.cursor-ring');
 let mx=0,my=0,rx=0,ry=0;
 document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
 function animCursor(){
-  if(document.hidden){ requestAnimationFrame(animCursor); return; }
+  if(document.hidden || isTouchDevice){ requestAnimationFrame(animCursor); return; }
   rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
   dot.style.left=mx-4+'px'; dot.style.top=my-4+'px';
   ring.style.left=rx-20+'px'; ring.style.top=ry-20+'px';
@@ -743,6 +752,8 @@ document.querySelectorAll('a,.filter-tab,.project-card,.contact-cta,.nav-links a
   const canvas = document.getElementById('heroCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  
+  const isMobile = window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches;
   
   const offscreenCanvas = document.createElement('canvas');
   const offscreenCtx = offscreenCanvas.getContext('2d');
@@ -769,11 +780,11 @@ document.querySelectorAll('a,.filter-tab,.project-card,.contact-cta,.nav-links a
   let introProgress = 0;
   let mouseInHero = false;
   let lastMouseMoveTime = Date.now();
-  const radius = 135;
+  const radius = isMobile ? 68 : 135;
   
   function resizeCanvas() {
     const rect = heroSection.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = isMobile ? Math.min(window.devicePixelRatio || 1, 2) : (window.devicePixelRatio || 1);
     scale = dpr;
     
     canvas.width = rect.width * dpr;
@@ -1157,15 +1168,19 @@ document.querySelectorAll('a,.filter-tab,.project-card,.contact-cta,.nav-links a
     ly += (targetY - ly) * 0.09;
     
     renderOffscreen();
-    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.filter = 'blur(5px) brightness(0.35)';
-    ctx.drawImage(offscreenCanvas, 0, 0);
-    ctx.filter = 'none';
     
-    applyLensDistortion();
+    if (isMobile) {
+      // Mobile: skip blur filter and pixel-level lens distortion
+      ctx.drawImage(offscreenCanvas, 0, 0);
+    } else {
+      ctx.filter = 'blur(5px) brightness(0.35)';
+      ctx.drawImage(offscreenCanvas, 0, 0);
+      ctx.filter = 'none';
+      applyLensDistortion();
+    }
+    
     drawLensBorder();
-    
     requestAnimationFrame(animLoop);
   }
   
