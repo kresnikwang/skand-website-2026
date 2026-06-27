@@ -36,8 +36,9 @@ async function processAll() {
       const meta = await img.metadata();
       const origSize = fs.statSync(srcPath).size;
 
-      // 1. WebP conversion (82 quality)
+      // 1. WebP conversion (resize to max width 1000px to optimize file sizes)
       await img
+        .resize({ width: 1000, withoutEnlargement: true })
         .webp({ quality: WEBP_QUALITY, effort: 4 })
         .toFile(webpPath);
 

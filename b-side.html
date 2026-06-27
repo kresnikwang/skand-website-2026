@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKAND — B-Side Letter Play</title>
+<meta name="description" content="SKAND B-Side: a PixiJS letter interaction built around the SKAND logo.">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="stylesheet" href="fonts/local-fonts.css">
+<style>
+:root {
+  --black: #0a0a0a;
+  --dark: #131313;
+  --panel: rgba(14, 14, 14, 0.82);
+  --white: #f0ede8;
+  --muted: rgba(240, 237, 232, 0.56);
+  --line: rgba(240, 237, 232, 0.14);
+  --coral: #e8563a;
+  --blue: #4052b5;
+  --green: #7bbf9c;
+  --font-body: 'Outfit', 'Helvetica Neue', sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: var(--black);
+}
+
+body {
+  color: var(--white);
+  font-family: var(--font-body);
+  font-weight: 300;
+  overflow: hidden;
+  cursor: none;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+button {
+  cursor: none;
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.018;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  mix-blend-mode: difference;
+}
+
+.cursor-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--coral);
+}
+
+.cursor-ring {
+  width: 42px;
+  height: 42px;
+  border: 1.5px solid var(--white);
+  border-radius: 50%;
+  transition: width 0.25s ease, height 0.25s ease, border-color 0.25s ease;
+}
+
+.cursor-ring.hovering {
+  width: 58px;
+  height: 58px;
+  border-color: var(--coral);
+}
+
+.b-side-shell {
+  position: fixed;
+  inset: 0;
+  opacity: 0;
+  transform: rotateY(12deg) scale(0.985);
+  transform-origin: center;
+  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.b-side-shell.ready {
+  opacity: 1;
+  transform: rotateY(0deg) scale(1);
+}
+
+#pixiCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 40px;
+  mix-blend-mode: difference;
+}
+
+.nav-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--white);
+  text-decoration: none;
+}
+
+.nav-logo img {
+  height: 28px;
+  filter: invert(1);
+}
+
+.page-mark {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid rgba(240, 237, 232, 0.32);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--white);
+  text-decoration: none;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.back-btn:hover {
+  border-color: var(--coral);
+  background: var(--coral);
+  color: var(--black);
+}
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  background: var(--black);
+  transition: opacity 0.7s ease;
+}
+
+.intro.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intro-inner {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  padding: 24px;
+}
+
+.intro-title {
+  font-size: clamp(42px, 9vw, 126px);
+  font-weight: 800;
+  line-height: 0.86;
+  letter-spacing: clamp(8px, 1.8vw, 24px);
+}
+
+.intro-kicker {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.start-btn {
+  min-height: 40px;
+  margin-top: 14px;
+  padding: 0 18px;
+  border: 1px solid rgba(240, 237, 232, 0.28);
+  border-radius: 4px;
+  background: var(--white);
+  color: var(--black);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.35s ease, transform 0.35s ease, background 0.25s ease;
+  pointer-events: none;
+}
+
+.start-btn.ready {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.start-btn:hover {
+  background: var(--coral);
+}
+
+.hud {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  gap: 12px;
+  width: min(900px, calc(100vw - 32px));
+  padding: 10px;
+  border: 1px solid rgba(240, 237, 232, 0.12);
+  border-radius: 8px;
+  background: var(--panel);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  transform: translate(-50%, 12px);
+  pointer-events: none;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.hud.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+.letter-meter,
+.mode-switch,
+.utility {
+  display: flex;
+  align-items: center;
+}
+
+.letter-meter {
+  gap: 6px;
+}
+
+.letter-chip {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(240, 237, 232, 0.035);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.letter-chip.is-awake {
+  border-color: rgba(232, 86, 58, 0.72);
+  background: rgba(232, 86, 58, 0.16);
+  color: var(--white);
+}
+
+.mode-switch {
+  justify-self: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.mode-btn {
+  min-width: 74px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.mode-btn.is-active {
+  background: var(--white);
+  color: var(--black);
+}
+
+.utility {
+  justify-self: end;
+  gap: 6px;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--white);
+  font-size: 16px;
+  line-height: 1;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.icon-btn:hover,
+.icon-btn.is-active {
+  border-color: var(--coral);
+  background: rgba(232, 86, 58, 0.14);
+  color: var(--coral);
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+  body,
+  button {
+    cursor: auto;
+  }
+
+  .cursor-dot,
+  .cursor-ring {
+    display: none;
+  }
+
+  nav {
+    padding: 18px 18px;
+  }
+
+  .page-mark {
+    display: none;
+  }
+
+  .back-btn {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 10px;
+  }
+
+  .hud {
+    bottom: 16px;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    width: min(420px, calc(100vw - 24px));
+  }
+
+  .letter-meter,
+  .mode-switch,
+  .utility {
+    justify-content: center;
+  }
+
+  .mode-switch {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .mode-btn {
+    min-width: 66px;
+    padding: 0 8px;
+    font-size: 9px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+
+<div class="b-side-shell" id="bSideShell">
+  <canvas id="pixiCanvas"></canvas>
+
+  <nav>
+    <a class="nav-logo" href="index.html" aria-label="SKAND home">
+      <img src="logo.png" alt="SKAND">
+      <span class="page-mark">B-Side</span>
+    </a>
+    <a href="index.html" class="back-btn" id="backBtn">Back</a>
+  </nav>
+
+  <div class="hud" id="hud">
+    <div class="letter-meter" aria-label="SKAND letters">
+      <button class="letter-chip" data-letter="0">S</button>
+      <button class="letter-chip" data-letter="1">K</button>
+      <button class="letter-chip" data-letter="2">A</button>
+      <button class="letter-chip" data-letter="3">N</button>
+      <button class="letter-chip" data-letter="4">D</button>
+    </div>
+
+    <div class="mode-switch" role="tablist" aria-label="Play mode">
+      <button class="mode-btn is-active" data-mode="compose">Compose</button>
+      <button class="mode-btn" data-mode="scatter">Scatter</button>
+      <button class="mode-btn" data-mode="orbit">Orbit</button>
+      <button class="mode-btn" data-mode="bloom">Bloom</button>
+      <button class="mode-btn" data-mode="pull">Pull</button>
+    </div>
+
+    <div class="utility">
+      <button class="icon-btn is-active" id="soundBtn" aria-label="Sound on" title="Sound">♪</button>
+      <button class="icon-btn" id="resetBtn" aria-label="Reset" title="Reset">↺</button>
+    </div>
+  </div>
+</div>
+
+<div class="intro" id="intro">
+  <div class="intro-inner">
+    <div class="intro-title">SKAND</div>
+    <div class="intro-kicker" id="introKicker">B-Side Letter Play</div>
+    <button class="start-btn" id="startBtn">Start</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.1.1/pixi.min.js"></script>
+<script>
+const urlParams = new URLSearchParams(window.location.search);
+let lang = urlParams.get('lang') || localStorage.getItem('skand-lang') || 'en';
+if (lang !== 'zh' && lang !== 'en') lang = 'en';
+document.documentElement.lang = lang;
+
+const COPY = {
+  back: { en: 'Back', zh: '返回' },
+  start: { en: 'Start', zh: '开始' },
+  kicker: { en: 'B-Side Letter Play', zh: 'B-Side 字母互动' },
+  modes: {
+    compose: { en: 'Compose', zh: '组合' },
+    scatter: { en: 'Scatter', zh: '散开' },
+    orbit: { en: 'Orbit', zh: '环绕' },
+    bloom: { en: 'Bloom', zh: '发光' },
+    pull: { en: 'Pull', zh: '吸附' }
+  }
+};
+
+function localize() {
+  document.getElementById('backBtn').textContent = COPY.back[lang];
+  document.getElementById('startBtn').textContent = COPY.start[lang];
+  document.getElementById('introKicker').textContent = COPY.kicker[lang];
+  document.querySelectorAll('.mode-btn').forEach((btn) => {
+    btn.textContent = COPY.modes[btn.dataset.mode][lang];
+  });
+}
+
+localize();
+
+const dot = document.querySelector('.cursor-dot');
+const ring = document.querySelector('.cursor-ring');
+let mx = window.innerWidth / 2;
+let my = window.innerHeight / 2;
+let rx = mx;
+let ry = my;
+
+function setPointer(x, y) {
+  mx = x;
+  my = y;
+}
+
+window.addEventListener('pointermove', (event) => {
+  setPointer(event.clientX, event.clientY);
+}, { passive: true });
+
+function animateCursor() {
+  const isTouch = window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches;
+  if (!isTouch && dot && ring) {
+    rx += (mx - rx) * 0.14;
+    ry += (my - ry) * 0.14;
+    dot.style.transform = `translate(${mx - 3.5}px, ${my - 3.5}px)`;
+    ring.style.transform = `translate(${rx - 21}px, ${ry - 21}px)`;
+  }
+  requestAnimationFrame(animateCursor);
+}
+animateCursor();
+
+document.querySelectorAll('a, button').forEach((el) => {
+  el.addEventListener('mouseenter', () => ring && ring.classList.add('hovering'));
+  el.addEventListener('mouseleave', () => ring && ring.classList.remove('hovering'));
+});
+
+let audioCtx = null;
+let soundOn = true;
+
+function initAudio() {
+  if (!soundOn) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function tone(freq, duration = 0.12, type = 'sine', volume = 0.055) {
+  if (!soundOn) return;
+  try {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0008, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (error) {}
+}
+
+function chord(root) {
+  tone(root, 0.18, 'triangle', 0.045);
+  setTimeout(() => tone(root * 1.25, 0.16, 'sine', 0.035), 32);
+  setTimeout(() => tone(root * 1.5, 0.18, 'sine', 0.03), 64);
+}
+
+const shell = document.getElementById('bSideShell');
+const intro = document.getElementById('intro');
+const startBtn = document.getElementById('startBtn');
+const hud = document.getElementById('hud');
+const canvas = document.getElementById('pixiCanvas');
+const letters = ['S', 'K', 'A', 'N', 'D'];
+const accentColors = [0xe8563a, 0x4052b5, 0xf0ede8, 0x7bbf9c, 0xffb5a7];
+const letterNotes = [196, 247, 294, 370, 440];
+
+let app;
+let particles = [];
+let letterBounds = [];
+let letterCenters = [];
+let letterWake = [0, 0, 0, 0, 0];
+let letterPinned = [false, false, false, false, false];
+let activeLetter = -1;
+let currentMode = 'compose';
+let isDown = false;
+let shockwaves = [];
+let started = false;
+let logoFontSize = 160;
+let logoMidY = window.innerHeight / 2;
+let lastX = mx;
+let lastY = my;
+let pointerSpeed = 0;
+let logoDragX = 0;
+let logoDragY = 0;
+let logoDragVX = 0;
+let logoDragVY = 0;
+let pullCharge = 0;
+let pullAnchorX = window.innerWidth / 2;
+let pullAnchorY = window.innerHeight / 2;
+
+class LogoParticle {
+  constructor(x, y, letterIndex) {
+    this.homeX = x;
+    this.homeY = y;
+    this.x = x + (Math.random() - 0.5) * window.innerWidth * 0.8;
+    this.y = y + (Math.random() - 0.5) * window.innerHeight * 0.8;
+    this.vx = (Math.random() - 0.5) * 8;
+    this.vy = (Math.random() - 0.5) * 8;
+    this.seed = Math.random() * Math.PI * 2;
+    this.noise = Math.random();
+    this.letter = letterIndex;
+    this.size = 1.2 + Math.random() * 1.45;
+    this.baseSize = this.size;
+    this.color = 0xf0ede8;
+    this.burstX = 0;
+    this.burstY = 0;
+    this.pickBurst();
+  }
+
+  pickBurst() {
+    const center = letterCenters[this.letter] || { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const dx = this.homeX - center.x;
+    const dy = this.homeY - center.y;
+    const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+    const spread = 88 + Math.random() * 210;
+    this.burstX = (dx / dist) * spread + (Math.random() - 0.5) * 80;
+    this.burstY = (dy / dist) * spread + (Math.random() - 0.5) * 80;
+  }
+
+  update(time) {
+    const wake = letterWake[this.letter];
+    const center = letterCenters[this.letter] || { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const bounds = letterBounds[this.letter];
+    let tx = this.homeX + logoDragX;
+    let ty = this.homeY + logoDragY;
+    let spring = 0.066;
+    let drag = 0.86;
+
+    if (currentMode === 'scatter') {
+      const scatter = 0.35 + wake * 0.9;
+      tx = this.homeX + logoDragX + this.burstX * scatter;
+      ty = this.homeY + logoDragY + this.burstY * scatter;
+      spring = 0.036;
+      drag = 0.9;
+    }
+
+    if (currentMode === 'orbit') {
+      const angle = this.seed + time * (0.72 + this.noise * 0.45) + this.letter * 0.38;
+      const width = bounds ? Math.max(42, bounds.w) : logoFontSize * 0.5;
+      const height = bounds ? Math.max(54, bounds.h) : logoFontSize;
+      const orbit = 0.28 + wake * 0.56;
+      tx = (this.homeX + logoDragX) * (1 - orbit) + (center.x + logoDragX + Math.cos(angle) * width * (0.34 + this.noise * 0.18)) * orbit;
+      ty = (this.homeY + logoDragY) * (1 - orbit) + (center.y + logoDragY + Math.sin(angle) * height * (0.34 + this.noise * 0.18)) * orbit;
+      spring = 0.052;
+      drag = 0.875;
+    }
+
+    if (currentMode === 'bloom') {
+      const dx = this.homeX - center.x;
+      const dy = this.homeY - center.y;
+      const pulse = Math.sin(time * 2.5 + this.seed) * 0.5 + 0.5;
+      const bloom = 0.1 + wake * (0.5 + pulse * 0.24);
+      tx = this.homeX + logoDragX + dx * bloom * 0.55;
+      ty = this.homeY + logoDragY + dy * bloom * 0.55;
+      spring = 0.07;
+      drag = 0.84;
+    }
+
+    if (currentMode === 'pull') {
+      const restX = this.homeX + logoDragX;
+      const restY = this.homeY + logoDragY;
+      const dragDx = mx - pullAnchorX;
+      const dragDy = my - pullAnchorY;
+      const dragDist = Math.sqrt(dragDx * dragDx + dragDy * dragDy);
+      const dirX = dragDist > 0 ? dragDx / dragDist : 0;
+      const dirY = dragDist > 0 ? dragDy / dragDist : 0;
+      const anchorDx = restX - pullAnchorX;
+      const anchorDy = restY - pullAnchorY;
+      const along = anchorDx * dirX + anchorDy * dirY;
+      const side = Math.abs(anchorDx * -dirY + anchorDy * dirX);
+      const frontBias = Math.max(0, 1 - Math.max(0, along) / Math.max(logoFontSize * 0.72, 92));
+      const sideBias = Math.max(0, 1 - side / Math.max(logoFontSize * 0.48, 58));
+      const anchorDist = Math.sqrt(anchorDx * anchorDx + anchorDy * anchorDy);
+      const anchorBias = Math.max(0, 1 - anchorDist / Math.max(logoFontSize * 1.25, 155));
+      const grainBias = 0.72 + this.noise * 0.36;
+      const distanceBoost = Math.min(1, dragDist / Math.max(logoFontSize * 1.25, 180));
+      const wideSideBias = Math.max(0, 1 - side / Math.max(logoFontSize * 0.72, 84));
+      const coneMask = Math.max(Math.pow(anchorBias, 1.25), Math.pow(wideSideBias, 1.75) * frontBias * 0.9);
+      const tailPull = Math.min(1.75, pullCharge * (1.05 + distanceBoost * 1.9) * coneMask * grainBias);
+      const dragReach = Math.min(dragDist, Math.max(window.innerWidth, window.innerHeight) * 0.72);
+      const tipShare = 0.72 + sideBias * 0.72 + anchorBias * 0.42 + (1 - this.noise) * 0.12;
+      const taper = Math.max(0, 1 - side / Math.max(logoFontSize * 0.32, 42));
+      const elastic = isDown ? tailPull : tailPull * 0.82;
+      const lateral = Math.sin(time * 4.2 + this.seed) * elastic * 7 * taper * (1 - anchorBias * 0.55);
+      tx = restX + dirX * dragReach * elastic * tipShare + (-dirY) * lateral;
+      ty = restY + dirY * dragReach * elastic * tipShare + dirX * lateral;
+      spring = 0.085 + elastic * 0.16;
+      drag = Math.max(0.68, 0.84 - elastic * 0.12);
+      if (isDown && dragDist > logoFontSize * 0.4) {
+        this.vx += dirX * elastic * 2.8;
+        this.vy += dirY * elastic * 2.8;
+        this.x += (tx - this.x) * elastic * 0.055;
+        this.y += (ty - this.y) * elastic * 0.055;
+      }
+    }
+
+    const homeShake = wake * 0.62;
+    tx += Math.cos(time * 1.7 + this.seed) * homeShake;
+    ty += Math.sin(time * 1.9 + this.seed) * homeShake;
+
+    this.vx += (tx - this.x) * spring;
+    this.vy += (ty - this.y) * spring;
+
+    const mdx = this.x - mx;
+    const mdy = this.y - my;
+    const md = Math.sqrt(mdx * mdx + mdy * mdy);
+    const range = isDown ? 240 : 145;
+    if (currentMode !== 'pull' && md > 0 && md < range) {
+      const force = (range - md) / range;
+      if (isDown) {
+        this.vx -= (mdx / md) * force * 2.25;
+        this.vy -= (mdy / md) * force * 2.25;
+      } else {
+        this.vx += (mdx / md) * force * (1.5 + pointerSpeed * 0.025);
+        this.vy += (mdy / md) * force * (1.5 + pointerSpeed * 0.025);
+      }
+    }
+
+    for (const wave of shockwaves) {
+      const sdx = this.x - wave.x;
+      const sdy = this.y - wave.y;
+      const sd = Math.sqrt(sdx * sdx + sdy * sdy);
+      const front = wave.radius;
+      const band = 90;
+      if (sd > front - band && sd < front + band && sd > 0) {
+        const power = (1 - Math.abs(sd - front) / band) * wave.life;
+        this.vx += (sdx / sd) * power * 15;
+        this.vy += (sdy / sd) * power * 15;
+      }
+    }
+
+    this.vx *= drag;
+    this.vy *= drag;
+    this.x += this.vx;
+    this.y += this.vy;
+
+    const margin = 24;
+    if (this.x < -margin) this.x = window.innerWidth + margin;
+    if (this.x > window.innerWidth + margin) this.x = -margin;
+    if (this.y < -margin) this.y = window.innerHeight + margin;
+    if (this.y > window.innerHeight + margin) this.y = -margin;
+
+    const activeBoost = this.letter === activeLetter ? 1 : 0;
+    const glow = Math.min(1, wake + activeBoost * 0.38);
+    const pullGlow = currentMode === 'pull' ? pullCharge * 0.8 : 0;
+    this.size = this.baseSize + glow * 1.15 + (currentMode === 'bloom' ? glow * 0.7 : 0) + pullGlow * 0.18;
+    this.color = glow > 0.12 || (currentMode === 'pull' && pullCharge > 0.18 && this.noise > 0.68) ? accentColors[this.letter] : 0xf0ede8;
+  }
+}
+
+function getFont() {
+  logoFontSize = Math.max(52, Math.min(window.innerWidth * 0.185, window.innerHeight * 0.33, 250));
+  return `800 ${logoFontSize}px Outfit, Helvetica Neue, sans-serif`;
+}
+
+function measureLogo(ctx) {
+  const tracking = logoFontSize * 0.12;
+  const widths = letters.map((letter) => ctx.measureText(letter).width);
+  const totalWidth = widths.reduce((sum, value) => sum + value, 0) + tracking * (letters.length - 1);
+  return { tracking, widths, totalWidth };
+}
+
+function generateParticles() {
+  particles = [];
+  letterBounds = [];
+  letterCenters = [];
+  letterWake = [0, 0, 0, 0, 0];
+  letterPinned = [false, false, false, false, false];
+  activeLetter = -1;
+
+  const tempCanvas = document.createElement('canvas');
+  const ctx = tempCanvas.getContext('2d', { willReadFrequently: true });
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const dpr = 1;
+  tempCanvas.width = Math.round(w * dpr);
+  tempCanvas.height = Math.round(h * dpr);
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = getFont();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+
+  let logoMeasure = measureLogo(ctx);
+  const maxLogoWidth = w * (w < 760 ? 0.84 : 0.86);
+  if (logoMeasure.totalWidth > maxLogoWidth) {
+    logoFontSize = Math.max(44, logoFontSize * (maxLogoWidth / logoMeasure.totalWidth));
+    ctx.font = `800 ${logoFontSize}px Outfit, Helvetica Neue, sans-serif`;
+    logoMeasure = measureLogo(ctx);
+  }
+
+  const { tracking, widths, totalWidth } = logoMeasure;
+  let x = w / 2 - totalWidth / 2;
+  logoMidY = h / 2 - (window.innerWidth < 760 ? 34 : 18);
+  const positions = [];
+
+  letters.forEach((letter, index) => {
+    positions.push({ letter, index, x, width: widths[index] });
+    ctx.fillText(letter, x, logoMidY);
+    x += widths[index] + tracking;
+  });
+
+  const image = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height).data;
+  const step = Math.max(3, Math.round(logoFontSize / 58));
+
+  positions.forEach((pos) => {
+    const left = Math.max(0, Math.floor(pos.x - step * 2));
+    const right = Math.min(w, Math.ceil(pos.x + pos.width + step * 2));
+    const top = Math.max(0, Math.floor(logoMidY - logoFontSize * 0.62));
+    const bottom = Math.min(h, Math.ceil(logoMidY + logoFontSize * 0.62));
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (let py = top; py < bottom; py += step) {
+      for (let px = left; px < right; px += step) {
+        const idx = (Math.floor(py) * tempCanvas.width + Math.floor(px)) * 4;
+        if (image[idx + 3] > 90 && Math.random() > 0.04) {
+          particles.push(new LogoParticle(px, py, pos.index));
+          if (px < minX) minX = px;
+          if (py < minY) minY = py;
+          if (px > maxX) maxX = px;
+          if (py > maxY) maxY = py;
+        }
+      }
+    }
+
+    const fallback = {
+      x: pos.x,
+      y: logoMidY - logoFontSize * 0.46,
+      w: pos.width,
+      h: logoFontSize * 0.92
+    };
+    const bound = minX === Infinity ? fallback : {
+      x: minX,
+      y: minY,
+      w: maxX - minX,
+      h: maxY - minY
+    };
+    letterBounds[pos.index] = bound;
+    letterCenters[pos.index] = {
+      x: bound.x + bound.w / 2,
+      y: bound.y + bound.h / 2
+    };
+  });
+
+  particles.forEach((particle) => particle.pickBurst());
+  updateLetterHud();
+}
+
+function updateLetterHud() {
+  document.querySelectorAll('.letter-chip').forEach((chip) => {
+    const idx = Number(chip.dataset.letter);
+    chip.classList.toggle('is-awake', letterWake[idx] > 0.24 || letterPinned[idx]);
+  });
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach((btn) => {
+    btn.classList.toggle('is-active', btn.dataset.mode === mode);
+  });
+  const note = { compose: 220, scatter: 165, orbit: 294, bloom: 392, pull: 262 }[mode] || 220;
+  tone(note, 0.12, 'triangle', 0.04);
+}
+
+function detectLetter() {
+  let found = -1;
+  letterBounds.forEach((box, index) => {
+    if (!box) return;
+    const pad = Math.max(18, logoFontSize * 0.1);
+    const dragX = currentMode === 'pull' ? logoDragX : 0;
+    const dragY = currentMode === 'pull' ? logoDragY : 0;
+    if (mx >= box.x + dragX - pad && mx <= box.x + dragX + box.w + pad && my >= box.y + dragY - pad && my <= box.y + dragY + box.h + pad) {
+      found = index;
+    }
+  });
+
+  if (found !== activeLetter && found !== -1) {
+    chord(letterNotes[found]);
+  }
+  activeLetter = found;
+}
+
+function wakeLetter(index, amount = 1) {
+  if (index < 0 || index > 4) return;
+  letterWake[index] = Math.min(1, letterWake[index] + amount);
+  letterPinned[index] = true;
+  chord(letterNotes[index]);
+}
+
+function addShockwave(x, y, power = 1) {
+  shockwaves.push({ x, y, radius: 8, life: power });
+}
+
+function setPullAnchor(x, y) {
+  let best = null;
+  let bestDist = Infinity;
+  const dragX = currentMode === 'pull' ? logoDragX : 0;
+  const dragY = currentMode === 'pull' ? logoDragY : 0;
+  for (const particle of particles) {
+    const dx = particle.homeX + dragX - x;
+    const dy = particle.homeY + dragY - y;
+    const dist = dx * dx + dy * dy;
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = particle;
+    }
+  }
+  if (best) {
+    pullAnchorX = best.homeX + dragX;
+    pullAnchorY = best.homeY + dragY;
+  } else {
+    pullAnchorX = x;
+    pullAnchorY = y;
+  }
+}
+
+function getLogoCenter() {
+  if (!letterCenters.length) {
+    return { x: window.innerWidth / 2, y: logoMidY };
+  }
+  const total = letterCenters.reduce((acc, center) => {
+    if (!center) return acc;
+    acc.x += center.x;
+    acc.y += center.y;
+    acc.count += 1;
+    return acc;
+  }, { x: 0, y: 0, count: 0 });
+  if (!total.count) return { x: window.innerWidth / 2, y: logoMidY };
+  return { x: total.x / total.count, y: total.y / total.count };
+}
+
+function updatePullPhysics() {
+  const center = getLogoCenter();
+  const isPulling = currentMode === 'pull' && isDown;
+  pullCharge += isPulling ? 0.095 : -0.015;
+  pullCharge = Math.max(0, Math.min(1, pullCharge));
+
+  const targetX = isPulling ? (mx - center.x) * 0.12 : 0;
+  const targetY = isPulling ? (my - center.y) * 0.12 : 0;
+  logoDragVX += (targetX - logoDragX) * 0.075;
+  logoDragVY += (targetY - logoDragY) * 0.075;
+  logoDragVX *= isPulling ? 0.78 : 0.68;
+  logoDragVY *= isPulling ? 0.78 : 0.68;
+  logoDragX += logoDragVX;
+  logoDragY += logoDragVY;
+
+  if (currentMode !== 'pull' && Math.abs(logoDragX) + Math.abs(logoDragY) < 0.05) {
+    logoDragX = 0;
+    logoDragY = 0;
+    logoDragVX = 0;
+    logoDragVY = 0;
+  }
+}
+
+function resetLogo() {
+  letterWake = [0, 0, 0, 0, 0];
+  letterPinned = [false, false, false, false, false];
+  currentMode = 'compose';
+  logoDragX = 0;
+  logoDragY = 0;
+  logoDragVX = 0;
+  logoDragVY = 0;
+  pullCharge = 0;
+  pullAnchorX = window.innerWidth / 2;
+  pullAnchorY = logoMidY;
+  setMode('compose');
+  particles.forEach((particle) => {
+    particle.vx += (Math.random() - 0.5) * 18;
+    particle.vy += (Math.random() - 0.5) * 18;
+  });
+  addShockwave(window.innerWidth / 2, logoMidY, 0.8);
+  updateLetterHud();
+}
+
+function strokeCirclePath(graphics, x, y, radius, style) {
+  const segments = 72;
+  graphics.moveTo(x + radius, y);
+  for (let i = 1; i <= segments; i++) {
+    const angle = (i / segments) * Math.PI * 2;
+    graphics.lineTo(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius);
+  }
+  graphics.stroke(style);
+}
+
+function drawBackdrop(graphics, time) {
+  for (let i = 0; i < 5; i++) {
+    const center = letterCenters[i];
+    if (!center) continue;
+    const wake = letterWake[i];
+    const r = 24 + wake * 48 + Math.sin(time * 2 + i) * 2;
+    strokeCirclePath(graphics, center.x + logoDragX, center.y + logoDragY, r, { width: 1, color: 0x4052b5, alpha: 0.12 });
+  }
+
+  for (const wave of shockwaves) {
+    strokeCirclePath(graphics, wave.x, wave.y, wave.radius, { width: 1, color: 0xe8563a, alpha: 0.16 });
+  }
+
+  if (currentMode === 'pull' && pullCharge > 0.02) {
+    const radius = 22 + pullCharge * 42 + Math.sin(time * 8) * 2;
+    strokeCirclePath(graphics, mx, my, radius, { width: 1.2, color: 0xe8563a, alpha: 0.12 + pullCharge * 0.22 });
+  }
+}
+
+function drawParticles(graphics) {
+  const buckets = new Map();
+  particles.forEach((particle) => {
+    const key = particle.color;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(particle);
+  });
+
+  buckets.forEach((items, color) => {
+    const isAccent = color !== 0xf0ede8;
+    items.forEach((particle) => {
+      graphics.rect(particle.x - particle.size / 2, particle.y - particle.size / 2, particle.size, particle.size);
+    });
+    graphics.fill({ color, alpha: isAccent ? 0.95 : 0.88 });
+  });
+
+  if (activeLetter !== -1 && letterCenters[activeLetter]) {
+    const center = letterCenters[activeLetter];
+    const size = 4.5 + Math.sin(performance.now() * 0.009) * 1.2;
+    graphics.rect(center.x + logoDragX - size / 2, center.y + logoDragY - size / 2, size, size);
+    graphics.fill({ color: accentColors[activeLetter], alpha: 0.82 });
+  }
+}
+
+async function initPixi() {
+  app = new PIXI.Application();
+  await app.init({
+    canvas,
+    resizeTo: window,
+    background: '#0a0a0a',
+    antialias: true,
+    resolution: Math.min(window.devicePixelRatio || 1, 1.5),
+    autoDensity: true
+  });
+
+  const backdropGraphics = new PIXI.Graphics();
+  const particleGraphics = new PIXI.Graphics();
+  app.stage.addChild(backdropGraphics);
+  app.stage.addChild(particleGraphics);
+  app.stage.eventMode = 'static';
+  app.stage.hitArea = app.screen;
+
+  app.stage.on('pointermove', (event) => {
+    const point = event.global || { x: event.clientX, y: event.clientY };
+    setPointer(point.x, point.y);
+  });
+
+  app.stage.on('pointerdown', (event) => {
+    const point = event.global || { x: mx, y: my };
+    setPointer(point.x, point.y);
+    isDown = true;
+    initAudio();
+    detectLetter();
+    if (activeLetter !== -1) wakeLetter(activeLetter, 0.55);
+    if (currentMode === 'pull') {
+      setPullAnchor(mx, my);
+      tone(132, 0.18, 'sine', 0.035);
+    } else {
+      addShockwave(mx, my, 1);
+    }
+  });
+
+  app.stage.on('pointerup', () => {
+    isDown = false;
+  });
+  app.stage.on('pointerupoutside', () => {
+    isDown = false;
+  });
+
+  generateParticles();
+  startBtn.classList.add('ready');
+
+  app.ticker.add(() => {
+    if (!started) {
+      particles.forEach((particle) => {
+        particle.x += (particle.homeX - particle.x) * 0.025;
+        particle.y += (particle.homeY - particle.y) * 0.025;
+      });
+    }
+
+    const dx = mx - lastX;
+    const dy = my - lastY;
+    pointerSpeed = Math.sqrt(dx * dx + dy * dy);
+    lastX = mx;
+    lastY = my;
+    updatePullPhysics();
+
+    detectLetter();
+    for (let i = 0; i < letterWake.length; i++) {
+      const hovered = i === activeLetter ? 0.065 : 0;
+      const pinnedBase = letterPinned[i] ? 0.18 : 0;
+      letterWake[i] = Math.max(pinnedBase, Math.min(1, letterWake[i] + hovered - 0.012));
+    }
+
+    shockwaves.forEach((wave) => {
+      wave.radius += 18;
+      wave.life *= 0.92;
+    });
+    shockwaves = shockwaves.filter((wave) => wave.life > 0.04 && wave.radius < Math.max(window.innerWidth, window.innerHeight) * 1.2);
+
+    const time = performance.now() * 0.001;
+    particles.forEach((particle) => particle.update(time));
+
+    backdropGraphics.clear();
+    particleGraphics.clear();
+    drawBackdrop(backdropGraphics, time);
+    drawParticles(particleGraphics);
+    updateLetterHud();
+  });
+}
+
+document.querySelectorAll('.mode-btn').forEach((btn) => {
+  btn.addEventListener('click', () => setMode(btn.dataset.mode));
+});
+
+document.querySelectorAll('.letter-chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    const index = Number(chip.dataset.letter);
+    wakeLetter(index, 0.8);
+    const center = letterCenters[index] || { x: window.innerWidth / 2, y: logoMidY };
+    addShockwave(center.x, center.y, 0.75);
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click', resetLogo);
+document.getElementById('soundBtn').addEventListener('click', (event) => {
+  soundOn = !soundOn;
+  event.currentTarget.classList.toggle('is-active', soundOn);
+  event.currentTarget.setAttribute('aria-label', soundOn ? 'Sound on' : 'Sound off');
+  if (soundOn) tone(330, 0.1, 'sine', 0.04);
+});
+
+startBtn.addEventListener('click', () => {
+  started = true;
+  initAudio();
+  chord(220);
+  intro.classList.add('is-hidden');
+  hud.classList.add('visible');
+  addShockwave(window.innerWidth / 2, logoMidY, 0.8);
+});
+
+document.querySelectorAll('a[href="index.html"]').forEach((link) => {
+  link.addEventListener('click', (event) => {
+    event.preventDefault();
+    shell.classList.remove('ready');
+    tone(196, 0.16, 'triangle', 0.04);
+    setTimeout(() => {
+      window.location.href = `index.html?lang=${lang}`;
+    }, 520);
+  });
+});
+
+window.addEventListener('pointerup', () => {
+  isDown = false;
+});
+
+window.addEventListener('pointerdown', (event) => {
+  if (event.target && event.target.closest && event.target.closest('a, button')) return;
+  if (!started || currentMode !== 'pull') return;
+  setPointer(event.clientX, event.clientY);
+  isDown = true;
+  setPullAnchor(mx, my);
+  initAudio();
+}, { passive: true });
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (app) app.stage.hitArea = app.screen;
+    generateParticles();
+  }, 180);
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  requestAnimationFrame(() => shell.classList.add('ready'));
+});
+
+if (document.fonts) {
+  document.fonts.ready.then(initPixi);
+  setTimeout(() => {
+    if (!app) initPixi();
+  }, 900);
+} else {
+  window.addEventListener('load', initPixi);
+}
+</script>
+</body>
+</html>
