@@ -49,7 +49,7 @@ export function prepareHeroForPixi() {
   const tagline = document.querySelector('.hero-tagline');
   if (tagline) {
     tagline.style.cssText =
-      'position:absolute;left:50%;top:calc(50% + 170px);transform:translateX(-50%);opacity:0;margin:0;z-index:3;pointer-events:none;transition:opacity .8s ease;';
+      'position:absolute;left:50%;top:calc(50% + 150px);transform:translateX(-50%);opacity:0;margin:0;z-index:3;pointer-events:none;transition:opacity .8s ease;';
     setTimeout(() => (tagline.style.opacity = '1'), 900);
   }
   const cn = document.querySelector('.hero-cn');

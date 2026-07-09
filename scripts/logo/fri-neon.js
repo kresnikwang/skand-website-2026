@@ -1,7 +1,9 @@
-// Friday — Neon.
-// SKAND is shown as a dim outline (描边线稿). A glowing coral fill with
-// GlowFilter is revealed by a radial mask that follows the cursor (鼠标扫过
-// 点亮), with a subtle displacement turbulence for an electric-current feel.
+// Friday — Neon 霓虹
+// SKAND is shown as a dim flickering outline (描边线稿). A glowing coral-filled
+// version sits beneath, masked by a radial spotlight that follows the cursor
+// (鼠标径向遮罩扫过点亮). Subtle electric-current displacement adds a buzzing
+// neon-sign feel (电流噪波). The mask expands when over the text and shrinks
+// when the cursor leaves.
 import {
   Application,
   Texture,
@@ -14,28 +16,31 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import { GlowFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
-  prepareHeroForPixi, makeApp, bindPixi, brandTextCanvas,
-  makeTexture, fitAndCenter, trackPointer, onResize,
+  prepareHeroForPixi, makeApp, bindPixi, createTextCanvas, brandTextCanvas,
+  makeTexture, fitAndCenter, trackPointer, onResize, isMobile,
 } from './shared.js';
 
-function noiseTexture() {
+/* ---------- procedural noise for electric-current displacement ---------- */
+function makeNoiseCanvas(size = 256) {
   const c = document.createElement('canvas');
-  c.width = c.height = 256;
-  const x = c.getContext('2d');
-  x.fillStyle = '#808080';
-  x.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 50; i++) {
-    const r = 16 + Math.random() * 70;
-    const gx = Math.random() * 256;
-    const gy = Math.random() * 256;
-    const g = x.createRadialGradient(gx, gy, 0, gx, gy, r);
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  // neutral grey base (zero displacement)
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(0, 0, size, size);
+  // overlay soft radial blobs of varying brightness for organic displacement
+  for (let i = 0; i < 60; i++) {
+    const r = 12 + Math.random() * 60;
+    const cx = Math.random() * size;
+    const cy = Math.random() * size;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
     const v = Math.floor(Math.random() * 255);
-    g.addColorStop(0, `rgba(${v},${v},${v},0.6)`);
+    g.addColorStop(0, `rgba(${v},${v},${v},0.55)`);
     g.addColorStop(1, 'rgba(128,128,128,0)');
-    x.fillStyle = g;
-    x.beginPath();
-    x.arc(gx, gy, r, 0, Math.PI * 2);
-    x.fill();
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
   }
   return c;
 }
@@ -47,71 +52,144 @@ export async function init() {
   bindPixi(Texture, CanvasSource, Rectangle);
   const ptr = trackPointer(hero);
 
-  // Dim outline base (line art)
-  const outline = createTextCanvas({ text: 'SKAND', size: 210, weight: 600, mode: 'stroke', strokeWidth: 3, letterSpacing: 8 });
-  const outlineTex = makeTexture(outline.canvas);
+  /* ------------------------------------------------------------------ */
+  /*  Layer 1 — dim stroke outline (line art base)                      */
+  /* ------------------------------------------------------------------ */
+  const outlineData = createTextCanvas({
+    text: 'SKAND', size: 210, weight: 600, mode: 'stroke',
+    strokeWidth: 2.5, strokeColor: '#f0ede8', letterSpacing: 8,
+  });
+  const outlineTex = makeTexture(outlineData.canvas);
   const baseSpr = new Sprite(outlineTex);
   fitAndCenter(baseSpr, app, 0.7);
-  baseSpr.alpha = 0.45;
+  baseSpr.alpha = 0.4;
   app.stage.addChild(baseSpr);
 
-  // Glowing coral fill (revealed by mask)
-  const fill = brandTextCanvas({ text: 'SKAND', size: 210, weight: 500, letterSpacing: 8 });
-  const fillTex = makeTexture(fill.canvas);
+  // Faint ambient glow on outline — suggests residual charge in the tubes
+  const ambientGlow = new GlowFilter({
+    distance: 8,
+    outerStrength: 1.0,
+    innerStrength: 0,
+    color: 0xe8563a,
+    quality: 0.25,
+  });
+  baseSpr.filters = [ambientGlow];
+
+  /* ------------------------------------------------------------------ */
+  /*  Layer 2 — coral-gradient filled text with GlowFilter              */
+  /* ------------------------------------------------------------------ */
+  const fillData = brandTextCanvas({
+    text: 'SKAND', size: 210, weight: 500, letterSpacing: 8,
+  });
+  const fillTex = makeTexture(fillData.canvas);
   const glowSpr = new Sprite(fillTex);
   fitAndCenter(glowSpr, app, 0.7);
-  glowSpr.tint = 0xe8563a;
+  // NO tint — let the brandTextCanvas coral→white→coral gradient show through
   app.stage.addChild(glowSpr);
 
   const glow = new GlowFilter({
-    distance: 18,
-    outerStrength: 3,
-    innerStrength: 0,
+    distance: 20,
+    outerStrength: 3.5,
+    innerStrength: 0.5,
     color: 0xe8563a,
     quality: 0.3,
   });
-  glowSpr.filters = [glow];
 
-  // Electric-current turbulence
-  const dispTex = makeTexture(noiseTexture());
-  const disp = new Sprite(dispTex);
-  disp.width = app.screen.width;
-  disp.height = app.screen.height;
-  app.stage.addChild(disp);
-  const turb = new DisplacementFilter({ sprite: disp, scale: 5 });
-  glowSpr.filters = [glow, turb];
+  /* ------------------------------------------------------------------ */
+  /*  Electric-current displacement                                      */
+  /* ------------------------------------------------------------------ */
+  const noiseCanvas = makeNoiseCanvas(256);
+  const dispTex = makeTexture(noiseCanvas);
+  const dispSprite = new Sprite(dispTex);
+  dispSprite.width = app.screen.width;
+  dispSprite.height = app.screen.height;
+  app.stage.addChild(dispSprite);
+  const turbulence = new DisplacementFilter({ sprite: dispSprite, scale: 4 });
 
-  // Radial mask following the cursor
+  glowSpr.filters = [glow, turbulence];
+
+  /* ------------------------------------------------------------------ */
+  /*  Radial mask — follows cursor with easing                          */
+  /* ------------------------------------------------------------------ */
   const mask = new Graphics();
-  mask.circle(0, 0, 120).fill(0xffffff);
+  const BASE_RADIUS = isMobile ? 100 : 90;
+  const EXPANDED_RADIUS = isMobile ? 160 : 160;
+  mask.circle(0, 0, BASE_RADIUS).fill(0xffffff);
   app.stage.addChild(mask);
   glowSpr.mask = mask;
 
+  // Eased mask position
+  let maskX = app.screen.width / 2;
+  let maskY = app.screen.height / 2;
+  let currentRadius = BASE_RADIUS;
+
+  /* ------------------------------------------------------------------ */
+  /*  Resize handler                                                     */
+  /* ------------------------------------------------------------------ */
   onResize(app, () => {
     fitAndCenter(baseSpr, app, 0.7);
     fitAndCenter(glowSpr, app, 0.7);
-    disp.width = app.screen.width;
-    disp.height = app.screen.height;
+    dispSprite.width = app.screen.width;
+    dispSprite.height = app.screen.height;
   });
 
-  let lit = 0;
+  /* ------------------------------------------------------------------ */
+  /*  Animation loop                                                     */
+  /* ------------------------------------------------------------------ */
+  let lit = 0;       // eased 0→1: how much the cursor is "over" the text
+  let elapsed = 0;   // total elapsed time for oscillations
+
   app.ticker.add((ticker) => {
     const dt = ticker.deltaTime;
+    elapsed += dt / 60; // accumulate seconds
+
+    /* --- determine if pointer is over the text bounds --- */
     const b = glowSpr.getBounds();
-    const over = ptr.inside && ptr.x >= b.x && ptr.x <= b.x + b.width && ptr.y >= b.y && ptr.y <= b.y + b.height;
-    lit += ((over ? 1 : 0) - lit) * 0.12 * dt;
+    const overText = ptr.inside &&
+      ptr.x >= b.x && ptr.x <= b.x + b.width &&
+      ptr.y >= b.y && ptr.y <= b.y + b.height;
 
-    mask.x += (ptr.x - mask.x) * 0.25;
-    mask.y += (ptr.y - mask.y) * 0.25;
-    const rad = 90 + lit * 70;
+    // smooth ease toward target
+    const target = overText ? 1 : 0;
+    lit += (target - lit) * 0.08 * dt;
+
+    /* --- mask position: ease toward pointer --- */
+    if (ptr.inside) {
+      maskX += (ptr.x - maskX) * 0.15 * dt;
+      maskY += (ptr.y - maskY) * 0.15 * dt;
+    }
+    mask.x = maskX;
+    mask.y = maskY;
+
+    /* --- mask radius: expand when over text, shrink when leaving --- */
+    const targetRadius = BASE_RADIUS + lit * (EXPANDED_RADIUS - BASE_RADIUS);
+    currentRadius += (targetRadius - currentRadius) * 0.1 * dt;
     mask.clear();
-    mask.circle(0, 0, rad).fill(0xffffff);
+    mask.circle(0, 0, currentRadius).fill(0xffffff);
 
-    glow.outerStrength = 2 + lit * 3;
-    // DisplacementFilter.scale is a Point in Pixi v8 (getter-only).
-    turb.scale.x = 3 + lit * 10;
-    turb.scale.y = 3 + lit * 10;
-    disp.x += 2 * dt;
-    disp.y += 1 * dt;
+    /* --- outline flicker: warm old gas lamp (very subtle alpha drift) --- */
+    const flicker1 = Math.sin(elapsed * 3.2) * 0.025;
+    const flicker2 = Math.sin(elapsed * 7.1) * 0.01;
+    baseSpr.alpha = 0.4 + flicker1 + flicker2;
+
+    // Ambient glow pulses very gently — warm residual charge
+    ambientGlow.outerStrength = 0.7 + Math.sin(elapsed * 1.8) * 0.2;
+
+    /* --- GlowFilter pulse: gentle warm breathing like old gas lamp --- */
+    const glowPulse = Math.sin(elapsed * 1.5) * 0.3;
+    glow.outerStrength = 3.0 + lit * 1.5 + glowPulse;
+    glow.distance = 18 + lit * 3 + Math.sin(elapsed * 2.0) * 0.8;
+
+    /* --- displacement: gentle slow drift — old gas lamp warmth --- */
+    dispSprite.x += 0.6 * dt;
+    dispSprite.y += 0.3 * dt;
+
+    // Very gentle displacement — just enough to suggest warmth/heat shimmer
+    const baseDisp = 2;
+    const litDisp = lit * 4;
+    const shimmerX = Math.sin(elapsed * 3.5) * 0.8;
+    const shimmerY = Math.cos(elapsed * 2.8) * 0.6;
+    turbulence.scale.x = baseDisp + litDisp + shimmerX;
+    turbulence.scale.y = baseDisp + litDisp + shimmerY;
   });
 }

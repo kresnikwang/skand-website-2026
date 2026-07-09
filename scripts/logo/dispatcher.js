@@ -24,7 +24,7 @@ import('./shared.js')
     }
     // Cache-bust only the day module (never shared.js — it must stay a single
     // instance, and the day modules import it without a query).
-    import(`./${mod}.js?v=5`)
+    import(`./${mod}.js?v=7`)
       .then((m) => {
         if (!m.init) {
           shared.revealStaticTitle();
