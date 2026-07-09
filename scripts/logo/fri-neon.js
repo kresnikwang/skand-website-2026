@@ -16,9 +16,9 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import { GlowFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
-  prepareHeroForPixi, makeApp, bindPixi, createTextCanvas, brandTextCanvas,
-  makeTexture, fitAndCenter, trackPointer, onResize, isMobile,
-} from './shared.js?v=13';
+  prepareHeroForPixi, makeApp, createTextCanvas, brandTextCanvas,
+  fitAndCenter, trackPointer, onResize, isMobile,
+} from './shared.js';
 
 /* ---------- procedural noise for electric-current displacement ---------- */
 function makeNoiseCanvas(size = 256) {
@@ -49,7 +49,6 @@ export async function init() {
   prepareHeroForPixi();
   const hero = document.getElementById('hero');
   const app = await makeApp(hero);
-  bindPixi(Texture, CanvasSource, Rectangle);
   const ptr = trackPointer(hero);
 
   /* ------------------------------------------------------------------ */
@@ -59,9 +58,8 @@ export async function init() {
     text: 'SKAND', size: 210, weight: 600, mode: 'stroke',
     strokeWidth: 2.5, strokeColor: '#f0ede8', letterSpacing: 8,
   });
-  const outlineTex = makeTexture(outlineData.canvas);
+  const outlineTex = new Texture({ source: new CanvasSource({ resource: outlineData.canvas }) });
   const baseSpr = new Sprite(outlineTex);
-  fitAndCenter(baseSpr, app, 0.7);
   baseSpr.alpha = 0.4;
   app.stage.addChild(baseSpr);
 
@@ -81,10 +79,8 @@ export async function init() {
   const fillData = brandTextCanvas({
     text: 'SKAND', size: 210, weight: 500, letterSpacing: 8,
   });
-  const fillTex = makeTexture(fillData.canvas);
+  const fillTex = new Texture({ source: new CanvasSource({ resource: fillData.canvas }) });
   const glowSpr = new Sprite(fillTex);
-  fitAndCenter(glowSpr, app, 0.7);
-  // NO tint — let the brandTextCanvas coral→white→coral gradient show through
   app.stage.addChild(glowSpr);
 
   const glow = new GlowFilter({
@@ -99,7 +95,7 @@ export async function init() {
   /*  Electric-current displacement                                      */
   /* ------------------------------------------------------------------ */
   const noiseCanvas = makeNoiseCanvas(256);
-  const dispTex = makeTexture(noiseCanvas);
+  const dispTex = new Texture({ source: new CanvasSource({ resource: noiseCanvas }) });
   const dispSprite = new Sprite(dispTex);
   dispSprite.width = app.screen.width;
   dispSprite.height = app.screen.height;

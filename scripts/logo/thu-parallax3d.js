@@ -14,8 +14,8 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import { BevelFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
-  prepareHeroForPixi, makeApp, bindPixi, makeTexture, trackPointer,
-} from './shared.js?v=13';
+  prepareHeroForPixi, makeApp, trackPointer, onResize,
+} from './shared.js';
 
 // Chrome / brushed-steel gradient wordmark -> reads as metal under BevelFilter.
 function metallicTextCanvas({ text = 'SKAND', size = 210, weight = 600, letterSpacing = 8, supersample = 2 } = {}) {
@@ -82,11 +82,10 @@ export async function init() {
   prepareHeroForPixi();
   const hero = document.getElementById('hero');
   const app = await makeApp(hero);
-  bindPixi(Texture, CanvasSource, Rectangle);
   const ptr = trackPointer(hero);
 
   const logo = metallicTextCanvas({ text: 'SKAND', size: 210, weight: 600, letterSpacing: 8 });
-  const logoTex = makeTexture(logo.canvas);
+  const logoTex = new Texture({ source: new CanvasSource({ resource: logo.canvas }) });
 
   // Group holds the logo + its masked glint; parallax transforms apply to it.
   const group = new Container();
@@ -110,7 +109,7 @@ export async function init() {
   logoSpr.filters = [bevel];
 
   // Specular glint, clipped to the letters so it looks like a reflection.
-  const glintTex = makeTexture(glintTexture());
+  const glintTex = new Texture({ source: new CanvasSource({ resource: glintTexture() }) });
   const glint = new Sprite(glintTex);
   glint.anchor.set(0.5);
   glint.blendMode = 'add';
@@ -132,7 +131,7 @@ export async function init() {
     group.x = app.screen.width / 2;
     group.y = app.screen.height / 2;
   };
-  layout();
+  onResize(app, layout);
 
   let tlx = 0, tly = 0; // eased tilt (skew)
   let gx = 0, gy = 0; // eased glint position (group-local)
@@ -170,6 +169,4 @@ export async function init() {
     glint.alpha += ((ptr.inside ? 0.95 : shimmer) - glint.alpha) * 0.1;
   });
 
-  const onResize = () => layout();
-  app.renderer.on('resize', onResize);
 }

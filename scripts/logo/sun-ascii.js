@@ -12,9 +12,9 @@ import {
   Container,
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import {
-  isMobile, prepareHeroForPixi, makeApp, bindPixi,
+  isMobile, prepareHeroForPixi, makeApp,
   fitAndCenter, trackPointer, onResize,
-} from './shared.js?v=13';
+} from './shared.js';
 
 const RAMP = ' .:-=+*#%@';
 const NOISE_CHARS = '.:;|/\\~*+-';
@@ -23,11 +23,10 @@ export async function init() {
   prepareHeroForPixi();
   const hero = document.getElementById('hero');
   const app = await makeApp(hero);
-  bindPixi(Texture, CanvasSource, Rectangle);
   const ptr = trackPointer(hero);
 
   const W = 960, H = 320;
-  const cell = isMobile ? 16 : 12;
+  const cell = isMobile ? 20 : 12;
   const cols = Math.floor(W / cell);
   const rows = Math.floor(H / cell);
 
@@ -82,7 +81,6 @@ export async function init() {
 
   const tex = new Texture({ source: new CanvasSource({ resource: ascii }) });
   const spr = new Sprite(tex);
-  fitAndCenter(spr, app, 0.8);
   app.stage.addChild(spr);
 
   onResize(app, () => fitAndCenter(spr, app, 0.8));

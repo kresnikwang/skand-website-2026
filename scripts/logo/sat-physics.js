@@ -14,9 +14,9 @@ import {
   ColorMatrixFilter,
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import {
-  isMobile, prepareHeroForPixi, makeApp, bindPixi, createTextCanvas,
-  brandTextCanvas, makeTexture, trackPointer, onResize,
-} from './shared.js?v=13';
+  isMobile, prepareHeroForPixi, makeApp, createTextCanvas,
+  brandTextCanvas, trackPointer, onResize,
+} from './shared.js';
 
 /* ── helper: seeded pseudo-random ──────────────────────────────────── */
 function seededRand(i) {
@@ -130,7 +130,6 @@ export async function init() {
   const hero = document.getElementById('hero');
 
   const app = await makeApp(hero);
-  bindPixi(Texture, CanvasSource, Rectangle);
   const ptr = trackPointer(hero);
 
   const LOGO_SIZE = 210;
@@ -145,8 +144,8 @@ export async function init() {
     strokeWidth: 1.8, strokeColor: '#f0ede8', letterSpacing: LOGO_SPACING,
   });
 
-  const filledTex = makeTexture(filled.canvas);
-  const outlineTex = makeTexture(outline.canvas);
+  const filledTex = new Texture({ source: new CanvasSource({ resource: filled.canvas }) });
+  const outlineTex = new Texture({ source: new CanvasSource({ resource: outline.canvas }) });
 
   /* ── Root container (centered on logo position) ─────────────────── */
   const root = new Container();
@@ -179,7 +178,7 @@ export async function init() {
   const RAY_W = isMobile ? 220 : 340;
   const RAY_H = isMobile ? 650 : 1000;
 
-  const rayTex = makeTexture(raySliceTexture(RAY_W, RAY_H));
+  const rayTex = new Texture({ source: new CanvasSource({ resource: raySliceTexture(RAY_W, RAY_H) }) });
   const rays = [];
 
   for (let i = 0; i < NUM_RAYS; i++) {
@@ -202,7 +201,7 @@ export async function init() {
   /* ── LAYER 2: Top haze glow ─────────────────────────────────────── */
   const HAZE_W = 800;
   const HAZE_H = 600;
-  const hazeTex = makeTexture(hazeTexture(HAZE_W, HAZE_H));
+  const hazeTex = new Texture({ source: new CanvasSource({ resource: hazeTexture(HAZE_W, HAZE_H) }) });
   const haze = new Sprite(hazeTex);
   haze.anchor.set(0.5, 0);
   haze.blendMode = 'add';
@@ -216,7 +215,7 @@ export async function init() {
   root.addChild(filledSpr);
 
   /* ── LAYER 4: Edge highlight on top of logo (lit from above) ────── */
-  const edgeTex = makeTexture(edgeHighlightTexture(filled.width, filled.height));
+  const edgeTex = new Texture({ source: new CanvasSource({ resource: edgeHighlightTexture(filled.width, filled.height) }) });
   const edgeSpr = new Sprite(edgeTex);
   edgeSpr.anchor.set(0.5);
   edgeSpr.blendMode = 'add';
@@ -238,7 +237,7 @@ export async function init() {
   dustLayer.filters = [dustBlur];
 
   const NUM_DUST = isMobile ? 45 : 110;
-  const dustTex = makeTexture(dustTexture(isMobile ? 8 : 12));
+  const dustTex = new Texture({ source: new CanvasSource({ resource: dustTexture(isMobile ? 8 : 12) }) });
   const dustParticles = [];
 
   for (let i = 0; i < NUM_DUST; i++) {
@@ -286,7 +285,6 @@ export async function init() {
     root.x = app.screen.width / 2;
     root.y = app.screen.height / 2;
   };
-  layout();
   onResize(app, layout);
 
   /* ── Animation loop ─────────────────────────────────────────────── */

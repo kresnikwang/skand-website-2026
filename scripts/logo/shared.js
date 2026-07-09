@@ -124,23 +124,15 @@ export async function makeApp(hero, { pointerEvents = false } = {}) {
   return app;
 }
 
-// Pixi classes are injected by each effect module via bindPixi() so that
-// shared.js itself never imports 'pixi.js' (keeps Monday free of Pixi).
-let _Texture, _CanvasSource, _Rectangle;
-export function bindPixi(Texture, CanvasSource, Rectangle) {
-  _Texture = Texture;
-  _CanvasSource = CanvasSource;
-  _Rectangle = Rectangle;
-}
-
-// Build a texture from a canvas element (Pixi v8 CanvasSource).
-export function makeTexture(canvas) {
-  return new _Texture({ source: new _CanvasSource({ resource: canvas }) });
-}
-
-// Slice a sub-texture (frame) from a base texture.
-export function subTexture(baseTex, x, y, w, h) {
-  return new _Texture({ source: baseTex.source, frame: new _Rectangle(x, y, w, h) });
+// Fit a sprite to a fraction of the hero width and center it.
+export function fitAndCenter(sprite, app, ratio = 0.7) {
+  const maxW = app.screen.width * ratio;
+  const s = maxW / sprite.texture.width;
+  sprite.scale.set(s);
+  sprite.anchor.set(0.5);
+  sprite.x = app.screen.width / 2;
+  sprite.y = app.screen.height / 2;
+  return sprite;
 }
 
 // Render the SKAND wordmark to a 2D canvas. mode 'fill' or 'stroke'.
@@ -234,17 +226,6 @@ export function brandTextCanvas(opts = {}) {
   x2.fillText(text, w / 2, h / 2);
 
   return { canvas: c, width: w, height: h, cssWidth: w / supersample, cssHeight: h / supersample };
-}
-
-// Fit a sprite to a fraction of the hero width and center it.
-export function fitAndCenter(sprite, app, ratio = 0.7) {
-  const maxW = app.screen.width * ratio;
-  const s = maxW / sprite.texture.width;
-  sprite.scale.set(s);
-  sprite.anchor.set(0.5);
-  sprite.x = app.screen.width / 2;
-  sprite.y = app.screen.height / 2;
-  return sprite;
 }
 
 export function onResize(app, cb) {

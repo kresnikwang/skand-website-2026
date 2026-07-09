@@ -12,9 +12,9 @@ import {
   Container,
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import {
-  isMobile, prepareHeroForPixi, makeApp, bindPixi, brandTextCanvas,
-  makeTexture, subTexture, trackPointer, pointerOverSprite, onResize,
-} from './shared.js?v=13';
+  isMobile, prepareHeroForPixi, makeApp, brandTextCanvas,
+  trackPointer, pointerOverSprite, onResize,
+} from './shared.js';
 
 /* ── helpers ──────────────────────────────────────────────────────── */
 
@@ -37,7 +37,6 @@ export async function init() {
   prepareHeroForPixi();
   const hero = document.getElementById('hero');
   const app = await makeApp(hero);
-  bindPixi(Texture, CanvasSource, Rectangle);
   const ptr = trackPointer(hero);
 
   // ── Build the SKAND wordmark texture ──
@@ -47,7 +46,7 @@ export async function init() {
     weight: 500,
     letterSpacing: 8,
   });
-  const baseTex = makeTexture(logo.canvas);
+  const baseTex = new Texture({ source: new CanvasSource({ resource: logo.canvas }) });
 
   // ── Slice into tile grid ──
   const cols = isMobile ? 34 : 52;
@@ -65,7 +64,7 @@ export async function init() {
     for (let c = 0; c < cols; c++) {
       const x = Math.min(c * tw, logo.width - tw);
       const y = Math.min(r * th, logo.height - th);
-      const tex = subTexture(baseTex, x, y, tw, th);
+      const tex = new Texture({ source: baseTex.source, frame: new Rectangle(x, y, tw, th) });
       const spr = new Sprite(tex);
       spr.anchor.set(0.5);
       // Center entire grid around container origin.
@@ -106,7 +105,6 @@ export async function init() {
     container.x = app.screen.width / 2;
     container.y = app.screen.height / 2;
   };
-  scaleFit();
   onResize(app, scaleFit);
 
   // ── Invisible hit sprite for hover detection ──

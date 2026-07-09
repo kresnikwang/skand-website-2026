@@ -3,7 +3,7 @@
 // Monday keeps the existing 2D canvas effect in index.html.
 // Tue..Sun are loaded lazily (only the current day's module + Pixi).
 // URL override: ?fx=1..7 or ?fx=monday..sunday
-import('./shared.js?v=13')
+import('./shared.js')
   .then((shared) => {
     const day = shared.getEffectiveDay();
     const map = {

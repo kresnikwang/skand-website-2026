@@ -16,9 +16,9 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import { AdvancedBloomFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
-  isMobile, prepareHeroForPixi, makeApp, bindPixi, brandTextCanvas,
-  makeTexture, fitAndCenter, trackPointer, pointerOverSprite, onResize,
-} from './shared.js?v=13';
+  isMobile, prepareHeroForPixi, makeApp, brandTextCanvas,
+  fitAndCenter, trackPointer, pointerOverSprite, onResize,
+} from './shared.js';
 
 /* --------------------------------------------------------------------------
  * Procedural noise texture — very soft, low-contrast cloudy blobs.
@@ -82,14 +82,12 @@ export async function init() {
   prepareHeroForPixi();
   const hero = document.getElementById('hero');
   const app = await makeApp(hero);
-  bindPixi(Texture, CanvasSource, Rectangle);
   const ptr = trackPointer(hero);
 
   /* ---- Logo ---- */
   const logo = brandTextCanvas({ text: 'SKAND', size: 210, weight: 500, letterSpacing: 8 });
-  const logoTex = makeTexture(logo.canvas);
+  const logoTex = new Texture({ source: new CanvasSource({ resource: logo.canvas }) });
   const logoSpr = new Sprite(logoTex);
-  fitAndCenter(logoSpr, app, 0.7);
   app.stage.addChild(logoSpr);
 
   /* ---- AdvancedBloom — very gentle, subtle glow ---- */
@@ -103,7 +101,7 @@ export async function init() {
 
   /* ---- Displacement — gentle ink-wash drift ---- */
   const dispCanvas = createNoiseCanvas(256);
-  const dispTex = makeTexture(dispCanvas);
+  const dispTex = new Texture({ source: new CanvasSource({ resource: dispCanvas }) });
   const dispSprite = new TilingSprite({
     texture: dispTex,
     width: app.screen.width,
@@ -115,7 +113,7 @@ export async function init() {
   logoSpr.filters = [bloom, dispFilter];
 
   /* ---- Ripple layer ---- */
-  const rippleTex = makeTexture(createRippleCanvas(128));
+  const rippleTex = new Texture({ source: new CanvasSource({ resource: createRippleCanvas(128) }) });
   const rippleContainer = new Container();
   app.stage.addChild(rippleContainer);
   const ripples = [];
