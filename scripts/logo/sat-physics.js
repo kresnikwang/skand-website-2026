@@ -40,6 +40,8 @@ export async function init() {
 
   const blocks = [];
   const stage = new Container();
+  stage.x = app.screen.width / 2;
+  stage.y = app.screen.height / 2;
   app.stage.addChild(stage);
 
   const scaleFit = () => (app.screen.width * 0.72) / logo.width;
@@ -62,9 +64,9 @@ export async function init() {
 
       const bw = tw * scale;
       const bh = th * scale;
-      // target (stage coords) so logo is centered
-      const targetX = app.screen.width / 2 + (sx + tw / 2 - logo.width / 2) * scale;
-      const targetY = app.screen.height / 2 + (sy + th / 2 - logo.height / 2) * scale;
+      // target (local stage coords) so logo is centered
+      const targetX = (sx + tw / 2 - logo.width / 2) * scale;
+      const targetY = (sy + th / 2 - logo.height / 2) * scale;
 
       const body = Bodies.rectangle(
         app.screen.width * (0.2 + Math.random() * 0.6),
