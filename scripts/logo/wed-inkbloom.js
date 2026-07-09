@@ -68,8 +68,14 @@ export async function init() {
   const logoSpr = new Sprite(logoTex);
   fitAndCenter(logoSpr, app, 0.7);
   const logoBox = new Container();
+  logoBox.x = app.screen.width / 2;
+  logoBox.y = app.screen.height / 2;
   logoBox.addChild(logoSpr);
   app.stage.addChild(logoBox);
+  
+  // 调整 logo 精灵的位置，使其相对于容器中心
+  logoSpr.x -= app.screen.width / 2;
+  logoSpr.y -= app.screen.height / 2;
 
   // Glow
   const bloom = new AdvancedBloomFilter({
