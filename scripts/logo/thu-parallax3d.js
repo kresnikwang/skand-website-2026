@@ -15,7 +15,7 @@ import {
 import { BevelFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
   prepareHeroForPixi, makeApp, bindPixi, makeTexture, trackPointer,
-} from './shared.js';
+} from './shared.js?v=13';
 
 // Chrome / brushed-steel gradient wordmark -> reads as metal under BevelFilter.
 function metallicTextCanvas({ text = 'SKAND', size = 210, weight = 600, letterSpacing = 8, supersample = 2 } = {}) {

@@ -16,7 +16,7 @@ import {
 import {
   isMobile, prepareHeroForPixi, makeApp, bindPixi, createTextCanvas,
   brandTextCanvas, makeTexture, trackPointer, onResize,
-} from './shared.js';
+} from './shared.js?v=13';
 
 /* ── helper: seeded pseudo-random ──────────────────────────────────── */
 function seededRand(i) {

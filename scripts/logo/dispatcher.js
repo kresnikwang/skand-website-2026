@@ -3,7 +3,7 @@
 // Monday keeps the existing 2D canvas effect in index.html.
 // Tue..Sun are loaded lazily (only the current day's module + Pixi).
 // URL override: ?fx=1..7 or ?fx=monday..sunday
-import('./shared.js')
+import('./shared.js?v=13')
   .then((shared) => {
     const day = shared.getEffectiveDay();
     const map = {
@@ -24,7 +24,7 @@ import('./shared.js')
     }
     // Cache-bust only the day module (never shared.js — it must stay a single
     // instance, and the day modules import it without a query).
-    import(`./${mod}.js?v=12`)
+    import(`./${mod}.js?v=13`)
       .then((m) => {
         if (!m.init) {
           shared.revealStaticTitle();

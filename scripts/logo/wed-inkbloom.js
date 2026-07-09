@@ -18,7 +18,7 @@ import { AdvancedBloomFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6
 import {
   isMobile, prepareHeroForPixi, makeApp, bindPixi, brandTextCanvas,
   makeTexture, fitAndCenter, trackPointer, pointerOverSprite, onResize,
-} from './shared.js';
+} from './shared.js?v=13';
 
 /* --------------------------------------------------------------------------
  * Procedural noise texture — very soft, low-contrast cloudy blobs.

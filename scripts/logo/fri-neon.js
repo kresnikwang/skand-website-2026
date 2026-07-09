@@ -18,7 +18,7 @@ import { GlowFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pix
 import {
   prepareHeroForPixi, makeApp, bindPixi, createTextCanvas, brandTextCanvas,
   makeTexture, fitAndCenter, trackPointer, onResize, isMobile,
-} from './shared.js';
+} from './shared.js?v=13';
 
 /* ---------- procedural noise for electric-current displacement ---------- */
 function makeNoiseCanvas(size = 256) {

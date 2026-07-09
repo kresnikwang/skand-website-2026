@@ -14,7 +14,7 @@ import {
 import {
   isMobile, prepareHeroForPixi, makeApp, bindPixi,
   fitAndCenter, trackPointer, onResize,
-} from './shared.js';
+} from './shared.js?v=13';
 
 const RAMP = ' .:-=+*#%@';
 const NOISE_CHARS = '.:;|/\\~*+-';

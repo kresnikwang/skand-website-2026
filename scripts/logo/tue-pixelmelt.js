@@ -14,7 +14,7 @@ import {
 import {
   isMobile, prepareHeroForPixi, makeApp, bindPixi, brandTextCanvas,
   makeTexture, subTexture, trackPointer, pointerOverSprite, onResize,
-} from './shared.js';
+} from './shared.js?v=13';
 
 /* ── helpers ──────────────────────────────────────────────────────── */
 
