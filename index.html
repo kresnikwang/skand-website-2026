@@ -13,6 +13,28 @@
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="SKAND — Independent Creative Agency in China | Shanghai">
+<script>
+// Temporary debug: show uncaught JS errors on the page so we can diagnose file:// or CDN issues.
+(function(){
+  window.__skandErrors = [];
+  function showErr(msg, src, line, col, err) {
+    window.__skandErrors.push({msg, src, line, col, err: err && err.message});
+    var box = document.getElementById('__skandDebugBox');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = '__skandDebugBox';
+      box.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(180,0,0,.92);color:#fff;font:12px/1.4 monospace;padding:10px;white-space:pre-wrap;word-break:break-all;max-height:40vh;overflow:auto;';
+      document.addEventListener('DOMContentLoaded', function(){ document.body.appendChild(box); });
+    }
+    var text = (msg||'') + (src ? ' @ ' + src + ':' + line + ':' + col : '');
+    if (err && err.stack) text += '\n' + err.stack;
+    box.textContent += (box.textContent ? '\n---\n' : '') + text;
+  }
+  window.onerror = showErr;
+  window.addEventListener('error', function(e){ showErr(e.message, e.filename, e.lineno, e.colno, e.error); });
+  window.addEventListener('unhandledrejection', function(e){ showErr('Unhandled Promise: ' + (e.reason && e.reason.message || e.reason), '', 0, 0, e.reason); });
+})();
+</script>
 <meta name="twitter:description" content="Independent creative agency in Shanghai, China, specializing in IMC, brand voice, social storytelling, digital experiences, and brand design.">
 <meta name="twitter:image" content="https://skandstudio.com/logo.png">
 <link rel="canonical" href="https://skandstudio.com/">
@@ -363,6 +385,15 @@ footer a{color:var(--grey);text-decoration:none}
       "name": "Global"
     }
   ]
+}
+</script>
+<script type="importmap">
+{
+  "imports": {
+    "pixi.js": "https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs",
+    "pixi-filters": "https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs",
+    "matter-js": "https://esm.sh/matter-js@0.20.0"
+  }
 }
 </script>
 </head>
@@ -956,6 +987,33 @@ document.querySelectorAll('a,.filter-tab,.project-card,.contact-cta,.nav-links a
 
 /* === HERO CANVAS ANIMATION (Moonshot-inspired Lens) === */
 (function() {
+  // Only run this built-in effect on Monday (day===1), or when ?fx=1|mon|monday.
+  const DAY_ALIASES = {
+    monday: 1, mon: 1,
+    tuesday: 2, tue: 2,
+    wednesday: 3, wed: 3,
+    thursday: 4, thu: 4,
+    friday: 5, fri: 5,
+    saturday: 6, sat: 6,
+    sunday: 7, sun: 7,
+  };
+  const params = new URLSearchParams(window.location.search);
+  let day;
+  if (params.has('fx')) {
+    const raw = params.get('fx').toLowerCase().trim();
+    day = DAY_ALIASES[raw] ?? (() => {
+      const n = parseInt(raw, 10);
+      return !Number.isNaN(n) && n >= 1 && n <= 7 ? n : null;
+    })();
+  }
+  if (!day) {
+    const now = new Date();
+    const cn = new Date(now.getTime() + (480 + now.getTimezoneOffset()) * 60000);
+    day = cn.getDay();
+    if (day === 0) day = 7;
+  }
+  if (day !== 1) return;
+
   const canvas = document.getElementById('heroCanvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -1508,5 +1566,6 @@ document.querySelectorAll('a[href^="b-side.html"]').forEach(link => {
   });
 });
 </script>
+<script type="module" src="scripts/logo/dispatcher.js?v=2"></script>
 </body>
 </html>
