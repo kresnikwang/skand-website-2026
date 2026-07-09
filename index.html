@@ -13,28 +13,6 @@
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="SKAND — Independent Creative Agency in China | Shanghai">
-<script>
-// Temporary debug: show uncaught JS errors on the page so we can diagnose file:// or CDN issues.
-(function(){
-  window.__skandErrors = [];
-  function showErr(msg, src, line, col, err) {
-    window.__skandErrors.push({msg, src, line, col, err: err && err.message});
-    var box = document.getElementById('__skandDebugBox');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = '__skandDebugBox';
-      box.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(180,0,0,.92);color:#fff;font:12px/1.4 monospace;padding:10px;white-space:pre-wrap;word-break:break-all;max-height:40vh;overflow:auto;';
-      document.addEventListener('DOMContentLoaded', function(){ document.body.appendChild(box); });
-    }
-    var text = (msg||'') + (src ? ' @ ' + src + ':' + line + ':' + col : '');
-    if (err && err.stack) text += '\n' + err.stack;
-    box.textContent += (box.textContent ? '\n---\n' : '') + text;
-  }
-  window.onerror = showErr;
-  window.addEventListener('error', function(e){ showErr(e.message, e.filename, e.lineno, e.colno, e.error); });
-  window.addEventListener('unhandledrejection', function(e){ showErr('Unhandled Promise: ' + (e.reason && e.reason.message || e.reason), '', 0, 0, e.reason); });
-})();
-</script>
 <meta name="twitter:description" content="Independent creative agency in Shanghai, China, specializing in IMC, brand voice, social storytelling, digital experiences, and brand design.">
 <meta name="twitter:image" content="https://skandstudio.com/logo.png">
 <link rel="canonical" href="https://skandstudio.com/">
@@ -1566,6 +1544,6 @@ document.querySelectorAll('a[href^="b-side.html"]').forEach(link => {
   });
 });
 </script>
-<script type="module" src="scripts/logo/dispatcher.js?v=2"></script>
+<script type="module" src="scripts/logo/dispatcher.js?v=5"></script>
 </body>
 </html>

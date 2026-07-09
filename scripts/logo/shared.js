@@ -40,12 +40,25 @@ export function getEffectiveDay() {
 const HIDE =
   'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;';
 
-// Hide the original HTML hero text/bg and the 2D Monday canvas, then reveal
-// the scroll hint + Find B-Side button so Pixi days feel consistent.
+// Hide the original HTML SKAND title (replaced by the Pixi logo), but keep the
+// company slogan + Chinese line visible and position them below the logo.
 export function prepareHeroForPixi() {
   const ht = document.getElementById('heroTitle');
   if (ht) ht.style.cssText = HIDE;
-  document.querySelectorAll('.hero-tagline, .hero-cn').forEach((e) => (e.style.cssText = HIDE));
+
+  const tagline = document.querySelector('.hero-tagline');
+  if (tagline) {
+    tagline.style.cssText =
+      'position:absolute;left:50%;top:calc(50% + 170px);transform:translateX(-50%);opacity:0;margin:0;z-index:3;pointer-events:none;transition:opacity .8s ease;';
+    setTimeout(() => (tagline.style.opacity = '1'), 900);
+  }
+  const cn = document.querySelector('.hero-cn');
+  if (cn) {
+    cn.style.cssText =
+      'position:absolute;left:50%;top:calc(50% + 210px);transform:translateX(-50%);opacity:0;margin:0;z-index:3;pointer-events:none;transition:opacity .8s ease;';
+    setTimeout(() => (cn.style.opacity = '1'), 1100);
+  }
+
   document.querySelectorAll('.hero-bg-line').forEach((e) => (e.style.display = 'none'));
   const hc = document.getElementById('heroCanvas');
   if (hc) hc.style.display = 'none';
@@ -176,6 +189,50 @@ export function createTextCanvas(opts = {}) {
     x2.fillStyle = color;
     x2.fillText(text, w / 2, h / 2);
   }
+  return { canvas: c, width: w, height: h, cssWidth: w / supersample, cssHeight: h / supersample };
+}
+
+// Same as above, but with the brand coral->white horizontal gradient used by
+// .hero-title. Use this for all daily Pixi effects so the logo keeps its color.
+export function brandTextCanvas(opts = {}) {
+  const text = opts.text || 'SKAND';
+  const fontFamily = opts.fontFamily || "'Cormorant Garamond', Georgia, serif";
+  const weight = opts.weight || 500;
+  const size = opts.size || 200;
+  const letterSpacing = opts.letterSpacing != null ? opts.letterSpacing : 6;
+  const supersample = opts.supersample || 2;
+
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+  const fpx = size * supersample;
+  const font = `${weight} ${fpx}px ${fontFamily}`;
+  ctx.font = font;
+  try {
+    ctx.letterSpacing = letterSpacing * supersample + 'px';
+  } catch (e) {}
+  const m = ctx.measureText(text);
+  const pad = 30 * supersample;
+  const w = Math.ceil(m.width) + pad * 2;
+  const h = Math.ceil(fpx * 1.5) + pad * 2;
+  c.width = w;
+  c.height = h;
+
+  const x2 = c.getContext('2d');
+  x2.font = font;
+  try {
+    x2.letterSpacing = letterSpacing * supersample + 'px';
+  } catch (e) {}
+  x2.textAlign = 'center';
+  x2.textBaseline = 'middle';
+
+  const grad = x2.createLinearGradient(0, 0, w, 0);
+  grad.addColorStop(0.0, '#e8563a');
+  grad.addColorStop(0.3, '#f0ede8');
+  grad.addColorStop(0.7, '#f0ede8');
+  grad.addColorStop(1.0, '#e8563a');
+  x2.fillStyle = grad;
+  x2.fillText(text, w / 2, h / 2);
+
   return { canvas: c, width: w, height: h, cssWidth: w / supersample, cssHeight: h / supersample };
 }
 

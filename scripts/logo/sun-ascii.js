@@ -96,7 +96,7 @@ export async function init() {
         if (d2 < scanR2) lit[i] = 1;
         else lit[i] *= 0.93;
 
-        const bright = Math.min(1, a * 0.55 + lit[i] * 0.75);
+        const bright = Math.min(1, a * 0.75 + lit[i] * 0.6);
         const ci = Math.min(RAMP.length - 1, Math.floor(bright * (RAMP.length - 1)));
         const ch = RAMP[ci];
         if (ch === ' ') { lit[i] *= 0.9; continue; }
@@ -109,6 +109,14 @@ export async function init() {
         actx.fillText(ch, cx, cy);
       }
     }
+
+    // scan-line cursor indicator
+    actx.strokeStyle = 'rgba(240, 237, 232, 0.35)';
+    actx.lineWidth = 2;
+    actx.beginPath();
+    actx.moveTo(cursorX, 0);
+    actx.lineTo(cursorX, H);
+    actx.stroke();
 
     tex.source.update();
   });

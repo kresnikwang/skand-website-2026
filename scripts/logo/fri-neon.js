@@ -14,7 +14,7 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import { GlowFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
-  prepareHeroForPixi, makeApp, bindPixi, createTextCanvas,
+  prepareHeroForPixi, makeApp, bindPixi, brandTextCanvas,
   makeTexture, fitAndCenter, trackPointer, onResize,
 } from './shared.js';
 
@@ -56,7 +56,7 @@ export async function init() {
   app.stage.addChild(baseSpr);
 
   // Glowing coral fill (revealed by mask)
-  const fill = createTextCanvas({ text: 'SKAND', size: 210, weight: 500, letterSpacing: 8 });
+  const fill = brandTextCanvas({ text: 'SKAND', size: 210, weight: 500, letterSpacing: 8 });
   const fillTex = makeTexture(fill.canvas);
   const glowSpr = new Sprite(fillTex);
   fitAndCenter(glowSpr, app, 0.7);
@@ -108,7 +108,9 @@ export async function init() {
     mask.circle(0, 0, rad).fill(0xffffff);
 
     glow.outerStrength = 2 + lit * 3;
-    turb.scale = 3 + lit * 10;
+    // DisplacementFilter.scale is a Point in Pixi v8 (getter-only).
+    turb.scale.x = 3 + lit * 10;
+    turb.scale.y = 3 + lit * 10;
     disp.x += 2 * dt;
     disp.y += 1 * dt;
   });

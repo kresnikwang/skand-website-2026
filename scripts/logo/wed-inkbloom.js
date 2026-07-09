@@ -14,7 +14,7 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import { AdvancedBloomFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
-  isMobile, prepareHeroForPixi, makeApp, bindPixi, createTextCanvas,
+  isMobile, prepareHeroForPixi, makeApp, bindPixi, brandTextCanvas,
   makeTexture, fitAndCenter, trackPointer, pointerOverSprite, onResize,
 } from './shared.js';
 
@@ -62,20 +62,12 @@ export async function init() {
   bindPixi(Texture, CanvasSource, Rectangle);
   const ptr = trackPointer(hero);
 
-  // Logo
-  const logo = createTextCanvas({ text: 'SKAND', size: 210, weight: 500, letterSpacing: 8 });
+  // Logo centered directly on stage.
+  const logo = brandTextCanvas({ text: 'SKAND', size: 210, weight: 500, letterSpacing: 8 });
   const logoTex = makeTexture(logo.canvas);
   const logoSpr = new Sprite(logoTex);
   fitAndCenter(logoSpr, app, 0.7);
-  const logoBox = new Container();
-  logoBox.x = app.screen.width / 2;
-  logoBox.y = app.screen.height / 2;
-  logoBox.addChild(logoSpr);
-  app.stage.addChild(logoBox);
-  
-  // 调整 logo 精灵的位置，使其相对于容器中心
-  logoSpr.x -= app.screen.width / 2;
-  logoSpr.y -= app.screen.height / 2;
+  app.stage.addChild(logoSpr);
 
   // Glow
   const bloom = new AdvancedBloomFilter({
@@ -91,7 +83,7 @@ export async function init() {
   const disp = new TilingSprite({ texture: dispTex, width: app.screen.width, height: app.screen.height });
   app.stage.addChild(disp);
   const dispFilter = new DisplacementFilter({ sprite: disp, scale: 8 });
-  logoBox.filters = [bloom, dispFilter];
+  logoSpr.filters = [bloom, dispFilter];
 
   onResize(app, () => {
     disp.width = app.screen.width;
@@ -114,7 +106,9 @@ export async function init() {
     intensity += ((hovering ? 1 : 0) - intensity) * 0.06 * dt;
 
     // smoke strength follows hover
-    if (dispFilter) dispFilter.scale = 6 + intensity * 26;
+    // DisplacementFilter.scale is a Point in Pixi v8 (getter-only).
+    dispFilter.scale.x = 6 + intensity * 26;
+    dispFilter.scale.y = 6 + intensity * 26;
     disp.tilePosition.x += 0.4 * dt;
     disp.tilePosition.y += 0.25 * dt;
     bloom.bloomScale = 1.3 + intensity * 0.8;

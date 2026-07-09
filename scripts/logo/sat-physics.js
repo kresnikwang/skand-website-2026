@@ -12,7 +12,7 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import Matter from 'https://esm.sh/matter-js@0.20.0';
 import {
-  isMobile, prepareHeroForPixi, makeApp, bindPixi, createTextCanvas,
+  isMobile, prepareHeroForPixi, makeApp, bindPixi, brandTextCanvas,
   makeTexture, subTexture, trackPointer,
 } from './shared.js';
 
@@ -25,7 +25,7 @@ export async function init() {
   bindPixi(Texture, CanvasSource, Rectangle);
   const ptr = trackPointer(hero);
 
-  const logo = createTextCanvas({ text: 'SKAND', size: 200, weight: 500, letterSpacing: 8 });
+  const logo = brandTextCanvas({ text: 'SKAND', size: 200, weight: 500, letterSpacing: 8 });
   const baseTex = makeTexture(logo.canvas);
 
   // Sample the logo alpha on a grid to decide which cells are filled.
@@ -36,12 +36,12 @@ export async function init() {
   const th = Math.ceil(logo.height / rows);
 
   const engine = Engine.create();
-  engine.gravity.y = 0.6; // fall during assemble
+  engine.gravity.y = 0.8;
 
   const blocks = [];
   const stage = new Container();
-  stage.x = app.screen.width / 2;
-  stage.y = app.screen.height / 2;
+  stage.x = 0;
+  stage.y = 0;
   app.stage.addChild(stage);
 
   const scaleFit = () => (app.screen.width * 0.72) / logo.width;
@@ -64,24 +64,24 @@ export async function init() {
 
       const bw = tw * scale;
       const bh = th * scale;
-      // target (local stage coords) so logo is centered
-      const targetX = (sx + tw / 2 - logo.width / 2) * scale;
-      const targetY = (sy + th / 2 - logo.height / 2) * scale;
+      // Target position is the global centre of the hero.
+      const targetX = (sx + tw / 2 - logo.width / 2) * scale + app.screen.width / 2;
+      const targetY = (sy + th / 2 - logo.height / 2) * scale + app.screen.height / 2;
 
       const body = Bodies.rectangle(
         app.screen.width * (0.2 + Math.random() * 0.6),
         -100 - Math.random() * app.screen.height,
         bw,
         bh,
-        { friction: 0.5, restitution: 0.15, frictionAir: 0.02 }
+        { friction: 0.6, restitution: 0.1, frictionAir: 0.015, collisionFilter: { group: -1 } }
       );
       Composite.add(engine.world, body);
 
       const cons = Constraint.create({
         bodyA: body,
         pointB: { x: targetX, y: targetY },
-        stiffness: 0.02,
-        damping: 0.08,
+        stiffness: 0.12,
+        damping: 0.04,
         length: 0,
       });
       Composite.add(engine.world, cons);
@@ -104,20 +104,6 @@ export async function init() {
     }
     return null;
   };
-  const startDrag = () => {
-    if (!ptr.inside) return;
-    const b = pickBlock();
-    if (b) {
-      dragged = b;
-      offX = ptr.x - b.body.position.x;
-      offY = ptr.y - b.body.position.y;
-    }
-  };
-  const endDrag = () => { dragged = null; };
-  hero.addEventListener('mousedown', () => { down = true; startDrag(); });
-  window.addEventListener('mouseup', () => { down = false; endDrag(); });
-  hero.addEventListener('touchstart', () => { down = true; startDrag(); }, { passive: true });
-  window.addEventListener('touchend', () => { down = false; endDrag(); });
 
   app.renderer.on('resize', () => {
     scale = scaleFit();
@@ -128,15 +114,38 @@ export async function init() {
     }
   });
 
-  const assembleEnd = performance.now() + 2400;
+  const assembleEnd = performance.now() + 2200;
   let assembled = false;
+
+  // Drag: wake a block (make it dynamic), then on release it falls & stacks.
+  const startDrag = () => {
+    if (!ptr.inside) return;
+    const b = pickBlock();
+    if (b) {
+      dragged = b;
+      Body.setStatic(b.body, false);
+      b.body.collisionFilter.group = 0;
+      offX = ptr.x - b.body.position.x;
+      offY = ptr.y - b.body.position.y;
+    }
+  };
+  const endDrag = () => { dragged = null; };
+  hero.addEventListener('mousedown', () => { down = true; startDrag(); });
+  window.addEventListener('mouseup', () => { down = false; endDrag(); });
+  hero.addEventListener('touchstart', () => { down = true; startDrag(); }, { passive: true });
+  window.addEventListener('touchend', () => { down = false; endDrag(); });
 
   app.ticker.add((ticker) => {
     const dt = Math.min(ticker.deltaTime, 3);
 
     if (!assembled && performance.now() > assembleEnd) {
       assembled = true;
-      engine.gravity.y = 0; // hold the assembled shape; drag/stack from here
+      // Freeze the completed logo and remove the assembly springs.
+      for (const b of blocks) {
+        Composite.remove(engine.world, b.cons);
+        Body.setStatic(b.body, true);
+        b.body.collisionFilter.group = 0;
+      }
     }
 
     if (dragged) {
@@ -151,7 +160,7 @@ export async function init() {
       b.spr.x = b.body.position.x;
       b.spr.y = b.body.position.y;
       b.spr.rotation = b.body.angle;
-      b.spr.scale.set(scale); // texture source px -> css px
+      b.spr.scale.set(scale);
     }
   });
 }

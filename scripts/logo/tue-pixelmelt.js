@@ -10,7 +10,7 @@ import {
   Container,
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import {
-  isMobile, prepareHeroForPixi, makeApp, bindPixi, createTextCanvas,
+  isMobile, prepareHeroForPixi, makeApp, bindPixi, brandTextCanvas,
   makeTexture, subTexture, trackPointer, pointerOverSprite, onResize,
 } from './shared.js';
 
@@ -22,7 +22,7 @@ export async function init() {
   const ptr = trackPointer(hero);
 
   // Build the SKAND wordmark and a sliced grid of tiles.
-  const logo = createTextCanvas({ text: 'SKAND', size: 200, weight: 500, letterSpacing: 8 });
+  const logo = brandTextCanvas({ text: 'SKAND', size: 200, weight: 500, letterSpacing: 8 });
   const baseTex = makeTexture(logo.canvas);
 
   const cols = isMobile ? 34 : 52;
@@ -43,8 +43,9 @@ export async function init() {
       const tex = subTexture(baseTex, x, y, tw, th);
       const spr = new Sprite(tex);
       spr.anchor.set(0.5);
-      spr.x = x + tw / 2;
-      spr.y = y + th / 2;
+      // Center the whole logo around the container's local origin.
+      spr.x = x + tw / 2 - logo.width / 2;
+      spr.y = y + th / 2 - logo.height / 2;
       // per-column drip phase for organic melt
       spr._col = c;
       spr._baseY = spr.y;
@@ -58,7 +59,11 @@ export async function init() {
     const maxW = app.screen.width * 0.72;
     const s = maxW / logo.width;
     container.scale.set(s);
+    // Keep the scaled logo centered on every resize.
+    container.x = app.screen.width / 2;
+    container.y = app.screen.height / 2;
   };
+  scaleFit();
   onResize(app, scaleFit);
 
   // Invisible full-logo hit sprite for hover detection.
