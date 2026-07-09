@@ -51,8 +51,14 @@ export async function init() {
   fitAndCenter(logoSpr, app, 0.68);
 
   const box = new Container();
+  box.x = app.screen.width / 2;
+  box.y = app.screen.height / 2;
   box.addChild(logoSpr);
   app.stage.addChild(box);
+  
+  // 调整 logo 精灵的位置，使其相对于容器中心
+  logoSpr.x -= app.screen.width / 2;
+  logoSpr.y -= app.screen.height / 2;
 
   // Embossed metal relief
   const bevel = new BevelFilter({
