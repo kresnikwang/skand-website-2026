@@ -57,7 +57,6 @@ export async function init() {
   const outlineData = createTextCanvas({
     text: 'SKAND', size: 210, weight: 600, mode: 'stroke',
     strokeWidth: 2.5, strokeColor: '#f0ede8', letterSpacing: 8,
-    pad: 30,
   });
   const outlineTex = new Texture({ source: new CanvasSource({ resource: outlineData.canvas }) });
   const baseSpr = new Sprite(outlineTex);
