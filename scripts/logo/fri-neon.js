@@ -17,7 +17,7 @@ import {
 import { GlowFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
   prepareHeroForPixi, makeApp, createTextCanvas, brandTextCanvas,
-  fitAndCenter, trackPointer, onResize, isMobile,
+  trackPointer, onResize, isMobile,
 } from './shared.js';
 
 /* ---------- procedural noise for electric-current displacement ---------- */
@@ -123,8 +123,19 @@ export async function init() {
   /*  Resize handler                                                     */
   /* ------------------------------------------------------------------ */
   onResize(app, () => {
-    fitAndCenter(baseSpr, app, 0.7);
-    fitAndCenter(glowSpr, app, 0.7);
+    const maxW = app.screen.width * 0.7;
+    const s = maxW / fillData.canvas.width;
+
+    baseSpr.scale.set(s);
+    baseSpr.anchor.set(0.5);
+    baseSpr.x = app.screen.width / 2;
+    baseSpr.y = app.screen.height / 2;
+
+    glowSpr.scale.set(s);
+    glowSpr.anchor.set(0.5);
+    glowSpr.x = app.screen.width / 2;
+    glowSpr.y = app.screen.height / 2;
+
     dispSprite.width = app.screen.width;
     dispSprite.height = app.screen.height;
   });
