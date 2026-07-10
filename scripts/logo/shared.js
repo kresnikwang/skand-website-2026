@@ -148,6 +148,7 @@ export function createTextCanvas(opts = {}) {
     strokeColor = '#f0ede8',
     strokeWidth = 3,
     supersample = 2,
+    pad = (opts.mode === 'stroke' ? (opts.strokeWidth || 3) * supersample * 3 : 30 * supersample) / supersample,
   } = opts;
 
   const c = document.createElement('canvas');
@@ -159,9 +160,9 @@ export function createTextCanvas(opts = {}) {
     ctx.letterSpacing = letterSpacing * supersample + 'px';
   } catch (e) {}
   const m = ctx.measureText(text);
-  const pad = (mode === 'stroke' ? strokeWidth * supersample * 3 : 30 * supersample);
-  const w = Math.ceil(m.width) + pad * 2;
-  const h = Math.ceil(fpx * 1.5) + pad * 2;
+  const padPx = pad * supersample;
+  const w = Math.ceil(m.width) + padPx * 2;
+  const h = Math.ceil(fpx * 1.5) + padPx * 2;
   c.width = w;
   c.height = h;
 

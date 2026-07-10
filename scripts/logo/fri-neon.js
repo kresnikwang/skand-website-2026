@@ -17,7 +17,7 @@ import {
 import { GlowFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
   prepareHeroForPixi, makeApp, createTextCanvas, brandTextCanvas,
-  trackPointer, onResize, isMobile,
+  fitAndCenter, trackPointer, onResize, isMobile,
 } from './shared.js';
 
 /* ---------- procedural noise for electric-current displacement ---------- */
@@ -57,6 +57,7 @@ export async function init() {
   const outlineData = createTextCanvas({
     text: 'SKAND', size: 210, weight: 600, mode: 'stroke',
     strokeWidth: 2.5, strokeColor: '#f0ede8', letterSpacing: 8,
+    pad: 30,
   });
   const outlineTex = new Texture({ source: new CanvasSource({ resource: outlineData.canvas }) });
   const baseSpr = new Sprite(outlineTex);
@@ -123,19 +124,8 @@ export async function init() {
   /*  Resize handler                                                     */
   /* ------------------------------------------------------------------ */
   onResize(app, () => {
-    const maxW = app.screen.width * 0.7;
-    const s = maxW / fillData.canvas.width;
-
-    baseSpr.scale.set(s);
-    baseSpr.anchor.set(0.5);
-    baseSpr.x = app.screen.width / 2;
-    baseSpr.y = app.screen.height / 2;
-
-    glowSpr.scale.set(s);
-    glowSpr.anchor.set(0.5);
-    glowSpr.x = app.screen.width / 2;
-    glowSpr.y = app.screen.height / 2;
-
+    fitAndCenter(baseSpr, app, 0.7);
+    fitAndCenter(glowSpr, app, 0.7);
     dispSprite.width = app.screen.width;
     dispSprite.height = app.screen.height;
   });
