@@ -568,6 +568,11 @@ let logoDragVY = 0;
 let pullCharge = 0;
 let pullAnchorX = window.innerWidth / 2;
 let pullAnchorY = window.innerHeight / 2;
+/* Mode-specific interaction energy (0–1), decayed each frame */
+let composeSnap = 0;   // magnetic settle pulse
+let scatterChaos = 0;  // residual explosion energy
+let orbitSpinBoost = 0; // spin injection
+let bloomPulse = 0;    // organic bloom wave
 
 class LogoParticle {
   constructor(x, y, letterIndex) {
@@ -583,9 +588,16 @@ class LogoParticle {
     this.size = 1.2 + Math.random() * 1.45;
     this.baseSize = this.size;
     this.color = 0xf0ede8;
+    this.shape = 'rect'; // rect | circle | diamond
     this.burstX = 0;
     this.burstY = 0;
+    this.orbitAngle = 0;
+    this.orbitR = 0;
+    this.baseOrbitR = 0;
+    this.spinVel = 0;
+    this.localBloom = 0;
     this.pickBurst();
+    this.initOrbit();
   }
 
   pickBurst() {
@@ -593,87 +605,45 @@ class LogoParticle {
     const dx = this.homeX - center.x;
     const dy = this.homeY - center.y;
     const dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
-    const spread = 88 + Math.random() * 210;
-    this.burstX = (dx / dist) * spread + (Math.random() - 0.5) * 80;
-    this.burstY = (dy / dist) * spread + (Math.random() - 0.5) * 80;
+    // Keep scatter offsets local to the letter — not full-screen debris
+    const spread = 42 + Math.random() * 78;
+    this.burstX = (dx / dist) * spread + (Math.random() - 0.5) * 36;
+    this.burstY = (dy / dist) * spread + (Math.random() - 0.5) * 36;
   }
 
-  update(time) {
-    const wake = letterWake[this.letter];
+  initOrbit() {
     const center = letterCenters[this.letter] || { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    const bounds = letterBounds[this.letter];
-    let tx = this.homeX + logoDragX;
-    let ty = this.homeY + logoDragY;
-    let spring = 0.066;
-    let drag = 0.86;
+    const dx = this.homeX - center.x;
+    const dy = this.homeY - center.y;
+    this.orbitAngle = Math.atan2(dy, dx) + this.seed * 0.08;
+    this.baseOrbitR = Math.max(6, Math.sqrt(dx * dx + dy * dy) * (0.85 + this.noise * 0.55));
+    this.orbitR = this.baseOrbitR;
+    this.spinVel = (0.004 + this.noise * 0.01) * (this.noise > 0.5 ? 1 : -1);
+  }
 
-    if (currentMode === 'scatter') {
-      const scatter = 0.35 + wake * 0.9;
-      tx = this.homeX + logoDragX + this.burstX * scatter;
-      ty = this.homeY + logoDragY + this.burstY * scatter;
-      spring = 0.036;
-      drag = 0.9;
-    }
+  integrate(tx, ty, spring, drag) {
+    this.vx += (tx - this.x) * spring;
+    this.vy += (ty - this.y) * spring;
+    this.vx *= drag;
+    this.vy *= drag;
+    this.x += this.vx;
+    this.y += this.vy;
+  }
 
-    if (currentMode === 'orbit') {
-      const angle = this.seed + time * (0.72 + this.noise * 0.45) + this.letter * 0.38;
-      const width = bounds ? Math.max(42, bounds.w) : logoFontSize * 0.5;
-      const height = bounds ? Math.max(54, bounds.h) : logoFontSize;
-      const orbit = 0.28 + wake * 0.56;
-      tx = (this.homeX + logoDragX) * (1 - orbit) + (center.x + logoDragX + Math.cos(angle) * width * (0.34 + this.noise * 0.18)) * orbit;
-      ty = (this.homeY + logoDragY) * (1 - orbit) + (center.y + logoDragY + Math.sin(angle) * height * (0.34 + this.noise * 0.18)) * orbit;
-      spring = 0.052;
-      drag = 0.875;
-    }
+  wrapEdges() {
+    const margin = 24;
+    if (this.x < -margin) this.x = window.innerWidth + margin;
+    if (this.x > window.innerWidth + margin) this.x = -margin;
+    if (this.y < -margin) this.y = window.innerHeight + margin;
+    if (this.y > window.innerHeight + margin) this.y = -margin;
+  }
 
-    if (currentMode === 'bloom') {
-      const dx = this.homeX - center.x;
-      const dy = this.homeY - center.y;
-      const pulse = Math.sin(time * 2.5 + this.seed) * 0.5 + 0.5;
-      const bloom = 0.1 + wake * (0.5 + pulse * 0.24);
-      tx = this.homeX + logoDragX + dx * bloom * 0.55;
-      ty = this.homeY + logoDragY + dy * bloom * 0.55;
-      spring = 0.07;
-      drag = 0.84;
-    }
-
-    if (currentMode === 'pull') {
-      const restX = this.homeX + logoDragX;
-      const restY = this.homeY + logoDragY;
-      const dragDx = mx - pullAnchorX;
-      const dragDy = my - pullAnchorY;
-      const dragDist = Math.sqrt(dragDx * dragDx + dragDy * dragDy);
-      const dirX = dragDist > 0 ? dragDx / dragDist : 0;
-      const dirY = dragDist > 0 ? dragDy / dragDist : 0;
-      const anchorDx = restX - pullAnchorX;
-      const anchorDy = restY - pullAnchorY;
-      const along = anchorDx * dirX + anchorDy * dirY;
-      const side = Math.abs(anchorDx * -dirY + anchorDy * dirX);
-      const frontBias = Math.max(0, 1 - Math.max(0, along) / Math.max(logoFontSize * 0.72, 92));
-      const sideBias = Math.max(0, 1 - side / Math.max(logoFontSize * 0.48, 58));
-      const anchorDist = Math.sqrt(anchorDx * anchorDx + anchorDy * anchorDy);
-      const anchorBias = Math.max(0, 1 - anchorDist / Math.max(logoFontSize * 1.25, 155));
-      const grainBias = 0.72 + this.noise * 0.36;
-      const distanceBoost = Math.min(1, dragDist / Math.max(logoFontSize * 1.25, 180));
-      const wideSideBias = Math.max(0, 1 - side / Math.max(logoFontSize * 0.72, 84));
-      const coneMask = Math.max(Math.pow(anchorBias, 1.25), Math.pow(wideSideBias, 1.75) * frontBias * 0.9);
-      const tailPull = Math.min(1.75, pullCharge * (1.05 + distanceBoost * 1.9) * coneMask * grainBias);
-      const dragReach = Math.min(dragDist, Math.max(window.innerWidth, window.innerHeight) * 0.72);
-      const tipShare = 0.72 + sideBias * 0.72 + anchorBias * 0.42 + (1 - this.noise) * 0.12;
-      const taper = Math.max(0, 1 - side / Math.max(logoFontSize * 0.32, 42));
-      const elastic = isDown ? tailPull : tailPull * 0.82;
-      const lateral = Math.sin(time * 4.2 + this.seed) * elastic * 7 * taper * (1 - anchorBias * 0.55);
-      tx = restX + dirX * dragReach * elastic * tipShare + (-dirY) * lateral;
-      ty = restY + dirY * dragReach * elastic * tipShare + dirX * lateral;
-      spring = 0.085 + elastic * 0.16;
-      drag = Math.max(0.68, 0.84 - elastic * 0.12);
-      if (isDown && dragDist > logoFontSize * 0.4) {
-        this.vx += dirX * elastic * 2.8;
-        this.vy += dirY * elastic * 2.8;
-        this.x += (tx - this.x) * elastic * 0.055;
-        this.y += (ty - this.y) * elastic * 0.055;
-      }
-    }
+  /* COMPOSE — original spring-to-home + pointer play + shockwave */
+  updateCompose(time, wake) {
+    let tx = this.homeX;
+    let ty = this.homeY;
+    const spring = 0.066;
+    const drag = 0.86;
 
     const homeShake = wake * 0.62;
     tx += Math.cos(time * 1.7 + this.seed) * homeShake;
@@ -682,11 +652,12 @@ class LogoParticle {
     this.vx += (tx - this.x) * spring;
     this.vy += (ty - this.y) * spring;
 
+    // Classic pointer field: hover repels, press attracts
     const mdx = this.x - mx;
     const mdy = this.y - my;
     const md = Math.sqrt(mdx * mdx + mdy * mdy);
     const range = isDown ? 240 : 145;
-    if (currentMode !== 'pull' && md > 0 && md < range) {
+    if (md > 0 && md < range) {
       const force = (range - md) / range;
       if (isDown) {
         this.vx -= (mdx / md) * force * 2.25;
@@ -714,18 +685,214 @@ class LogoParticle {
     this.vy *= drag;
     this.x += this.vx;
     this.y += this.vy;
-
-    const margin = 24;
-    if (this.x < -margin) this.x = window.innerWidth + margin;
-    if (this.x > window.innerWidth + margin) this.x = -margin;
-    if (this.y < -margin) this.y = window.innerHeight + margin;
-    if (this.y > window.innerHeight + margin) this.y = -margin;
+    this.wrapEdges();
 
     const activeBoost = this.letter === activeLetter ? 1 : 0;
     const glow = Math.min(1, wake + activeBoost * 0.38);
-    const pullGlow = currentMode === 'pull' ? pullCharge * 0.8 : 0;
-    this.size = this.baseSize + glow * 1.15 + (currentMode === 'bloom' ? glow * 0.7 : 0) + pullGlow * 0.18;
-    this.color = glow > 0.12 || (currentMode === 'pull' && pullCharge > 0.18 && this.noise > 0.68) ? accentColors[this.letter] : 0xf0ede8;
+    this.size = this.baseSize + glow * 1.15;
+    this.shape = 'rect';
+    this.color = glow > 0.12 ? accentColors[this.letter] : 0xf0ede8;
+  }
+
+  /* SCATTER — local freckle burst around the letter, not full-screen chaos */
+  updateScatter(time, wake) {
+    // Rest slightly expanded; wake + click push a bit farther — still near glyph
+    const scatterAmt = 0.22 + wake * 0.42 + scatterChaos * 0.38;
+    const tx = this.homeX + this.burstX * scatterAmt
+      + Math.cos(time * 1.4 + this.seed) * (2 + scatterChaos * 4);
+    const ty = this.homeY + this.burstY * scatterAmt
+      + Math.sin(time * 1.55 + this.seed) * (2 + scatterChaos * 4);
+
+    // Firmer spring than before so form stays readable
+    this.integrate(tx, ty, 0.042 + wake * 0.01, 0.9);
+
+    // Soft local push — broom, but short range
+    const mdx = this.x - mx;
+    const mdy = this.y - my;
+    const md = Math.sqrt(mdx * mdx + mdy * mdy);
+    const range = isDown ? 170 : 110;
+    if (md > 0 && md < range) {
+      const force = ((range - md) / range) * (isDown ? 2.4 : 1.15 + pointerSpeed * 0.03);
+      this.vx += (mdx / md) * force;
+      this.vy += (mdy / md) * force;
+    }
+
+    // Shockwave: crisp but short-lived local blast
+    for (const wave of shockwaves) {
+      const sdx = this.x - wave.x;
+      const sdy = this.y - wave.y;
+      const sd = Math.sqrt(sdx * sdx + sdy * sdy);
+      const front = wave.radius;
+      const band = 70;
+      if (sd > front - band && sd < front + band && sd > 0) {
+        const power = (1 - Math.abs(sd - front) / band) * wave.life;
+        this.vx += (sdx / sd) * power * 11;
+        this.vy += (sdy / sd) * power * 11;
+      }
+    }
+
+    // Soft leash: never drift too far from home
+    const leashX = this.x - this.homeX;
+    const leashY = this.y - this.homeY;
+    const leash = Math.sqrt(leashX * leashX + leashY * leashY);
+    const maxLeash = 70 + wake * 40 + scatterChaos * 35;
+    if (leash > maxLeash && leash > 0) {
+      const pull = (leash - maxLeash) / leash;
+      this.x -= leashX * pull * 0.35;
+      this.y -= leashY * pull * 0.35;
+      this.vx *= 0.85;
+      this.vy *= 0.85;
+    }
+
+    this.wrapEdges();
+    const speed = Math.min(1, Math.sqrt(this.vx * this.vx + this.vy * this.vy) / 10);
+    this.size = this.baseSize * (0.85 + speed * 0.55 + scatterChaos * 0.25);
+    this.shape = 'rect';
+    this.color = speed > 0.2 || wake > 0.18 || scatterChaos > 0.25 ? accentColors[this.letter] : 0xf0ede8;
+  }
+
+  /* ORBIT — continuous spin: polar motion, click boosts angular velocity, mouse = vortex */
+  updateOrbit(time, wake) {
+    const center = letterCenters[this.letter] || { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const bounds = letterBounds[this.letter];
+    const baseR = this.baseOrbitR * (1 + wake * 0.35 + orbitSpinBoost * 0.2);
+
+    // Ambient continuous spin + injected spin from clicks
+    const dir = this.noise > 0.48 ? 1 : -1;
+    const ambient = dir * (0.016 + this.noise * 0.022) * (1 + wake * 0.5);
+    this.spinVel += dir * orbitSpinBoost * 0.006 * (0.6 + this.noise);
+    this.spinVel *= 0.988;
+    this.orbitAngle += ambient + this.spinVel * (1 + orbitSpinBoost * 2.2);
+
+    // Mouse vortex: tangential force around pointer warps radius + angle
+    const mdx = this.x - mx;
+    const mdy = this.y - my;
+    const md = Math.sqrt(mdx * mdx + mdy * mdy);
+    if (md > 0 && md < 220) {
+      const t = 1 - md / 220;
+      const vortex = t * t * (isDown ? 0.085 : 0.028 + pointerSpeed * 0.0008);
+      this.orbitAngle += vortex * (mdx * 0 + 1); // swirl
+      // Perpendicular swirl in cartesian for feel
+      this.vx += (-mdy / md) * vortex * 28;
+      this.vy += (mdx / md) * vortex * 28;
+      this.orbitR += (isDown ? -1 : 1) * t * 0.8;
+    }
+
+    // Radius eases toward breathing target
+    const breathe = Math.sin(time * 1.1 + this.seed) * 4 * (0.4 + wake);
+    const targetR = baseR + breathe;
+    this.orbitR += (targetR - this.orbitR) * 0.06;
+
+    const maxR = bounds ? Math.max(bounds.w, bounds.h) * 0.85 : logoFontSize * 0.7;
+    this.orbitR = Math.max(4, Math.min(this.orbitR, maxR * (1.4 + orbitSpinBoost)));
+
+    const tx = center.x + Math.cos(this.orbitAngle) * this.orbitR;
+    const ty = center.y + Math.sin(this.orbitAngle) * this.orbitR;
+
+    // Stick tightly to the moving orbit path — smooth glide, not bounce
+    this.integrate(tx, ty, 0.2, 0.78);
+
+    this.wrapEdges();
+    const spinGlow = Math.min(1, Math.abs(this.spinVel) * 18 + orbitSpinBoost + wake);
+    this.size = this.baseSize * (0.85 + spinGlow * 0.55);
+    this.shape = 'diamond';
+    this.color = spinGlow > 0.15 || this.letter === activeLetter ? accentColors[this.letter] : 0xf0ede8;
+  }
+
+  /* BLOOM — soft organic pulse: size/radius grow, overdamped, no shock bounce */
+  updateBloom(time, wake) {
+    const center = letterCenters[this.letter] || { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const dx = this.homeX - center.x;
+    const dy = this.homeY - center.y;
+
+    // Ambient breath + click pulse
+    const breath = Math.sin(time * 1.6 + this.seed * 1.3) * 0.5 + 0.5;
+    this.localBloom += ((wake * 0.55 + bloomPulse * (0.7 + this.noise * 0.5) + breath * 0.2) - this.localBloom) * 0.08;
+
+    const expand = 0.08 + this.localBloom * 1.15;
+    let tx = this.homeX + dx * expand;
+    let ty = this.homeY + dy * expand;
+
+    // Soft radial shimmer (no sharp velocity hits)
+    tx += Math.cos(time * 0.9 + this.seed) * this.localBloom * 3;
+    ty += Math.sin(time * 1.05 + this.seed) * this.localBloom * 3;
+
+    // Hover: gentle inflate toward pointer distance
+    const mdx = this.x - mx;
+    const mdy = this.y - my;
+    const md = Math.sqrt(mdx * mdx + mdy * mdy);
+    if (md < 130 && md > 0) {
+      const t = 1 - md / 130;
+      // Soft drift outward from letter center, not bounce
+      tx += dx * t * 0.12;
+      ty += dy * t * 0.12;
+      this.localBloom = Math.min(1.4, this.localBloom + t * 0.03);
+    }
+
+    // Overdamped spring — settles without oscillation
+    this.integrate(tx, ty, 0.045, 0.9);
+    this.vx *= 0.92;
+    this.vy *= 0.92;
+
+    this.wrapEdges();
+    const glow = Math.min(1.5, this.localBloom + (this.letter === activeLetter ? 0.35 : 0));
+    this.size = this.baseSize * (1.1 + glow * 2.4 + breath * 0.35);
+    this.shape = 'circle';
+    this.color = glow > 0.12 ? accentColors[this.letter] : 0xf0ede8;
+  }
+
+  /* PULL — stretchy taffy (existing interaction, kept distinct) */
+  updatePull(time, wake) {
+    const restX = this.homeX + logoDragX;
+    const restY = this.homeY + logoDragY;
+    const dragDx = mx - pullAnchorX;
+    const dragDy = my - pullAnchorY;
+    const dragDist = Math.sqrt(dragDx * dragDx + dragDy * dragDy);
+    const dirX = dragDist > 0 ? dragDx / dragDist : 0;
+    const dirY = dragDist > 0 ? dragDy / dragDist : 0;
+    const anchorDx = restX - pullAnchorX;
+    const anchorDy = restY - pullAnchorY;
+    const along = anchorDx * dirX + anchorDy * dirY;
+    const side = Math.abs(anchorDx * -dirY + anchorDy * dirX);
+    const frontBias = Math.max(0, 1 - Math.max(0, along) / Math.max(logoFontSize * 0.72, 92));
+    const sideBias = Math.max(0, 1 - side / Math.max(logoFontSize * 0.48, 58));
+    const anchorDist = Math.sqrt(anchorDx * anchorDx + anchorDy * anchorDy);
+    const anchorBias = Math.max(0, 1 - anchorDist / Math.max(logoFontSize * 1.25, 155));
+    const grainBias = 0.72 + this.noise * 0.36;
+    const distanceBoost = Math.min(1, dragDist / Math.max(logoFontSize * 1.25, 180));
+    const wideSideBias = Math.max(0, 1 - side / Math.max(logoFontSize * 0.72, 84));
+    const coneMask = Math.max(Math.pow(anchorBias, 1.25), Math.pow(wideSideBias, 1.75) * frontBias * 0.9);
+    const tailPull = Math.min(1.75, pullCharge * (1.05 + distanceBoost * 1.9) * coneMask * grainBias);
+    const dragReach = Math.min(dragDist, Math.max(window.innerWidth, window.innerHeight) * 0.72);
+    const tipShare = 0.72 + sideBias * 0.72 + anchorBias * 0.42 + (1 - this.noise) * 0.12;
+    const taper = Math.max(0, 1 - side / Math.max(logoFontSize * 0.32, 42));
+    const elastic = isDown ? tailPull : tailPull * 0.82;
+    const lateral = Math.sin(time * 4.2 + this.seed) * elastic * 7 * taper * (1 - anchorBias * 0.55);
+    const tx = restX + dirX * dragReach * elastic * tipShare + (-dirY) * lateral;
+    const ty = restY + dirY * dragReach * elastic * tipShare + dirX * lateral;
+    const spring = 0.085 + elastic * 0.16;
+    const drag = Math.max(0.68, 0.84 - elastic * 0.12);
+    if (isDown && dragDist > logoFontSize * 0.4) {
+      this.vx += dirX * elastic * 2.8;
+      this.vy += dirY * elastic * 2.8;
+      this.x += (tx - this.x) * elastic * 0.055;
+      this.y += (ty - this.y) * elastic * 0.055;
+    }
+    this.integrate(tx, ty, spring, drag);
+    this.wrapEdges();
+    const glow = Math.min(1, wake + pullCharge * 0.8 + (this.letter === activeLetter ? 0.3 : 0));
+    this.size = this.baseSize + glow * 1.0 + pullCharge * 0.18;
+    this.shape = 'rect';
+    this.color = glow > 0.12 || (pullCharge > 0.18 && this.noise > 0.68) ? accentColors[this.letter] : 0xf0ede8;
+  }
+
+  update(time) {
+    const wake = letterWake[this.letter];
+    if (currentMode === 'scatter') this.updateScatter(time, wake);
+    else if (currentMode === 'orbit') this.updateOrbit(time, wake);
+    else if (currentMode === 'bloom') this.updateBloom(time, wake);
+    else if (currentMode === 'pull') this.updatePull(time, wake);
+    else this.updateCompose(time, wake);
   }
 }
 
@@ -827,7 +994,10 @@ function generateParticles() {
     };
   });
 
-  particles.forEach((particle) => particle.pickBurst());
+  particles.forEach((particle) => {
+    particle.pickBurst();
+    particle.initOrbit();
+  });
   updateLetterHud();
 }
 
@@ -843,8 +1013,110 @@ function setMode(mode) {
   document.querySelectorAll('.mode-btn').forEach((btn) => {
     btn.classList.toggle('is-active', btn.dataset.mode === mode);
   });
+  composeSnap = 0;
+  scatterChaos = 0;
+  orbitSpinBoost = 0;
+  bloomPulse = 0;
+  logoDragX = 0;
+  logoDragY = 0;
+  logoDragVX = 0;
+  logoDragVY = 0;
+  pullCharge = 0;
+  shockwaves = [];
+
+  if (mode === 'orbit') {
+    particles.forEach((p) => p.initOrbit());
+  }
+  if (mode === 'scatter') {
+    particles.forEach((p) => {
+      p.vx += p.burstX * 0.02 + (Math.random() - 0.5) * 1.5;
+      p.vy += p.burstY * 0.02 + (Math.random() - 0.5) * 1.5;
+    });
+    scatterChaos = 0.35;
+  }
+  if (mode === 'bloom') {
+    bloomPulse = 0.45;
+    particles.forEach((p) => { p.localBloom = 0.25 + p.noise * 0.2; });
+  }
+  if (mode === 'compose') {
+    // Light settle kick back into the classic compose rest state
+    particles.forEach((p) => {
+      p.vx *= 0.45;
+      p.vy *= 0.45;
+    });
+  }
+
   const note = { compose: 220, scatter: 165, orbit: 294, bloom: 392, pull: 262 }[mode] || 220;
-  tone(note, 0.12, 'triangle', 0.04);
+  const wave = { compose: 'sine', scatter: 'sawtooth', orbit: 'triangle', bloom: 'sine', pull: 'triangle' }[mode] || 'triangle';
+  tone(note, 0.14, wave, 0.04);
+}
+
+function triggerModeInteraction(x, y) {
+  if (currentMode === 'pull') {
+    setPullAnchor(x, y);
+    tone(132, 0.18, 'sine', 0.035);
+    return;
+  }
+
+  if (currentMode === 'compose') {
+    // Original compose click = shockwave ripple through the logo
+    addShockwave(x, y, 1);
+    tone(220, 0.12, 'triangle', 0.04);
+    return;
+  }
+
+  if (currentMode === 'scatter') {
+    scatterChaos = 0.85;
+    addShockwave(x, y, 0.85);
+    particles.forEach((p) => {
+      const dx = p.x - x;
+      const dy = p.y - y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      // Local pop only — falloff is tight so the whole screen doesn't explode
+      const force = Math.max(0, 1 - d / 220) * (10 + p.noise * 5);
+      p.vx += (dx / d) * force;
+      p.vy += (dy / d) * force;
+    });
+    tone(110, 0.14, 'sawtooth', 0.04);
+    setTimeout(() => tone(70, 0.16, 'triangle', 0.025), 50);
+    return;
+  }
+
+  if (currentMode === 'orbit') {
+    orbitSpinBoost = 1;
+    particles.forEach((p) => {
+      const dx = p.x - x;
+      const dy = p.y - y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const near = Math.max(0, 1 - d / 380);
+      const dir = p.noise > 0.5 ? 1 : -1;
+      p.spinVel += dir * (0.05 + near * 0.14);
+      // Kick onto the ring
+      p.orbitR += near * 18 * (Math.random() > 0.5 ? 1 : -0.4);
+    });
+    tone(294, 0.12, 'triangle', 0.04);
+    setTimeout(() => tone(440, 0.14, 'sine', 0.03), 45);
+    return;
+  }
+
+  if (currentMode === 'bloom') {
+    bloomPulse = 1;
+    particles.forEach((p) => {
+      const dx = p.x - x;
+      const dy = p.y - y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const near = Math.max(0, 1 - d / 360);
+      p.localBloom = Math.min(1.5, p.localBloom + 0.35 + near * 0.55);
+      // Soft radial ease — no hard velocity hit
+      const center = letterCenters[p.letter] || { x: window.innerWidth / 2, y: logoMidY };
+      const hx = p.homeX - center.x;
+      const hy = p.homeY - center.y;
+      p.vx += hx * 0.012 * (0.4 + near);
+      p.vy += hy * 0.012 * (0.4 + near);
+    });
+    tone(392, 0.18, 'sine', 0.04);
+    setTimeout(() => tone(523, 0.22, 'sine', 0.028), 70);
+  }
 }
 
 function detectLetter() {
@@ -940,7 +1212,6 @@ function updatePullPhysics() {
 function resetLogo() {
   letterWake = [0, 0, 0, 0, 0];
   letterPinned = [false, false, false, false, false];
-  currentMode = 'compose';
   logoDragX = 0;
   logoDragY = 0;
   logoDragVX = 0;
@@ -972,40 +1243,96 @@ function drawBackdrop(graphics, time) {
     const center = letterCenters[i];
     if (!center) continue;
     const wake = letterWake[i];
-    const r = 24 + wake * 48 + Math.sin(time * 2 + i) * 2;
-    strokeCirclePath(graphics, center.x + logoDragX, center.y + logoDragY, r, { width: 1, color: 0x4052b5, alpha: 0.12 });
+    const dragX = currentMode === 'pull' ? logoDragX : 0;
+    const dragY = currentMode === 'pull' ? logoDragY : 0;
+    const cx = center.x + dragX;
+    const cy = center.y + dragY;
+
+    if (currentMode === 'compose') {
+      const r = 24 + wake * 48 + Math.sin(time * 2 + i) * 2;
+      strokeCirclePath(graphics, cx, cy, r, { width: 1, color: 0x4052b5, alpha: 0.12 });
+    } else if (currentMode === 'scatter') {
+      if (scatterChaos > 0.08 || wake > 0.2) {
+        const r = 22 + wake * 36 + scatterChaos * 28;
+        strokeCirclePath(graphics, cx, cy, r, { width: 1, color: 0xe8563a, alpha: 0.06 + scatterChaos * 0.1 });
+      }
+    } else if (currentMode === 'orbit') {
+      const r1 = 28 + wake * 40 + orbitSpinBoost * 30 + Math.sin(time * 2 + i) * 3;
+      const r2 = r1 * 0.55;
+      strokeCirclePath(graphics, cx, cy, r1, { width: 1, color: 0x4052b5, alpha: 0.14 + orbitSpinBoost * 0.12 });
+      strokeCirclePath(graphics, cx, cy, r2, { width: 1, color: accentColors[i], alpha: 0.08 + wake * 0.1 });
+    } else if (currentMode === 'bloom') {
+      const r = 20 + wake * 55 + bloomPulse * 48 + Math.sin(time * 1.6 + i) * 4;
+      strokeCirclePath(graphics, cx, cy, r, { width: 1.2, color: accentColors[i], alpha: 0.1 + bloomPulse * 0.16 + wake * 0.08 });
+      strokeCirclePath(graphics, cx, cy, r * 0.45, { width: 1, color: 0xf0ede8, alpha: 0.05 + bloomPulse * 0.08 });
+    } else {
+      const r = 24 + wake * 48 + Math.sin(time * 2 + i) * 2;
+      strokeCirclePath(graphics, cx, cy, r, { width: 1, color: 0x4052b5, alpha: 0.12 });
+    }
   }
 
-  for (const wave of shockwaves) {
-    strokeCirclePath(graphics, wave.x, wave.y, wave.radius, { width: 1, color: 0xe8563a, alpha: 0.16 });
+  // Shockwaves only meaningful in scatter (and mild reset)
+  if (currentMode === 'scatter' || currentMode === 'compose') {
+    for (const wave of shockwaves) {
+      const alpha = currentMode === 'scatter' ? 0.2 : 0.08;
+      strokeCirclePath(graphics, wave.x, wave.y, wave.radius, { width: currentMode === 'scatter' ? 1.4 : 1, color: 0xe8563a, alpha });
+    }
   }
 
   if (currentMode === 'pull' && pullCharge > 0.02) {
     const radius = 22 + pullCharge * 42 + Math.sin(time * 8) * 2;
     strokeCirclePath(graphics, mx, my, radius, { width: 1.2, color: 0xe8563a, alpha: 0.12 + pullCharge * 0.22 });
   }
+
+  if (currentMode === 'orbit' && orbitSpinBoost > 0.05) {
+    strokeCirclePath(graphics, mx, my, 18 + orbitSpinBoost * 36, { width: 1, color: 0x4052b5, alpha: 0.1 + orbitSpinBoost * 0.15 });
+  }
+
+  if (currentMode === 'bloom' && bloomPulse > 0.05) {
+    strokeCirclePath(graphics, mx, my, 28 + bloomPulse * 70, { width: 1.2, color: 0x7bbf9c, alpha: 0.08 + bloomPulse * 0.14 });
+  }
+}
+
+function drawParticleShape(graphics, particle) {
+  const s = particle.size;
+  const x = particle.x;
+  const y = particle.y;
+  if (particle.shape === 'circle') {
+    graphics.circle(x, y, Math.max(0.6, s * 0.55));
+  } else if (particle.shape === 'diamond') {
+    const h = Math.max(0.7, s * 0.65);
+    graphics.poly([x, y - h, x + h, y, x, y + h, x - h, y], true);
+  } else {
+    graphics.rect(x - s / 2, y - s / 2, s, s);
+  }
 }
 
 function drawParticles(graphics) {
+  // Group by color + shape for fewer fill calls
   const buckets = new Map();
   particles.forEach((particle) => {
-    const key = particle.color;
-    if (!buckets.has(key)) buckets.set(key, []);
-    buckets.get(key).push(particle);
+    const key = particle.color + ':' + particle.shape;
+    if (!buckets.has(key)) buckets.set(key, { color: particle.color, shape: particle.shape, items: [] });
+    buckets.get(key).items.push(particle);
   });
 
-  buckets.forEach((items, color) => {
+  buckets.forEach(({ color, shape, items }) => {
     const isAccent = color !== 0xf0ede8;
-    items.forEach((particle) => {
-      graphics.rect(particle.x - particle.size / 2, particle.y - particle.size / 2, particle.size, particle.size);
-    });
-    graphics.fill({ color, alpha: isAccent ? 0.95 : 0.88 });
+    let alpha = isAccent ? 0.95 : 0.88;
+    if (currentMode === 'bloom') alpha = isAccent ? 0.82 : 0.55;
+    if (currentMode === 'scatter') alpha = isAccent ? 0.9 : 0.7;
+    if (currentMode === 'orbit') alpha = isAccent ? 0.92 : 0.75;
+
+    items.forEach((particle) => drawParticleShape(graphics, particle));
+    graphics.fill({ color, alpha });
   });
 
   if (activeLetter !== -1 && letterCenters[activeLetter]) {
     const center = letterCenters[activeLetter];
+    const dragX = currentMode === 'pull' ? logoDragX : 0;
+    const dragY = currentMode === 'pull' ? logoDragY : 0;
     const size = 4.5 + Math.sin(performance.now() * 0.009) * 1.2;
-    graphics.rect(center.x + logoDragX - size / 2, center.y + logoDragY - size / 2, size, size);
+    graphics.rect(center.x + dragX - size / 2, center.y + dragY - size / 2, size, size);
     graphics.fill({ color: accentColors[activeLetter], alpha: 0.82 });
   }
 }
@@ -1040,12 +1367,7 @@ async function initPixi() {
     initAudio();
     detectLetter();
     if (activeLetter !== -1) wakeLetter(activeLetter, 0.55);
-    if (currentMode === 'pull') {
-      setPullAnchor(mx, my);
-      tone(132, 0.18, 'sine', 0.035);
-    } else {
-      addShockwave(mx, my, 1);
-    }
+    triggerModeInteraction(mx, my);
   });
 
   app.stage.on('pointerup', () => {
@@ -1073,6 +1395,16 @@ async function initPixi() {
     lastY = my;
     updatePullPhysics();
 
+    // Decay mode energies at distinct rates
+    composeSnap *= 0.94;
+    scatterChaos *= 0.975;
+    orbitSpinBoost *= 0.965;
+    bloomPulse *= 0.955;
+    if (composeSnap < 0.01) composeSnap = 0;
+    if (scatterChaos < 0.01) scatterChaos = 0;
+    if (orbitSpinBoost < 0.01) orbitSpinBoost = 0;
+    if (bloomPulse < 0.01) bloomPulse = 0;
+
     detectLetter();
     for (let i = 0; i < letterWake.length; i++) {
       const hovered = i === activeLetter ? 0.065 : 0;
@@ -1081,10 +1413,14 @@ async function initPixi() {
     }
 
     shockwaves.forEach((wave) => {
-      wave.radius += 18;
-      wave.life *= 0.92;
+      // Scatter: shorter, punchier rings so the blast stays local
+      wave.radius += currentMode === 'scatter' ? 14 : 18;
+      wave.life *= currentMode === 'scatter' ? 0.88 : 0.92;
     });
-    shockwaves = shockwaves.filter((wave) => wave.life > 0.04 && wave.radius < Math.max(window.innerWidth, window.innerHeight) * 1.2);
+    const maxWave = currentMode === 'scatter'
+      ? Math.max(logoFontSize * 2.2, 220)
+      : Math.max(window.innerWidth, window.innerHeight) * 1.2;
+    shockwaves = shockwaves.filter((wave) => wave.life > 0.04 && wave.radius < maxWave);
 
     const time = performance.now() * 0.001;
     particles.forEach((particle) => particle.update(time));
@@ -1106,7 +1442,8 @@ document.querySelectorAll('.letter-chip').forEach((chip) => {
     const index = Number(chip.dataset.letter);
     wakeLetter(index, 0.8);
     const center = letterCenters[index] || { x: window.innerWidth / 2, y: logoMidY };
-    addShockwave(center.x, center.y, 0.75);
+    // Letter chips trigger the active mode's feel at that letter
+    triggerModeInteraction(center.x, center.y);
   });
 });
 

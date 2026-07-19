@@ -2,7 +2,8 @@
 // China local day (UTC+8): Mon=1 .. Sun=7.
 // Monday keeps the existing 2D canvas effect in index.html.
 // Tue..Sun are loaded lazily (only the current day's module + Pixi).
-// URL override: ?fx=1..7 or ?fx=monday..sunday
+// Mobile always falls back to the Monday canvas path (no Pixi day effects).
+// URL override: ?fx=1..7 or ?fx=monday..sunday (desktop only for 2–7).
 import('./shared.js')
   .then((shared) => {
     const day = shared.getEffectiveDay();
@@ -15,7 +16,8 @@ import('./shared.js')
       7: 'sun-ascii',
     };
 
-    if (day === 1) return; // Monday: built-in canvas effect handles it
+    // Monday, or any mobile viewport: built-in canvas in index.html handles it.
+    if (day === 1 || shared.isMobile) return;
 
     const mod = map[day];
     if (!mod) {
@@ -24,7 +26,7 @@ import('./shared.js')
     }
     // Cache-bust only the day module (never shared.js — it must stay a single
     // instance, and the day modules import it without a query).
-    import(`./${mod}.js?v=13`)
+    import(`./${mod}.js?v=15`)
       .then((m) => {
         if (!m.init) {
           shared.revealStaticTitle();

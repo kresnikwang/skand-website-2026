@@ -5,8 +5,10 @@ export const PIXI_URL = 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mj
 export const FILTERS_URL = 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 export const MATTER_URL = 'https://esm.sh/matter-js@0.20.0';
 
+// Match index.html hero fallback: coarse pointer OR narrow viewport.
 export const isMobile =
-  window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
+  window.matchMedia('(pointer: coarse)').matches ||
+  window.matchMedia('(max-width: 768px)').matches;
 
 // China day-of-week based on UTC+8 (no DST). Mon=1 ... Sun=7.
 export function getChinaDay() {
@@ -41,27 +43,18 @@ const HIDE =
   'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;';
 
 // Hide the original HTML SKAND title (replaced by the Pixi logo), but keep the
-// company slogan + Chinese line visible and position them below the logo.
+// hero-meta stack (slogan + subtitle + B-Side) in CSS flow so it never collides
+// with the Scroll cue.
 export function prepareHeroForPixi() {
   const ht = document.getElementById('heroTitle');
   if (ht) ht.style.cssText = HIDE;
 
-  const tagline = document.querySelector('.hero-tagline');
-  if (tagline) {
-    tagline.style.cssText =
-      'position:absolute;left:50%;top:calc(50% + 150px);transform:translateX(-50%);opacity:0;margin:0;z-index:3;pointer-events:none;transition:opacity .8s ease;';
-    setTimeout(() => (tagline.style.opacity = '1'), 900);
-  }
-  const cn = document.querySelector('.hero-cn');
-  if (cn) {
-    cn.style.cssText =
-      'position:absolute;left:50%;top:calc(50% + 210px);transform:translateX(-50%);opacity:0;margin:0;z-index:3;pointer-events:none;transition:opacity .8s ease;';
-    setTimeout(() => (cn.style.opacity = '1'), 1100);
-  }
-
   document.querySelectorAll('.hero-bg-line').forEach((e) => (e.style.display = 'none'));
   const hc = document.getElementById('heroCanvas');
   if (hc) hc.style.display = 'none';
+
+  const meta = document.getElementById('heroMeta');
+  if (meta) setTimeout(() => meta.classList.add('is-ready'), 850);
 
   const scroll = document.querySelector('.hero-scroll');
   if (scroll) {
@@ -79,12 +72,8 @@ export function revealStaticTitle() {
     ht.style.cssText =
       'opacity:1;transform:translateY(0) scale(1);filter:blur(0px);transition:opacity .8s ease, transform .8s cubic-bezier(0.2, 0, 0.2, 1), filter .8s ease;';
   }
-  document
-    .querySelectorAll('.hero-tagline, .hero-cn')
-    .forEach((e) => {
-      e.style.cssText =
-        'opacity:1;transform:translateY(0);transition:opacity .8s ease, transform .8s ease;';
-    });
+  const meta = document.getElementById('heroMeta');
+  if (meta) meta.classList.add('is-ready');
   document.querySelectorAll('.hero-bg-line').forEach((e) => (e.style.display = ''));
   const hc = document.getElementById('heroCanvas');
   if (hc) hc.style.display = 'none';
