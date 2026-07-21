@@ -83,11 +83,14 @@ nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;displa
 .nav-dropdown-toggle .arrow{font-size:10px;display:inline-block;transition:transform .3s ease;vertical-align:middle;margin-left:2px;margin-top:-2px}
 .nav-dropdown:hover .nav-dropdown-toggle .arrow,
 .nav-dropdown.open .nav-dropdown-toggle .arrow{transform:rotate(180deg)}
-.nav-dropdown-menu{position:absolute;top:100%;right:0;margin-top:16px;min-width:180px;background:var(--dark);border:1px solid rgba(240,237,232,.15);border-radius:4px;opacity:0;visibility:hidden;transform:translateY(-10px);transition:all .3s ease;z-index:100;mix-blend-mode:normal;pointer-events:none}
+/* padding-top bridges the visual gap so hover doesn't drop between toggle and menu */
+.nav-dropdown-menu{position:absolute;top:100%;right:0;margin-top:0;padding-top:16px;min-width:180px;background:transparent;border:none;border-radius:4px;opacity:0;visibility:hidden;transform:translateY(-10px);transition:opacity .3s ease,visibility .3s ease,transform .3s ease;z-index:100;mix-blend-mode:normal;pointer-events:none}
+.nav-dropdown-menu::before{content:'';position:absolute;top:16px;left:0;right:0;bottom:0;background:var(--dark);border:1px solid rgba(240,237,232,.15);border-radius:4px;z-index:0;pointer-events:none}
 .nav-dropdown:hover .nav-dropdown-menu,
 .nav-dropdown.open .nav-dropdown-menu{opacity:1;visibility:visible;transform:translateY(0);pointer-events:auto}
-.nav-dropdown-menu a{display:block;padding:12px 20px;color:var(--white);text-decoration:none;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:400;transition:all .3s ease;border-bottom:1px solid rgba(240,237,232,.05)}
-.nav-dropdown-menu a:last-child{border-bottom:none}
+.nav-dropdown-menu a{display:block;position:relative;z-index:1;padding:12px 20px;color:var(--white);text-decoration:none;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:400;transition:all .3s ease;border-bottom:1px solid rgba(240,237,232,.05)}
+.nav-dropdown-menu a:first-child{border-radius:4px 4px 0 0}
+.nav-dropdown-menu a:last-child{border-bottom:none;border-radius:0 0 4px 4px}
 .nav-dropdown-menu a:hover{background:var(--coral);color:var(--black);padding-left:24px}
 .nav-dropdown-menu a span{display:block;font-size:10px;color:var(--grey);margin-top:2px;text-transform:none;letter-spacing:0}
 .nav-dropdown-menu a:hover span{color:rgba(0,0,0,.6)}
@@ -859,6 +862,7 @@ footer a{color:var(--grey);text-decoration:none}
     position:static;
     right:auto;
     margin-top:0;
+    padding-top:0;
     min-width:min(260px,82vw);
     max-height:0;
     overflow:hidden;
@@ -871,6 +875,9 @@ footer a{color:var(--grey);text-decoration:none}
     border-radius:8px;
     transition:max-height .35s ease,opacity .25s ease,margin .25s ease,visibility .25s ease;
   }
+  .nav-dropdown-menu::before{display:none}
+  .nav-dropdown-menu a:first-child,
+  .nav-dropdown-menu a:last-child{border-radius:0}
   .nav-dropdown:hover .nav-dropdown-menu{
     /* Disable sticky-hover open on touch; JS .open controls it */
     max-height:0;
