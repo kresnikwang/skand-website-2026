@@ -1776,7 +1776,33 @@ const workCarousel = {
   needsRender: true,
   reducedMotion: false,
   suppressClickUntil: 0,
+  // Auto loop: ~1 case every ~3.2s — slightly brisker reading pace
+  autoSpeed: 0.31, // cards per second
+  hovering: false,
+  inView: false, // true once ribbon is on-screen (keeps random start until then)
+  userPausedUntil: 0,
+  lastAutoTs: 0,
 };
+
+function isWorkLightboxOpen() {
+  return !!document.getElementById('lightbox')?.classList.contains('active');
+}
+
+function pauseWorkAuto(ms = 2200) {
+  workCarousel.userPausedUntil = performance.now() + ms;
+}
+
+function shouldWorkAutoScroll() {
+  if (workCarousel.reducedMotion) return false;
+  if (workCarousel.dragging) return false;
+  if (workCarousel.hovering) return false;
+  if (!workCarousel.inView) return false;
+  if (document.hidden) return false;
+  if (isWorkLightboxOpen()) return false;
+  if (performance.now() < workCarousel.userPausedUntil) return false;
+  if (Math.abs(workCarousel.vel) > 0.0006) return false;
+  return getVisibleCards().length > 1;
+}
 
 function getVisibleCards() {
   return Array.from(document.querySelectorAll('#workCarouselTrack .project-card:not(.hidden)'));
@@ -1838,7 +1864,9 @@ function renderWorkCarousel() {
 
   // Ribbon bend: stronger while scrolling/dragging → smaller radius, larger angle step
   // Rest state still has gentle curve; motion tightens the "satin ribbon"
-  const speed = Math.min(1, Math.abs(workCarousel.vel) * 7 + (workCarousel.dragging ? 0.35 : 0));
+  // Gentle auto-scroll also contributes a little motion so the ribbon stays “alive”
+  const autoMotion = (!workCarousel.dragging && shouldWorkAutoScroll()) ? 0.12 : 0;
+  const speed = Math.min(1, Math.abs(workCarousel.vel) * 7 + (workCarousel.dragging ? 0.35 : 0) + autoMotion);
   const targetBend = workCarousel.reducedMotion ? 0.25 : (0.35 + speed * 0.65);
   workCarousel.bend += (targetBend - workCarousel.bend) * 0.14;
 
@@ -1909,27 +1937,42 @@ function renderWorkCarousel() {
   });
 }
 
-function workCarouselTick() {
+function workCarouselTick(ts) {
   workCarousel.raf = requestAnimationFrame(workCarouselTick);
+
+  const now = typeof ts === 'number' ? ts : performance.now();
+  const dt = workCarousel.lastAutoTs
+    ? Math.min(0.05, (now - workCarousel.lastAutoTs) / 1000)
+    : 0;
+  workCarousel.lastAutoTs = now;
 
   // Always ease bend toward rest when idle → continuous subtle animation of curvature
   let animating = false;
+  const autoOn = shouldWorkAutoScroll();
 
   if (!workCarousel.dragging) {
     if (Math.abs(workCarousel.vel) > 0.0006) {
+      // Residual flick momentum from drag / wheel
       workCarousel.pos += workCarousel.vel;
       workCarousel.vel *= 0.935;
       animating = true;
     } else {
       if (Math.abs(workCarousel.vel) > 0) workCarousel.vel = 0;
-      const target = Math.round(workCarousel.pos);
-      const diff = target - workCarousel.pos;
-      if (Math.abs(diff) > 0.001) {
-        workCarousel.pos += diff * 0.18;
+      if (autoOn) {
+        // Continuous infinite loop at normal speed (pos wraps via circular layout)
+        workCarousel.pos += workCarousel.autoSpeed * dt;
         animating = true;
-      } else if (diff !== 0) {
-        workCarousel.pos = target;
-        animating = true;
+      } else if (!workCarousel.hovering && !isWorkLightboxOpen()) {
+        // When paused (not hover/lightbox freeze), gently settle onto a card center
+        const target = Math.round(workCarousel.pos);
+        const diff = target - workCarousel.pos;
+        if (Math.abs(diff) > 0.001) {
+          workCarousel.pos += diff * 0.18;
+          animating = true;
+        } else if (diff !== 0) {
+          workCarousel.pos = target;
+          animating = true;
+        }
       }
     }
   } else {
@@ -1937,7 +1980,7 @@ function workCarouselTick() {
   }
 
   // Keep rendering while bend is still settling
-  if (Math.abs(workCarousel.bend - 0.35) > 0.008 && !workCarousel.dragging && Math.abs(workCarousel.vel) < 0.001) {
+  if (Math.abs(workCarousel.bend - 0.35) > 0.008 && !workCarousel.dragging && Math.abs(workCarousel.vel) < 0.001 && !autoOn) {
     animating = true;
   }
 
@@ -1955,11 +1998,14 @@ function applyFilter(cat) {
     const visible = cat === 'all' || card.dataset.cat === cat;
     card.classList.toggle('hidden', !visible);
   });
-  workCarousel.pos = 0;
   workCarousel.vel = 0;
   workCarousel.activeIdx = -1;
   const cards = getVisibleCards();
-  if (cards[0]) updateWorkMeta(cards[0], true);
+  // Fresh random center among the filtered set (same spirit as page-load random)
+  const start = cards.length ? Math.floor(Math.random() * cards.length) : 0;
+  workCarousel.pos = start;
+  if (cards[start]) updateWorkMeta(cards[start], true);
+  pauseWorkAuto(900);
   workCarousel.needsRender = true;
   renderWorkCarousel();
 }
@@ -2061,7 +2107,10 @@ function initWorkCarousel() {
     dragAxis = null;
     workCarousel.stage.classList.remove('is-dragging');
     if (wasTap) openCenterProject();
-    else if (workCarousel.moved) workCarousel.suppressClickUntil = performance.now() + 400;
+    else if (workCarousel.moved) {
+      workCarousel.suppressClickUntil = performance.now() + 400;
+      pauseWorkAuto(1800); // let flick momentum finish, then resume loop
+    }
   };
 
   // Pointer events (mouse + modern touch)
@@ -2134,6 +2183,7 @@ function initWorkCarousel() {
     const { bladeW } = getRibbonMetrics();
     workCarousel.pos += delta / (bladeW * 0.95);
     workCarousel.vel = delta / (bladeW * 14);
+    pauseWorkAuto(1600);
     workCarousel.needsRender = true;
   }, { passive: false });
 
@@ -2144,11 +2194,13 @@ function initWorkCarousel() {
       e.preventDefault();
       workCarousel.pos = Math.round(workCarousel.pos) - 1;
       workCarousel.vel = -0.08;
+      pauseWorkAuto(2200);
       workCarousel.needsRender = true;
     } else if (e.key === 'ArrowRight') {
       e.preventDefault();
       workCarousel.pos = Math.round(workCarousel.pos) + 1;
       workCarousel.vel = 0.08;
+      pauseWorkAuto(2200);
       workCarousel.needsRender = true;
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -2158,13 +2210,52 @@ function initWorkCarousel() {
     }
   });
 
+  // Pause auto-loop while pointer rests on the stage (desktop hover only —
+  // coarse/touch pointers would otherwise stick "hovering" after a tap)
+  const canHover = window.matchMedia('(hover: hover)').matches;
+  if (canHover) {
+    workCarousel.stage.addEventListener('pointerenter', () => {
+      workCarousel.hovering = true;
+    });
+    workCarousel.stage.addEventListener('pointerleave', () => {
+      workCarousel.hovering = false;
+    });
+  }
+
+  // Only auto-loop while the ribbon is on screen (preserves random center until first view)
+  if (typeof IntersectionObserver !== 'undefined') {
+    const io = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      workCarousel.inView = entry.isIntersecting;
+      if (entry.isIntersecting) workCarousel.lastAutoTs = 0;
+      workCarousel.needsRender = true;
+    }, { threshold: 0.12 });
+    io.observe(workCarousel.stage);
+  } else {
+    workCarousel.inView = true;
+  }
+
   window.addEventListener('resize', () => {
     workCarousel.needsRender = true;
     renderWorkCarousel();
   }, { passive: true });
 
+  document.addEventListener('visibilitychange', () => {
+    // Avoid a big jump after a long background tab
+    workCarousel.lastAutoTs = 0;
+    workCarousel.needsRender = true;
+  });
+
+  // Each page open: random case starts in the center, then auto-loop at normal speed
   const cards = getVisibleCards();
-  if (cards[0]) updateWorkMeta(cards[0], true);
+  if (cards.length) {
+    const start = Math.floor(Math.random() * cards.length);
+    workCarousel.pos = start;
+    workCarousel.activeIdx = start;
+    updateWorkMeta(cards[start], true);
+  }
+  workCarousel.lastAutoTs = 0;
   renderWorkCarousel();
   cancelAnimationFrame(workCarousel.raf);
   workCarousel.raf = requestAnimationFrame(workCarouselTick);
