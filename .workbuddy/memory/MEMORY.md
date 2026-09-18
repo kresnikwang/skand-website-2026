@@ -60,3 +60,28 @@ const catLabels = {all:'All',imc:'IMC & Brand Voice',...};
 - 响应式设计 (1024px/768px断点)
 - 移动端隐藏自定义光标
 - 无障碍支持 (键盘导航)
+
+## 部署与 SEO（重要）
+
+### 部署
+- 生产：`root@123.57.167.97`（sshpass 密码见 `test_ssh.exp`），1Panel OpenResty（容器 `1Panel-openresty-hoTG`）
+- 网站根：`/opt/1panel/www/wwwroot/www.skandstudio.com/`（= 容器 `/www/wwwroot/www.skandstudio.com`）
+- 部署命令：`rsync -az --delete`（排除见 `DEPLOYMENT.md`），静态文件即时生效
+- **坑**：连续多次密码认证会触发 SSH 限流（`Connection closed by port 22`），需等数十秒~数分钟再试；
+  `nginx -s reload` 是 graceful，旧 worker 退场前可能仍返回旧结果，验证前稍等或重试
+
+### Nginx 配置
+- 站点配置：`/opt/1panel/www/conf.d/skandstudio.com.conf`（→ 容器 `conf.d/`，已挂载）
+- 外层 TLS：`/opt/1panel/www/stream.d/anytls-sni.conf` 的 stream 块按 SNI 把公网 443 → `127.0.0.1:9443`（应用层终止 TLS）
+- 重载：`docker exec 1Panel-openresty-hoTG nginx -t && nginx -s reload`
+- 备份：`skandstudio.com.conf.bak.20260913`
+
+### SEO 规范（2026-09-13 定）
+- **canonical 域 = 非 www `https://skandstudio.com`**（与 sitemap / og:url 一致）
+- www → 非 www：HTTP(80) 块 `return 301 https://skandstudio.com$request_uri`；
+  HTTPS(9443) 块 `if ($host = www.skandstudio.com) { return 301 ...; }`（证书 SAN 含两域名）
+- `index.html` 已有 canonical + hreflang（x-default/en/zh），且 JS 随语言动态改 canonical
+- `b-side.html` 已补 canonical；`egg.html` 是 `noindex,nofollow`（彩蛋页），**已从 sitemap 移除**
+- `robots.txt` 引用 sitemap；sitemap 4 条 URL（`/`、`/?lang=en`、`/?lang=zh`、`/b-side.html`）
+- Google Search Console 已由用户完成域名验证
+
