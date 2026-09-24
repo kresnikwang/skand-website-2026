@@ -20,6 +20,7 @@ rsync -az --delete \
   --exclude='node_modules/' \
   --exclude='.DS_Store' \
   --exclude='.workbuddy/' \
+  --exclude='pdf_images/' \
   --exclude='README.md' \
   --exclude='download-fonts.py' \
   --exclude='package.json' \

@@ -12,18 +12,19 @@ import {
   Container,
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import {
-  isMobile, prepareHeroForPixi, makeApp,
+  isMobile, prepareStage, makeApp,
   fitAndCenter, trackPointer, onResize,
 } from './shared.js';
 
 const RAMP = ' .:-=+*#%@';
 const NOISE_CHARS = '.:;|/\\~*+-';
 
-export async function init() {
-  prepareHeroForPixi();
-  const hero = document.getElementById('hero');
-  const app = await makeApp(hero);
-  const ptr = trackPointer(hero);
+export async function init(stageEl) {
+  const host = stageEl || document.getElementById('dailyLogoStage');
+  if (!host) return;
+  prepareStage(host);
+  const app = await makeApp(host);
+  const ptr = trackPointer(host);
 
   const W = 960, H = 320;
   const cell = isMobile ? 20 : 12;

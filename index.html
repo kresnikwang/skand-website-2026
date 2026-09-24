@@ -31,7 +31,12 @@
   --font-body:'Outfit','Helvetica Neue',sans-serif;
 }
 html{scroll-behavior:smooth;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--coral) var(--black);scroll-snap-type:y proximity}
-body{background:var(--black);color:var(--white);font-family:var(--font-body);font-weight:300;line-height:1.6;overflow-x:hidden;cursor:auto}
+/* No overflow-x:hidden on body. It would make body a scroll container (a
+   non-visible overflow-x forces overflow-y to compute to auto), and the sticky
+   .hero-pin would then pin to a box that never scrolls. html carries the
+   clipping instead — a root element's overflow propagates to the viewport, so
+   it still suppresses horizontal scrollbars while leaving sticky working. */
+body{background:var(--black);color:var(--white);font-family:var(--font-body);font-weight:300;line-height:1.6;cursor:auto}
 
 /* === GRAIN OVERLAY === */
 .grain{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;opacity:.018;
@@ -57,11 +62,14 @@ html.custom-cursor-enabled .video-cta-btn,
 html.custom-cursor-enabled .service-card,
 html.custom-cursor-enabled .work-carousel-stage,
 html.custom-cursor-enabled .lightbox-close,
-html.custom-cursor-enabled .lightbox-arrow{cursor:none!important}
+html.custom-cursor-enabled .lightbox-arrow,
+html.custom-cursor-enabled #heroStage.is-clickable,
+html.custom-cursor-enabled .hero-hud-tag{cursor:none!important}
 html:not(.custom-cursor-enabled) a,
 html:not(.custom-cursor-enabled) button,
 html:not(.custom-cursor-enabled) .project-card,
 html:not(.custom-cursor-enabled) .filter-tab,
+html:not(.custom-cursor-enabled) #heroStage.is-clickable,
 html:not(.custom-cursor-enabled) .video-cta-btn{cursor:pointer!important}
 html:not(.custom-cursor-enabled) .work-carousel-stage{cursor:grab!important}
 html:not(.custom-cursor-enabled) .work-carousel-stage.is-dragging{cursor:grabbing!important}
@@ -96,22 +104,166 @@ nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;displa
 .nav-dropdown-menu a:hover span{color:rgba(0,0,0,.6)}
 
 /* === HERO === */
+/* No overflow:hidden here on purpose. It would make .hero a scroll container,
+   and a sticky child pins to its nearest scrolling ancestor — so the pin would
+   attach to a box that never scrolls and never stick. .hero-pin clips instead.
+   Padding is zeroed because the generic `section` rule adds up to 160px, which
+   with border-box sizing would eat into the taller hero and shove the pin off
+   its intended top edge. The pin centres its own contents. */
 .hero{
   height:100vh;
   height:100dvh;
   min-height:560px;
+  padding:0;
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
   position:relative;
+}
+/* Everything that makes up the visible hero lives in .hero-pin, which is one
+   viewport tall and sticks. The .hero box around it provides scroll travel.
+   Absolutely-positioned children (meta, scroll cue, bg rings) now resolve
+   against the pin, so at rest the layout is pixel-identical to an unpinned
+   hero — the pin only starts mattering once the user scrolls. */
+.hero-pin{
+  position:sticky;top:0;
+  width:100%;height:100vh;height:100dvh;min-height:560px;
+  display:flex;flex-direction:column;
+  justify-content:center;align-items:center;
   overflow:hidden;
 }
-#heroCanvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none}
+/* Scroll travel is added ONLY when the 3D scene boots. A visitor who gets the
+   static grid or the plain-text hero should not have to scroll through 100vh of
+   nothing to reach Work, so the extra height is opt-in from explode.js. */
+/* The pin is one viewport tall and sticky, so once the dive has used up the
+   scroll travel the pin still has a full viewport of scrolling to clear the
+   screen — and during that exit the next section is only now arriving from the
+   bottom. Left alone that reads as ~340px of nothing between the two screens.
+   Pulling Work up by a slice of a viewport overlaps the two, so its label is
+   already rising into frame as the last plates fade, and the pin hands over
+   instead of hanging around empty. It is a bottom margin, so the hero keeps its
+   own 200vh box and the pin's sticky travel is unchanged. */
+.hero.has-stage{height:200vh;height:200dvh;justify-content:flex-start;margin-bottom:-40vh}
+/* Stage hosts the Three.js explosion scene; HUD holds projected DOM callouts.
+   Both default to hidden — explode.js reveals them only when it actually boots,
+   so a failed module load leaves the plain text hero (the tier-2 fallback). */
+#heroStage{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .6s ease}
+/* The live 3D stage takes pointer input so plates can be picked. It sits at
+   z-index 2, below .hero-meta (4) and the nav, so the B-Side CTA and the menu
+   still win the hit test. .is-clickable is the hover state, not the gate. */
+#heroStage.is-live{opacity:1;pointer-events:auto}
+#heroStage.is-clickable{cursor:pointer}
+#heroStage canvas{display:block;width:100%;height:100%}
+#heroStage.is-done{opacity:0}
+#heroHud{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;transition:opacity .6s ease}
+#heroHud.is-live{opacity:1}
+#heroHud.is-done{opacity:0}
+.hero-hud-tag{
+  position:absolute;top:0;left:0;
+  display:flex;align-items:baseline;gap:8px;
+  padding:3px 8px 3px 11px;
+  white-space:nowrap;
+  font-family:var(--font-body);
+  font-size:12px;letter-spacing:1.5px;font-weight:500;
+  /* Callouts sit on top of the artwork, which ranges from near-black to blown
+     white. A tight shadow plus a wide soft one keeps them readable over both
+     without needing a box that would break the hairline-drawing look. */
+  text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 12px rgba(0,0,0,.75);
+  will-change:transform,opacity;
+  /* The callout is a real <button>: it is the keyboard- and screen-reader-
+     reachable way into a plate, since a bare canvas offers neither. Reset the
+     native chrome so it still reads as a drawing annotation. Each font
+     property is set explicitly — a `font:inherit` shorthand here would win over
+     the size above it and silently restore the inherited 16px. */
+  background:none;border:0;color:inherit;line-height:normal;
+  text-align:left;cursor:pointer;
+  /* #heroHud is pointer-events:none so the projection layer never eats clicks;
+     a descendant can opt back in, which is what makes these the accessible
+     hit targets for a plate. */
+  pointer-events:auto;
+  -webkit-tap-highlight-color:transparent;
+}
+.hero-hud-tag:focus-visible{outline:1px solid var(--coral);outline-offset:2px;border-radius:2px}
+.hero-hud-tag:hover .hero-hud-brand{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.95),0 0 14px rgba(232,86,58,.7)}
+/* Leader-line stub: the 11px L before the label mirrors the 3D hairlines. */
+.hero-hud-tag::before{
+  content:'';position:absolute;left:0;top:50%;
+  width:11px;height:1px;background:rgba(120,140,255,.8);
+  box-shadow:0 0 4px rgba(0,0,0,.8);
+}
+.hero-hud-num{color:#ff7a5c;font-variant-numeric:tabular-nums}
+.hero-hud-brand{color:#fff}
+.hero-hud-cat{color:rgba(206,206,206,.95)}
+/* Tier-1 fallback: plain responsive grid, no canvas. Sits in the flex flow
+   below the wordmark rather than overlaying it. */
+#heroStaticGrid{
+  display:none;position:relative;z-index:2;
+  grid-template-columns:repeat(4,1fr);gap:10px;
+  width:min(92vw,980px);
+  margin:clamp(18px,3.2vh,34px) 0 clamp(96px,15vh,150px);
+}
+.hero.has-static-grid #heroStaticGrid{display:grid}
+/* Tier 1 lays out top-down: the grid's row height is solved in JS against the
+   space left over, so centring the column would only push the overflowing top
+   off-screen. The flex container is .hero-pin, not .hero. The title's offset
+   clears the fixed header. */
+.hero.has-static-grid .hero-pin{justify-content:flex-start}
+.hero.has-static-grid .hero-bg-line{display:none}
+.hero.has-static-grid .hero-title{margin-top:clamp(78px,11vh,116px);flex:none}
+.hero-static-cell{
+  position:relative;overflow:hidden;border-radius:2px;
+  background:#1a1a1a center/cover no-repeat;
+  box-shadow:0 14px 40px rgba(0,0,0,.5);
+  /* A button so tier-1 visitors get the same "click a plate, land on that
+     project" behaviour as tier 0. Reset the native chrome, keep the card look. */
+  border:0;padding:0;font:inherit;color:inherit;appearance:none;
+  -webkit-appearance:none;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:box-shadow .3s ease,transform .3s ease;
+}
+.hero-static-cell:hover,.hero-static-cell:focus-visible{
+  box-shadow:0 18px 46px rgba(0,0,0,.6),0 0 0 1px rgba(232,86,58,.7);
+  transform:translateY(-2px);
+}
+.hero-static-cell:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+.hero-static-cell img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .45s ease;pointer-events:none}
+.hero-static-cell.loaded img{opacity:1}
+.hero-static-cell.loaded{background-image:none}
+.hero-static-cell span{
+  position:absolute;left:0;bottom:0;right:0;
+  display:flex;justify-content:space-between;gap:8px;
+  padding:18px 9px 7px;
+  background:linear-gradient(to top,rgba(10,10,10,.94),rgba(10,10,10,.55) 55%,transparent);
+  font-family:var(--font-body);font-size:11px;letter-spacing:1px;font-weight:500;
+  color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.9);
+  pointer-events:none;
+}
+.hero-static-cell span i{font-style:normal;color:#ff7a5c}
+.hero.has-static-grid .hero-title{font-size:clamp(44px,8vw,104px)}
+@media (max-width:900px){
+  #heroStaticGrid{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:768px){
+  .hero-hud-tag{font-size:11px;letter-spacing:1px}
+  #heroStaticGrid{grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:clamp(104px,18vh,170px)}
+}
 .hero-bg-line{position:absolute;width:500px;height:500px;border:1px solid rgba(64,82,181,.15);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
 .hero-bg-line:nth-child(2){width:700px;height:700px;border-color:rgba(232,86,58,.1)}
 .hero-bg-line:nth-child(3){width:900px;height:900px;border-color:rgba(64,82,181,.07)}
-.hero-title{font-family:var(--font-display);font-size:clamp(60px,15vw,220px);font-weight:500;letter-spacing:clamp(4px,2vw,30px);line-height:.9;text-align:center;position:relative;white-space:nowrap;background:linear-gradient(to right,var(--coral) 20%,var(--white) 30%,var(--white) 70%,var(--coral) 80%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:moonshotShine 5s linear infinite;opacity:0;transform:translateY(20px) scale(0.95);filter:blur(12px);transition:opacity .8s ease, transform .8s cubic-bezier(0.2, 0, 0.2, 1), filter .8s ease}
+.hero-title{font-family:var(--font-display);font-size:clamp(60px,15vw,220px);font-weight:500;letter-spacing:clamp(4px,2vw,30px);line-height:.9;text-align:center;position:relative;white-space:nowrap;background:linear-gradient(to right,var(--coral) 20%,var(--white) 30%,var(--white) 70%,var(--coral) 80%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:moonshotShine 5s linear infinite;transition:opacity .6s ease}
+/* Set only once the 3D scene has booted and taken the wordmark over. Default
+   visible, so tiers 1 (static grid) and 2 (no JS) keep their heading. */
+.hero-title.is-replaced{opacity:0}
+/* The same hiding, but decided in the head before the first paint. This is the
+   one that matters: waiting for .is-replaced means the H1 is on screen for the
+   whole of module load plus the font race, and the swap that follows is the
+   flash. The head script also removes the class again after 4s if the module
+   never arrives, so a blocked CDN leaves the heading visible rather than gone.
+   .is-replaced (0,2,0) outranks this (0,1,1) anyway, so the scene keeps the
+   heading hidden for the rest of the session even if the failsafe fires late. */
+html.hero-3d .hero-title{opacity:0}
 @keyframes moonshotShine{0%{background-position:0% center}100%{background-position:200% center}}
 /* Meta cluster: slogan + B-Side sit above Scroll with reserved clearance */
 .hero-meta{
@@ -136,7 +288,6 @@ nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;displa
   color:var(--coral);
   margin:0;
   letter-spacing:2px;
-  opacity:0;
   transform:translateY(16px);
   transition:opacity .8s ease, transform .8s ease;
 }
@@ -145,7 +296,6 @@ nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;displa
   color:var(--grey);
   margin:0;
   letter-spacing:3px;
-  opacity:0;
   transform:translateY(12px);
   transition:opacity .8s ease .1s, transform .8s ease .1s;
 }
@@ -163,7 +313,6 @@ nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;displa
   flex-direction:column;
   align-items:center;
   gap:6px;
-  opacity:0;
   z-index:3;
 }
 .hero-scroll span{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--grey)}
@@ -189,7 +338,6 @@ body {
   position: relative;
   top: auto;
   left: auto;
-  transform: translateY(12px);
   z-index: 4;
   display: inline-flex;
   align-items: center;
@@ -208,7 +356,6 @@ body {
   pointer-events: auto;
   transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 1s cubic-bezier(0.25, 1, 0.5, 1), transform 1s cubic-bezier(0.25, 1, 0.5, 1);
   background: transparent;
-  opacity: 0;
 }
 .find-b-side-btn::before {
   content: '';
@@ -658,6 +805,16 @@ section{padding:clamp(80px,12vw,160px) clamp(24px,5vw,80px)}
 .project-card.is-center{
   box-shadow:0 28px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(240,237,232,.1);
 }
+/* "You clicked this one up in the hero" — a coral ring plus a slow pulse, so
+   the eye finds it even though the carousel is still settling. */
+.project-card.is-hero-target{
+  box-shadow:0 28px 70px rgba(0,0,0,.6), 0 0 0 2px var(--coral);
+  animation:heroTargetPulse 1.4s ease-in-out 3;
+}
+@keyframes heroTargetPulse{
+  0%,100%{box-shadow:0 28px 70px rgba(0,0,0,.6), 0 0 0 2px var(--coral)}
+  50%{box-shadow:0 28px 70px rgba(0,0,0,.6), 0 0 0 5px rgba(232,86,58,.35)}
+}
 .project-card img{
   width:100%;
   height:100%;
@@ -753,6 +910,32 @@ footer a{color:var(--grey);text-decoration:none}
 @media (hover: hover) {
   .footer-egg:hover{color:var(--coral);transform:translateY(-1px)}
   .footer-egg:hover span.egg-dot{background:var(--coral);box-shadow:0 0 12px rgba(232,86,58,.55);transform:scale(1.2)}
+}
+/* === DAILY LOGO SHOWCASE (full screen) === */
+/* The daily logo effect used to be a 120x44 slot in the footer, which was the
+   wrong shape for what it is: these are the most elaborate pieces of motion on
+   the site, and at that size they read as a texture rather than as an effect.
+   It now gets a whole screen of its own, below Contact, where it can be the
+   thing it was always trying to be. */
+.logo-showcase{
+  position:relative;
+  height:100vh;
+  height:100dvh;
+  min-height:520px;
+  overflow:hidden;
+  background:var(--black);
+  /* Deliberately NOT a scroll-snap target. This is the last full-height section
+     and only a short footer follows it, so snapping its top edge to the viewport
+     makes the last snap position sit one screen above the document bottom — the
+     engine then pulls the visitor back up off the footer to watch the Pixi
+     screen again. Contact has no snap-align either, so leaving this one off keeps
+     the Contact -> showcase -> footer run completely free. */
+}
+.daily-logo-stage{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  pointer-events:none;
 }
 
 /* === LIGHTBOX / PROJECT OVERLAY === */
@@ -961,6 +1144,52 @@ footer a{color:var(--grey);text-decoration:none}
   }
 }
 </script>
+
+<!-- HERO TIER — decides, before the first paint, whether this device gets the
+     full 3D hero. It has to run here rather than in explode.js because the only
+     thing it is FOR is to let CSS hide the H1: the scene draws its own SKAND in
+     the same place, and explode.js is a deferred module that then waits on
+     document.fonts.ready, so a heading stays on screen for the best part of a
+     second and then visibly swaps to a near-identical one. That swap is the
+     flash of the big logo on every cold load. CSS cannot wait that long; the H1
+     has to be out of the first frame or the flash is unavoidable.
+
+     explode.js reads window.__HERO_TIER0 rather than re-deciding — two
+     implementations of one gate is how they drift apart, and the failure mode
+     is a device that gets neither the scene nor a heading. The 4s failsafe
+     hands the heading back if the module never arrives at all (CDN blocked,
+     import failed): if the script that was going to replace the wordmark will
+     not run, the heading has to stay. -->
+<script>
+(function () {
+  var mq = function (q) { return window.matchMedia(q).matches; };
+  var lowPower = mq('(pointer: coarse)') ||
+    mq('(max-width: 768px)') ||
+    (navigator.hardwareConcurrency || 8) <= 4 ||
+    (navigator.deviceMemory || 8) <= 4;
+  var webgl = false;
+  try {
+    var gl = document.createElement('canvas').getContext('webgl2');
+    if (gl) {
+      webgl = true;
+      // Hand the context straight back — the real one is created later, and
+      // browsers cap how many can be alive at once.
+      var lose = gl.getExtension('WEBGL_lose_context');
+      if (lose) lose.loseContext();
+    }
+  } catch (_) { webgl = false; }
+
+  window.__HERO_LOWPOWER = lowPower;
+  window.__HERO_TIER0 = !mq('(prefers-reduced-motion: reduce)') && !lowPower && webgl;
+  if (!window.__HERO_TIER0) return;
+
+  var el = document.documentElement;
+  el.classList.add('hero-3d');
+  setTimeout(function () {
+    if (!el.classList.contains('hero-3d-ready')) el.classList.remove('hero-3d');
+  }, 4000);
+})();
+</script>
 </head>
 <body>
 
@@ -1011,11 +1240,16 @@ footer a{color:var(--grey);text-decoration:none}
 
 <!-- HERO -->
 <section class="hero" id="hero">
-  <canvas id="heroCanvas"></canvas>
+ <div class="hero-pin">
   <div class="hero-bg-line"></div>
   <div class="hero-bg-line"></div>
   <div class="hero-bg-line"></div>
+  <div id="heroStage" aria-hidden="true"></div>
+  <div id="heroHud" aria-hidden="true"></div>
   <h1 class="hero-title" id="heroTitle">SKAND</h1>
+  <!-- After the title on purpose: in tier 1 these two are the only in-flow
+       children, and the wordmark belongs above the grid, not below it. -->
+  <div id="heroStaticGrid" aria-hidden="true"></div>
   <div class="hero-meta" id="heroMeta">
     <p class="hero-tagline" data-tk="tagline">Create For More</p>
     <p class="hero-cn" data-tk="subtitle">and be seen by the world</p>
@@ -1030,6 +1264,7 @@ footer a{color:var(--grey);text-decoration:none}
     <span data-tk="scroll">Scroll</span>
     <div class="hero-scroll-line"></div>
   </div>
+ </div>
 </section>
 
 <!-- WORK -->
@@ -1126,6 +1361,17 @@ footer a{color:var(--grey);text-decoration:none}
       <!-- reverse marquee -->
     </div>
   </div>
+</section>
+
+<!-- DAILY LOGO SHOWCASE -->
+<!-- The daily Pixi effect, full screen. It was a 120x44 footer slot, which is a
+     size that cannot show what these effects do — a pixel-melt and an ink-bloom
+     both need room to breathe. Contact's brand marquee above already carries the
+     client names, so this screen deliberately holds nothing but the effect. The
+     module lazy-loads on approach (see scripts/logo/dispatcher.js), and pauses
+     its ticker whenever the screen is off-screen. -->
+<section class="logo-showcase" id="logoShowcase" aria-label="Daily logo study">
+  <div id="dailyLogoStage" class="daily-logo-stage" aria-hidden="true"></div>
 </section>
 
 <!-- FOOTER -->
@@ -1302,6 +1548,73 @@ const IMAGE_MANIFEST = {
   'page_71':{webp:'images/page_71.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABQAE/8QAHhAAAgEFAQEBAAAAAAAAAAAAAQIAAwQREiEiMWH/xAAWAQEBAQAAAAAAAAAAAAAAAAAEAgP/xAAcEQEAAgEFAAAAAAAAAAAAAAABAAIRExQhIjH/2gAMAwEAAhEDEQA/AEXrttTcLSLr9z9A/JhrIKyNo4bY9wMAGYr1Q6Wzkewx9Dh4YpaMatqpfp4Mww2D2QdjEDe2qhiNScc5KNIiqCFGMkmUdvrnGJjpk//Z'},
   'page_72':{webp:'images/page_72.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAUGBP/EACMQAAIBBAEDBQAAAAAAAAAAAAECAwAEERIhBRNRFCIxQWH/xAAVAQEBAAAAAAAAAAAAAAAAAAABAv/EABkRAAIDAQAAAAAAAAAAAAAAAAABAhETEv/aAAwDAQACEQMRAD8AoXmiTO8iqM8++pu7a7fqM6QbkdxtQq/PimsFtDcZaaNXYjJJH5W2cD1PawNHhGw881SdESXQkTpHUmXLFVJ+i4zRTy0UNG2wBwxHPNFOjDJH/9k='}
 };
+
+/* === HERO EXPLOSION MEDIA ===
+   The first screen showcases 12 projects across all six categories, chosen for
+   category coverage then brand spread then file weight. Referenced by PROJECTS
+   index rather than copied, so PROJECTS + IMAGE_MANIFEST stay the single source
+   of truth shared with the Work carousel. Consumed by scripts/hero/explode.js.
+
+   `catLabel` is a function, not a precomputed string: `lang` is declared below
+   this block, so reading it here would hit the temporal dead zone — and a live
+   lookup also keeps HUD callouts correct across language switches. */
+// Stratified, day-seeded selection: two projects per category, so the ring keeps
+// the "every discipline represented" shape the layout is designed around, while
+// the actual picks rotate daily. Seeding from the date (not Math.random) means a
+// reload mid-day doesn't reshuffle the hero under the visitor, and the choice is
+// identical for everyone on a given day — a plain random draw would routinely
+// come up lopsided, e.g. five of the fifteen `content` projects and no `social`.
+// Eleven of the twelve picks are kept; see the note on the slice below.
+function heroIdxForDay() {
+  let seed = Math.floor(Date.now() / 86400000) >>> 0;
+  const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+  const byCat = new Map();
+  PROJECTS.forEach((p, i) => {
+    if (!byCat.has(p.cat)) byCat.set(p.cat, []);
+    byCat.get(p.cat).push(i);
+  });
+  const picked = [];
+  for (const pool of byCat.values()) {
+    const rest = pool.slice();
+    for (let k = 0; k < 2 && rest.length; k++) {
+      picked.push(rest.splice(Math.floor(rnd() * rest.length), 1)[0]);
+    }
+  }
+  // Top up to 11 if the library ever has fewer than two projects in some
+  // categories, so the hero always has a full set to show.
+  if (picked.length < 11) {
+    const rest = PROJECTS.map((_, i) => i).filter(i => !picked.includes(i));
+    while (picked.length < 11 && rest.length) {
+      picked.push(rest.splice(Math.floor(rnd() * rest.length), 1)[0]);
+    }
+  }
+  // Eleven, not twelve. The ring was six plates left against five right, and the
+  // extra left one landed in the middle of the left-hand stack, where it only
+  // added to the pile-up. LAYOUT in scripts/hero/explode.js is the other half of
+  // this decision — the two must stay the same length, since the ring indexes it
+  // positionally.
+  return picked.slice(0, 11);
+}
+const HERO_IDX = heroIdxForDay();
+window.__HERO_MEDIA = {
+  items: HERO_IDX.map((i, n) => {
+    const p = PROJECTS[i];
+    if (!p) return null;
+    const base = p.img.replace('pdf_images/', '').replace('.jpg', '');
+    const info = IMAGE_MANIFEST[base] || {};
+    return {
+      n,
+      srcIdx: i,                       // lets the hero jump to this card in Work
+      brand: p.brand,
+      name: p.name,
+      cat: p.cat,
+      webp: info.webp || p.img,
+      blur: info.blur || '',
+    };
+  }).filter(Boolean),
+  catLabel: (cat) => FILTER_LABELS[cat]?.[lang] || cat,
+};
+
 /* === LANGUAGE SYSTEM === */
 const urlParams = new URLSearchParams(window.location.search);
 let lang = urlParams.get('lang') || localStorage.getItem('skand-lang') || 'en';
@@ -1319,11 +1632,11 @@ function setLang(l) {
   window.history.pushState({}, '', url.toString());
 
   applyLang();
-  if (window.refreshHeroCanvas) {
-    window.refreshHeroCanvas();
-  }
   // Re-trigger reveal for already-visible elements after lang switch
   document.querySelectorAll('.reveal,.reveal-stagger .reveal-item').forEach(el => {
+    // Work's lead-in is gated on the hero's handover (see REVEAL ON SCROLL);
+    // it has no business being force-revealed by a language switch.
+    if (el.closest('#work') && !el.dataset.revealSeen) return;
     const rect = el.getBoundingClientRect();
     if (rect.top < window.innerHeight && rect.bottom > 0) el.classList.add('visible');
   });
@@ -1420,6 +1733,8 @@ function applyLang() {
   if (canonicalLink) {
     canonicalLink.href = lang === 'zh' ? 'https://skandstudio.com/?lang=zh' : 'https://skandstudio.com/?lang=en';
   }
+  // Let the hero scene relabel its HUD callouts (category names are localised).
+  window.dispatchEvent(new CustomEvent('skand:lang', { detail: { lang } }));
 }
 
 /* === INIT === */
@@ -2011,6 +2326,41 @@ function applyFilter(cat) {
   renderWorkCarousel();
 }
 
+/* Called by the hero when one of its plates is clicked: land on that exact
+   project in the carousel rather than merely scrolling to the section. The
+   carousel is a moving target on its own, so without pinning pos the card you
+   asked for would drift off centre while the page was still scrolling. */
+function focusWorkProject(srcIdx) {
+  const work = document.getElementById('work');
+  if (!work) return;
+  // The target may be hidden by an active category filter, and pos is an index
+  // into the *visible* set — so the filter has to be cleared before anything
+  // else, or the lookup below silently misses.
+  if (workCarousel.filter !== 'all') applyFilter('all');
+  const cards = getVisibleCards();
+  const i = cards.findIndex((c) => Number(c.dataset.idx) === srcIdx);
+  if (i === -1) return;
+
+  workCarousel.pos = i;
+  workCarousel.vel = 0;
+  workCarousel.activeIdx = i;
+  workCarousel.needsRender = true;
+  // Long enough to actually read the highlight — the default pause is under a
+  // second, after which autoscroll slides the card away again.
+  pauseWorkAuto(6000);
+  updateWorkMeta(cards[i], true);
+  renderWorkCarousel();
+
+  document.querySelectorAll('.project-card.is-hero-target').forEach((c) => c.classList.remove('is-hero-target'));
+  const card = cards[i];
+  card.classList.add('is-hero-target');
+  clearTimeout(focusWorkProject._t);
+  focusWorkProject._t = setTimeout(() => card.classList.remove('is-hero-target'), 3600);
+
+  work.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+window.__skandFocusProject = focusWorkProject;
+
 function initWorkCarousel() {
   workCarousel.stage = document.getElementById('workCarouselStage');
   workCarousel.track = document.getElementById('workCarouselTrack');
@@ -2474,533 +2824,44 @@ function animCursor(){
   requestAnimationFrame(animCursor);
 }
 animCursor();
-document.querySelectorAll('a,.filter-tab,.project-card,.service-card,.nav-links a,.lightbox-close,.lightbox-arrow,.work-carousel-stage').forEach(el => {
+document.querySelectorAll('a,.filter-tab,.project-card,.service-card,.nav-links a,.lightbox-close,.lightbox-arrow,.work-carousel-stage,#heroStage').forEach(el => {
   el.addEventListener('mouseenter', () => ring && ring.classList.add('hovering'));
   el.addEventListener('mouseleave', () => ring && ring.classList.remove('hovering'));
 });
-
-/* === HERO CANVAS ANIMATION (Moonshot-inspired Lens) === */
-(function() {
-  // Built-in effect: Monday always, and ALL days on mobile (Pixi day effects are desktop-only).
-  // Desktop Tue–Sun still use scripts/logo/* via dispatcher.
-  const DAY_ALIASES = {
-    monday: 1, mon: 1,
-    tuesday: 2, tue: 2,
-    wednesday: 3, wed: 3,
-    thursday: 4, thu: 4,
-    friday: 5, fri: 5,
-    saturday: 6, sat: 6,
-    sunday: 7, sun: 7,
-  };
-  const params = new URLSearchParams(window.location.search);
-  let day;
-  if (params.has('fx')) {
-    const raw = params.get('fx').toLowerCase().trim();
-    day = DAY_ALIASES[raw] ?? (() => {
-      const n = parseInt(raw, 10);
-      return !Number.isNaN(n) && n >= 1 && n <= 7 ? n : null;
-    })();
-  }
-  if (!day) {
-    const now = new Date();
-    const cn = new Date(now.getTime() + (480 + now.getTimezoneOffset()) * 60000);
-    day = cn.getDay();
-    if (day === 0) day = 7;
-  }
-  const isMobile = window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches;
-  // Mobile always uses this fallback; desktop only on Monday (or ?fx=1).
-  if (day !== 1 && !isMobile) return;
-
-  const canvas = document.getElementById('heroCanvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  
-  const offscreenCanvas = document.createElement('canvas');
-  const offscreenCtx = offscreenCanvas.getContext('2d');
-  
-  const heroSection = document.getElementById('hero');
-  const heroScroll = document.querySelector('.hero-scroll');
-  
-  // Hide original HTML text elements visually but keep for SEO/Accessibility
-  const hideStyle = 'position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;';
-  const titleEl = document.getElementById('heroTitle');
-  const taglineEl = document.querySelector('.hero-tagline');
-  const subtitleEl = document.querySelector('.hero-cn');
-  
-  if (titleEl) titleEl.style.cssText = hideStyle;
-  if (taglineEl) taglineEl.style.cssText = hideStyle;
-  if (subtitleEl) subtitleEl.style.cssText = hideStyle;
-  document.querySelectorAll('.hero-bg-line').forEach(line => line.style.display = 'none');
-  
-  let scale = 1;
-  let targetX = 0;
-  let targetY = 0;
-  let lx = 0;
-  let ly = 0;
-  let introProgress = 0;
-  let mouseInHero = false;
-  let lastMouseMoveTime = Date.now();
-  const radius = isMobile ? 68 : 135;
-  const setCustomCursorVisible = visible => {
-    const dotEl = document.querySelector('.cursor-dot');
-    const ringEl = document.querySelector('.cursor-ring');
-    if (!hasPointer) return;
-    if (dotEl) dotEl.style.opacity = '1';
-    if (ringEl) ringEl.style.opacity = '1';
-  };
-  const pointerIsInHero = e => {
-    if (window.scrollY > 8) return false;
-    const rect = heroSection.getBoundingClientRect();
-    return e.clientX >= rect.left && e.clientX <= rect.right &&
-      e.clientY >= rect.top && e.clientY <= rect.bottom;
-  };
-  const restoreCursorAfterHeroScroll = () => {
-    if (window.scrollY > 8) {
-      mouseInHero = false;
-      setCustomCursorVisible(true);
-      return;
-    }
-    if (!mouseInHero) return;
-    const rect = heroSection.getBoundingClientRect();
-    if (my < rect.top || my > rect.bottom || rect.bottom <= 0) {
-      mouseInHero = false;
-      setCustomCursorVisible(true);
-    }
-  };
-  
-  function resizeCanvas() {
-    const rect = heroSection.getBoundingClientRect();
-    // Cap the resolution scale at 1.5 for high-DPI screens to prevent performance bottlenecks
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    scale = dpr;
-    
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
-    
-    offscreenCanvas.width = rect.width * dpr;
-    offscreenCanvas.height = rect.height * dpr;
-    
-    // Set initial position
-    if (lx === 0 && ly === 0) {
-      lx = rect.width / 2;
-      ly = rect.height / 2;
-      targetX = lx;
-      targetY = ly;
-    }
-  }
-  
-  window.addEventListener('resize', resizeCanvas);
-  window.addEventListener('scroll', restoreCursorAfterHeroScroll, { passive: true });
-  resizeCanvas();
-  
-  // Track mouse movements relative to hero section
-  window.addEventListener('mousemove', e => {
-    const rect = heroSection.getBoundingClientRect();
-    // Check if mouse is within hero bounds
-    if (pointerIsInHero(e)) {
-      if (!mouseInHero) {
-        mouseInHero = true;
-        setCustomCursorVisible(false);
-      }
-      targetX = e.clientX - rect.left;
-      targetY = e.clientY - rect.top;
-      lastMouseMoveTime = Date.now();
-    } else {
-      if (mouseInHero) {
-        mouseInHero = false;
-        setCustomCursorVisible(true);
-      }
-    }
-  });
-  
-  // Support touch events on mobile
-  heroSection.addEventListener('touchmove', e => {
-    if (e.touches.length > 0) {
-      const rect = heroSection.getBoundingClientRect();
-      targetX = e.touches[0].clientX - rect.left;
-      targetY = e.touches[0].clientY - rect.top;
-      lastMouseMoveTime = Date.now();
-      mouseInHero = true;
-    }
-  }, { passive: true });
-  
-  heroSection.addEventListener('touchend', () => {
-    mouseInHero = false;
-  }, { passive: true });
-  
-  function renderOffscreen() {
-    offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-    offscreenCtx.fillStyle = '#0a0a0a';
-    offscreenCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-    
-    offscreenCtx.save();
-    offscreenCtx.scale(scale, scale);
-    
-    const w = offscreenCanvas.width / scale;
-    const h = offscreenCanvas.height / scale;
-    const centerX = w / 2;
-    const centerY = h / 2;
-    
-    // 1. Draw animated background rings
-    const sy = window.scrollY;
-    offscreenCtx.lineWidth = 1.0;
-    
-    // Ring 1
-    offscreenCtx.save();
-    offscreenCtx.translate(centerX, centerY);
-    offscreenCtx.scale(1 + sy * 0.0003, 1 + sy * 0.0003);
-    offscreenCtx.rotate((sy * 0.01) * Math.PI / 180);
-    offscreenCtx.beginPath();
-    offscreenCtx.arc(0, 0, 250, 0, Math.PI * 2);
-    offscreenCtx.strokeStyle = 'rgba(64, 82, 181, 0.18)';
-    offscreenCtx.stroke();
-    offscreenCtx.restore();
-    
-    // Ring 2
-    offscreenCtx.save();
-    offscreenCtx.translate(centerX, centerY);
-    offscreenCtx.scale(1 + sy * 0.0003 * 2, 1 + sy * 0.0003 * 2);
-    offscreenCtx.rotate((sy * 0.01 * 2) * Math.PI / 180);
-    offscreenCtx.beginPath();
-    offscreenCtx.arc(0, 0, 350, 0, Math.PI * 2);
-    offscreenCtx.strokeStyle = 'rgba(232, 86, 58, 0.12)';
-    offscreenCtx.stroke();
-    offscreenCtx.restore();
-    
-    // Ring 3
-    offscreenCtx.save();
-    offscreenCtx.translate(centerX, centerY);
-    offscreenCtx.scale(1 + sy * 0.0003 * 3, 1 + sy * 0.0003 * 3);
-    offscreenCtx.rotate((sy * 0.01 * 3) * Math.PI / 180);
-    offscreenCtx.beginPath();
-    offscreenCtx.arc(0, 0, 450, 0, Math.PI * 2);
-    offscreenCtx.strokeStyle = 'rgba(64, 82, 181, 0.08)';
-    offscreenCtx.stroke();
-    offscreenCtx.restore();
-    
-    // 2. Draw CRT horizontal scanlines
-    offscreenCtx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
-    offscreenCtx.lineWidth = 0.5;
-    for (let y = 0; y < h; y += 3) {
-      offscreenCtx.beginPath();
-      offscreenCtx.moveTo(0, y);
-      offscreenCtx.lineTo(w, y);
-      offscreenCtx.stroke();
-    }
-    
-    // 3. Render content blocks
-    // Keep logo + copy slightly above true center so they clear the
-    // bottom meta stack (Find B-Side + Scroll) on shorter viewports.
-    let introScale = 0.95 + introProgress * 0.05;
-    offscreenCtx.globalAlpha = introProgress;
-    
-    let titleSize = Math.max(56, Math.min(w * 0.15, h < 720 ? 160 : 220));
-    let taglineSize = Math.max(18, Math.min(w * 0.03, h < 720 ? 30 : 42));
-    let subtitleSize = Math.max(13, Math.min(w * 0.015, h < 720 ? 15 : 18));
-    let titleSpacing = Math.max(4, Math.min(w * 0.02, 30));
-    const contentLift = Math.min(56, Math.max(0, (780 - h) * 0.18));
-    const titleY = centerY - 30 - contentLift;
-    const taglineY = titleY + titleSize * 0.52 + (h < 720 ? 12 : 18);
-    const subtitleY = taglineY + taglineSize + (h < 720 ? 14 : 22);
-    
-    // Title
-    offscreenCtx.save();
-    offscreenCtx.translate(centerX, titleY);
-    offscreenCtx.scale(introScale, introScale);
-    offscreenCtx.font = "500 " + titleSize + "px 'Cormorant Garamond', Georgia, serif";
-    offscreenCtx.textAlign = 'center';
-    offscreenCtx.textBaseline = 'middle';
-    offscreenCtx.letterSpacing = titleSpacing + 'px';
-    
-    let titleText = "SKAND";
-    let titleWidth = offscreenCtx.measureText(titleText).width;
-    
-    // Animate gradient shine
-    let gradX = (Date.now() / 3000) % 1;
-    let grad = offscreenCtx.createLinearGradient(
-      -titleWidth/2 - titleWidth + gradX * titleWidth * 2, 0,
-      -titleWidth/2 + gradX * titleWidth * 2, 0
-    );
-    grad.addColorStop(0.2, '#E8563A');
-    grad.addColorStop(0.3, '#f0ede8');
-    grad.addColorStop(0.7, '#f0ede8');
-    grad.addColorStop(0.8, '#E8563A');
-    
-    offscreenCtx.fillStyle = grad;
-    offscreenCtx.fillText(titleText, 0, 0);
-    offscreenCtx.restore();
-    
-    // Tagline
-    offscreenCtx.save();
-    offscreenCtx.translate(centerX, taglineY);
-    offscreenCtx.font = "italic 300 " + taglineSize + "px 'Cormorant Garamond', Georgia, serif";
-    offscreenCtx.fillStyle = '#E8563A';
-    offscreenCtx.textAlign = 'center';
-    offscreenCtx.textBaseline = 'middle';
-    offscreenCtx.letterSpacing = '2px';
-    offscreenCtx.fillText(T.hero.tagline[lang], 0, 0);
-    offscreenCtx.restore();
-    
-    // Subtitle
-    offscreenCtx.save();
-    offscreenCtx.translate(centerX, subtitleY);
-    offscreenCtx.font = "300 " + subtitleSize + "px 'Outfit', 'Helvetica Neue', sans-serif";
-    offscreenCtx.fillStyle = '#888';
-    offscreenCtx.textAlign = 'center';
-    offscreenCtx.textBaseline = 'middle';
-    offscreenCtx.letterSpacing = '4px';
-    offscreenCtx.fillText(T.hero.subtitle[lang], 0, 0);
-    offscreenCtx.restore();
-    
-    offscreenCtx.restore();
-  }
-  
-  function applyLensDistortion() {
-    const pxLX = lx * scale;
-    const pxLY = ly * scale;
-    const pxRadius = radius * scale;
-    const pxRadiusSq = pxRadius * pxRadius;
-    
-    const boxX = Math.floor(pxLX - pxRadius);
-    const boxY = Math.floor(pxLY - pxRadius);
-    const boxW = Math.floor(pxRadius * 2);
-    const boxH = Math.floor(pxRadius * 2);
-    
-    const screenW = canvas.width;
-    const screenH = canvas.height;
-    
-    const srcXStart = Math.max(0, boxX);
-    const srcYStart = Math.max(0, boxY);
-    const srcXEnd = Math.min(screenW - 1, boxX + boxW);
-    const srcYEnd = Math.min(screenH - 1, boxY + boxH);
-    
-    if (srcXEnd <= srcXStart || srcYEnd <= srcYStart) return;
-    
-    const dstW = srcXEnd - srcXStart;
-    const dstH = srcYEnd - srcYStart;
-    
-    // Capture offscreen clean content and main blurred content
-    const srcData = offscreenCtx.getImageData(srcXStart, srcYStart, dstW, dstH);
-    const dstData = ctx.getImageData(srcXStart, srcYStart, dstW, dstH);
-    
-    const srcPixels = srcData.data;
-    const dstPixels = dstData.data;
-    
-    const time = Date.now() * 0.0035;
-    
-    // Precompute sine and cosine tables to avoid expensive trig calculations in the pixel loop
-    const sinTableY = new Float32Array(dstH);
-    for (let dyIndex = 0; dyIndex < dstH; dyIndex++) {
-      const y = srcYStart + dyIndex;
-      const dy = y - pxLY;
-      sinTableY[dyIndex] = Math.sin(dy * 0.035 + time);
-    }
-    
-    const cosTableX = new Float32Array(dstW);
-    for (let dxIndex = 0; dxIndex < dstW; dxIndex++) {
-      const x = srcXStart + dxIndex;
-      const dx = x - pxLX;
-      cosTableX[dxIndex] = Math.cos(dx * 0.035 + time);
-    }
-    
-    for (let dyIndex = 0; dyIndex < dstH; dyIndex++) {
-      const y = srcYStart + dyIndex;
-      const dy = y - pxLY;
-      const dySq = dy * dy;
-      const sinVal = sinTableY[dyIndex];
-      
-      for (let dxIndex = 0; dxIndex < dstW; dxIndex++) {
-        const x = srcXStart + dxIndex;
-        const dx = x - pxLX;
-        
-        const distSq = dx*dx + dySq;
-        if (distSq < pxRadiusSq) {
-          const dist = Math.sqrt(distSq);
-          const normDist = dist / pxRadius;
-          const oneMinusNormDist = 1.0 - normDist;
-          
-          // Magnification + Chromatic Aberration mapping
-          const factorR = 1.0 - 0.40 * (1.0 - normDist * normDist);
-          const factorG = 1.0 - 0.33 * (1.0 - normDist * normDist);
-          const factorB = 1.0 - 0.26 * (1.0 - normDist * normDist);
-          
-          // Wavy ripple displacement using precomputed lookup tables
-          const waveX = sinVal * 5 * scale * oneMinusNormDist;
-          const waveY = cosTableX[dxIndex] * 5 * scale * oneMinusNormDist;
-          
-          let rx = Math.floor(pxLX + dx * factorR + waveX);
-          let ry = Math.floor(pxLY + dy * factorR + waveY);
-          
-          let gx = Math.floor(pxLX + dx * factorG + waveX);
-          let gy = Math.floor(pxLY + dy * factorG + waveY);
-          
-          let bx = Math.floor(pxLX + dx * factorB + waveX);
-          let by = Math.floor(pxLY + dy * factorB + waveY);
-          
-          rx = Math.min(Math.max(rx, srcXStart), srcXEnd - 1);
-          ry = Math.min(Math.max(ry, srcYStart), srcYEnd - 1);
-          
-          gx = Math.min(Math.max(gx, srcXStart), srcXEnd - 1);
-          gy = Math.min(Math.max(gy, srcYStart), srcYEnd - 1);
-          
-          bx = Math.min(Math.max(bx, srcXStart), srcXEnd - 1);
-          by = Math.min(Math.max(by, srcYStart), srcYEnd - 1);
-          
-          const rIdx = ((ry - srcYStart) * dstW + (rx - srcXStart)) * 4;
-          const gIdx = ((gy - srcYStart) * dstW + (gx - srcXStart)) * 4;
-          const bIdx = ((by - srcYStart) * dstW + (bx - srcXStart)) * 4;
-          
-          const dstIdx = (dyIndex * dstW + dxIndex) * 4;
-          
-          const globalY = Math.floor(y / scale);
-          const scanline = (globalY % 3 === 0) ? 0.76 : 1.0;
-          
-          dstPixels[dstIdx]     = Math.floor(srcPixels[rIdx] * scanline);
-          dstPixels[dstIdx + 1] = Math.floor(srcPixels[gIdx + 1] * scanline);
-          dstPixels[dstIdx + 2] = Math.floor(srcPixels[bIdx + 2] * scanline);
-          dstPixels[dstIdx + 3] = 255;
-        }
-      }
-    }
-    
-    ctx.putImageData(dstData, srcXStart, srcYStart);
-  }
-  
-  function drawLensBorder() {
-    const w = canvas.width / scale;
-    const h = canvas.height / scale;
-    const centerX = w / 2;
-    const centerY = h / 2;
-    
-    let angle = Math.atan2(ly - centerY, lx - centerX);
-    
-    ctx.save();
-    ctx.scale(scale, scale);
-    
-    // 1. Draw a soft directional chromatic light leak (Photographic Flare)
-    // Offset leak center slightly opposite to screen center to create a realistic refracted light leak
-    let leakOffsetX = -Math.cos(angle) * 12;
-    let leakOffsetY = -Math.sin(angle) * 12;
-    
-    // Use 'screen' composite mode to blend organically
-    ctx.globalCompositeOperation = 'screen';
-    
-    // We set the inner radius to radius * 0.85 and start stop 0.0 at transparent
-    // This ensures the inside of the lens remains completely clear and empty!
-    let radialGrad = ctx.createRadialGradient(
-      lx + leakOffsetX, ly + leakOffsetY, radius * 0.85,
-      lx + leakOffsetX, ly + leakOffsetY, radius * 1.45
-    );
-    // Coral (#E8563A) peaks at the border (approx 0.95-1.0), then bleeds into a soft blue flare (#4052B5)
-    radialGrad.addColorStop(0.0, 'rgba(0, 0, 0, 0)');           // Transparent inside
-    radialGrad.addColorStop(0.2, 'rgba(232, 86, 58, 0.45)');   // Warm coral bleed peaks at the edge
-    radialGrad.addColorStop(0.6, 'rgba(232, 86, 58, 0.15)');   // Fade out
-    radialGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');          // Fully transparent outside
-    
-    ctx.fillStyle = radialGrad;
-    ctx.beginPath();
-    ctx.arc(lx + leakOffsetX, ly + leakOffsetY, radius * 1.45, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Restore normal composition
-    ctx.globalCompositeOperation = 'source-over';
-    
-    // 2. Draw the lens border (clean white crescent ring, color dispersion removed)
-    let grad = ctx.createLinearGradient(
-      lx - Math.cos(angle) * radius, ly - Math.sin(angle) * radius,
-      lx + Math.cos(angle) * radius, ly + Math.sin(angle) * radius
-    );
-    grad.addColorStop(0.0, 'rgba(255, 255, 255, 0.95)');       // Clean white crescent highlight
-    grad.addColorStop(0.3, 'rgba(255, 255, 255, 0.4)');
-    grad.addColorStop(1.0, 'rgba(255, 255, 255, 0.05)');       // Faded side
-    
-    ctx.beginPath();
-    ctx.arc(lx, ly, radius, 0, Math.PI * 2);
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 1.8;
-    ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';              // Clean white shadow
-    ctx.shadowBlur = 14;
-    ctx.stroke();
-    
-    // 3. Draw Center Dot & Inner Ring (Pure white cursor matching Moonshot)
-    ctx.beginPath();
-    ctx.arc(lx, ly, 3, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = '#ffffff';
-    ctx.shadowBlur = 8;
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.arc(lx, ly, 9, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-    ctx.lineWidth = 1.0;
-    ctx.shadowBlur = 0;
-    ctx.stroke();
-    
-    ctx.restore();
-  }
-  
-  window.refreshHeroCanvas = function() {
-    renderOffscreen();
-  };
-  
-  function animLoop() {
-    if (introProgress < 1.0) {
-      introProgress += (1.0 - introProgress) * 0.05;
-      if (1.0 - introProgress < 0.001) {
-        introProgress = 1.0;
-        if (heroScroll) {
-          heroScroll.style.transition = 'opacity .8s ease';
-          heroScroll.style.opacity = '1';
-        }
-        const btn = document.getElementById('findBSideBtn');
-        if (btn) btn.classList.add('visible');
-      }
-    }
-    
-    const now = Date.now();
-    if (!mouseInHero || (now - lastMouseMoveTime > 3000)) {
-      const t = now * 0.0006;
-      const w = canvas.width / scale;
-      const h = canvas.height / scale;
-      targetX = w / 2 + Math.cos(t * 0.8) * (w * 0.22);
-      targetY = h / 2 + Math.sin(t * 0.5) * (h * 0.12);
-    }
-    
-    lx += (targetX - lx) * 0.09;
-    ly += (targetY - ly) * 0.09;
-    
-    renderOffscreen();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    if (isMobile) {
-      // Mobile: skip blur filter and pixel-level lens distortion
-      ctx.drawImage(offscreenCanvas, 0, 0);
-    } else {
-      ctx.filter = 'blur(5px) brightness(0.35)';
-      ctx.drawImage(offscreenCanvas, 0, 0);
-      ctx.filter = 'none';
-      applyLensDistortion();
-    }
-    
-    drawLensBorder();
-    requestAnimationFrame(animLoop);
-  }
-  
-  animLoop();
-})();
 
 /* === REVEAL ON SCROLL === */
 const revealObserver = new IntersectionObserver(entries => {
   entries.forEach(entry => { if(entry.isIntersecting){ entry.target.classList.add('visible'); revealObserver.unobserve(entry.target); } });
 }, {threshold:.1});
-document.querySelectorAll('.reveal,.reveal-stagger .reveal-item').forEach(el => {
+const observeReveal = (el) => {
+  if (el.dataset.revealSeen) return;
+  el.dataset.revealSeen = '1';
   const rect = el.getBoundingClientRect();
   if (rect.top < window.innerHeight && rect.bottom > 0) el.classList.add('visible');
   revealObserver.observe(el);
+};
+document.querySelectorAll('.reveal,.reveal-stagger .reveal-item').forEach(el => {
+  if (!el.closest('#work')) observeReveal(el);
 });
+
+/* Work's lead-in waits for the hero to hand the screen over.
+   The 3D stage is pinned for a viewport after its dive and then needs a second
+   viewport of scrolling to clear the top, so Work is pulled up to close that
+   gap — which means its heading is already inside the viewport while the plates
+   are still flying past. A plain observer fires on that overlap and the heading
+   fades up *through* the images, which reads as a layering fault rather than a
+   cut. So the stage announces the handover (scripts/hero/explode.js) and Work
+   fades in then. The timeout is the backstop for the hero module never
+   reporting at all — CDN blocked, import failed: a late fade is recoverable, a
+   heading that never appears is not. */
+let heroReported = false;
+const workReveals = [...document.querySelectorAll('#work .reveal,#work .reveal-item')];
+const releaseWorkReveals = () => workReveals.forEach(observeReveal);
+document.addEventListener('skand:hero-handoff', e => {
+  heroReported = true;
+  if (e.detail && e.detail.done) releaseWorkReveals();
+});
+setTimeout(() => { if (!heroReported) releaseWorkReveals(); }, 3000);
 
 /* === LANGUAGE TOGGLE BUTTON === */
 document.getElementById('langToggle').addEventListener('click', () => {
@@ -3079,6 +2940,7 @@ function bindPageFlip(selector, buildUrl) {
 bindPageFlip('a[href^="b-side.html"]', () => 'b-side.html?v=1.2&lang=' + lang);
 bindPageFlip('a[href^="egg.html"]', () => 'egg.html?v=8&lang=' + lang);
 </script>
-<script type="module" src="scripts/logo/dispatcher.js?v=15"></script>
+<script type="module" src="scripts/hero/explode.js?v=20"></script>
+<script type="module" src="scripts/logo/dispatcher.js?v=17"></script>
 </body>
 </html>

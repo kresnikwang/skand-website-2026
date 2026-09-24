@@ -14,7 +14,7 @@ import {
   ColorMatrixFilter,
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import {
-  isMobile, prepareHeroForPixi, makeApp, createTextCanvas,
+  isMobile, prepareStage, makeApp, createTextCanvas,
   brandTextCanvas, trackPointer, onResize,
 } from './shared.js';
 
@@ -125,12 +125,13 @@ function edgeHighlightTexture(w, h) {
 
 /* ── main ─────────────────────────────────────────────────────────── */
 
-export async function init() {
-  prepareHeroForPixi();
-  const hero = document.getElementById('hero');
+export async function init(stageEl) {
+  const host = stageEl || document.getElementById('dailyLogoStage');
+  if (!host) return;
+  prepareStage(host);
 
-  const app = await makeApp(hero);
-  const ptr = trackPointer(hero);
+  const app = await makeApp(host);
+  const ptr = trackPointer(host);
 
   const LOGO_SIZE = 210;
   const LOGO_SPACING = 8;
@@ -163,7 +164,7 @@ export async function init() {
 
   const AMB_W = 900;
   const AMB_H = 1100;
-  const ambTex = makeTexture(wideBeamTexture(AMB_W, AMB_H));
+  const ambTex = new Texture({ source: new CanvasSource({ resource: wideBeamTexture(AMB_W, AMB_H) }) });
   const ambSpr = new Sprite(ambTex);
   ambSpr.anchor.set(0.5, 0);
   ambSpr.alpha = 0;

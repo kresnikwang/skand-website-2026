@@ -16,7 +16,7 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import { GlowFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
-  prepareHeroForPixi, makeApp, createTextCanvas, brandTextCanvas,
+  prepareStage, makeApp, createTextCanvas, brandTextCanvas,
   fitAndCenter, trackPointer, onResize, isMobile,
 } from './shared.js';
 
@@ -45,11 +45,12 @@ function makeNoiseCanvas(size = 256) {
   return c;
 }
 
-export async function init() {
-  prepareHeroForPixi();
-  const hero = document.getElementById('hero');
-  const app = await makeApp(hero);
-  const ptr = trackPointer(hero);
+export async function init(stageEl) {
+  const host = stageEl || document.getElementById('dailyLogoStage');
+  if (!host) return;
+  prepareStage(host);
+  const app = await makeApp(host);
+  const ptr = trackPointer(host);
 
   /* ------------------------------------------------------------------ */
   /*  Layer 1 — dim stroke outline (line art base)                      */

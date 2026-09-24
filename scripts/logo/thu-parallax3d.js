@@ -14,7 +14,7 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import { BevelFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
-  prepareHeroForPixi, makeApp, trackPointer, onResize,
+  prepareStage, makeApp, trackPointer, onResize,
 } from './shared.js';
 
 // Chrome / brushed-steel gradient wordmark -> reads as metal under BevelFilter.
@@ -78,11 +78,12 @@ function glintTexture() {
   return c;
 }
 
-export async function init() {
-  prepareHeroForPixi();
-  const hero = document.getElementById('hero');
-  const app = await makeApp(hero);
-  const ptr = trackPointer(hero);
+export async function init(stageEl) {
+  const host = stageEl || document.getElementById('dailyLogoStage');
+  if (!host) return;
+  prepareStage(host);
+  const app = await makeApp(host);
+  const ptr = trackPointer(host);
 
   const logo = metallicTextCanvas({ text: 'SKAND', size: 210, weight: 600, letterSpacing: 8 });
   const logoTex = new Texture({ source: new CanvasSource({ resource: logo.canvas }) });

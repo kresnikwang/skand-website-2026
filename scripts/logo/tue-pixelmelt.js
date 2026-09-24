@@ -12,7 +12,7 @@ import {
   Container,
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import {
-  isMobile, prepareHeroForPixi, makeApp, brandTextCanvas,
+  isMobile, prepareStage, makeApp, brandTextCanvas,
   trackPointer, pointerOverSprite, onResize,
 } from './shared.js';
 
@@ -33,11 +33,12 @@ function easeOutBack(t) {
 
 /* ── main ─────────────────────────────────────────────────────────── */
 
-export async function init() {
-  prepareHeroForPixi();
-  const hero = document.getElementById('hero');
-  const app = await makeApp(hero);
-  const ptr = trackPointer(hero);
+export async function init(stageEl) {
+  const host = stageEl || document.getElementById('dailyLogoStage');
+  if (!host) return;
+  prepareStage(host);
+  const app = await makeApp(host);
+  const ptr = trackPointer(host);
 
   // ── Build the SKAND wordmark texture ──
   const logo = brandTextCanvas({

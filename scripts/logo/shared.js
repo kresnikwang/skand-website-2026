@@ -39,51 +39,30 @@ export function getEffectiveDay() {
   return getChinaDay();
 }
 
-const HIDE =
-  'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;';
-
-// Hide the original HTML SKAND title (replaced by the Pixi logo), but keep the
-// hero-meta stack (slogan + subtitle + B-Side) in CSS flow so it never collides
-// with the Scroll cue.
-export function prepareHeroForPixi() {
-  const ht = document.getElementById('heroTitle');
-  if (ht) ht.style.cssText = HIDE;
-
-  document.querySelectorAll('.hero-bg-line').forEach((e) => (e.style.display = 'none'));
-  const hc = document.getElementById('heroCanvas');
-  if (hc) hc.style.display = 'none';
-
-  const meta = document.getElementById('heroMeta');
-  if (meta) setTimeout(() => meta.classList.add('is-ready'), 850);
-
-  const scroll = document.querySelector('.hero-scroll');
-  if (scroll) {
-    scroll.style.transition = 'opacity .8s ease';
-    setTimeout(() => (scroll.style.opacity = '1'), 700);
-  }
-  const btn = document.getElementById('findBSideBtn');
-  if (btn) setTimeout(() => btn.classList.add('visible'), 900);
+// Prepare an arbitrary host container for a Pixi effect.
+//
+// This used to be prepareHeroForPixi(): it hid the hero H1, the hero backdrop
+// rings, the hero canvas, then staged the slogan/Scroll/B-Side button reveal on
+// a timer. All of that is hero-specific and none of it applies now that the day
+// effects live in their own section below Contact — they have no business
+// hiding the page's <h1>. What remains is a ready-flag the effect can key off.
+export function prepareStage(host, { readyDelay = 200 } = {}) {
+  if (!host) return;
+  host.dataset.pixiReady = '0';
+  setTimeout(() => { host.dataset.pixiReady = '1'; }, readyDelay);
 }
 
-// Fallback: show the static SKAND title with entrance animation if a Pixi effect fails.
-export function revealStaticTitle() {
-  const ht = document.getElementById('heroTitle');
-  if (ht) {
-    ht.style.cssText =
-      'opacity:1;transform:translateY(0) scale(1);filter:blur(0px);transition:opacity .8s ease, transform .8s cubic-bezier(0.2, 0, 0.2, 1), filter .8s ease;';
-  }
-  const meta = document.getElementById('heroMeta');
-  if (meta) meta.classList.add('is-ready');
-  document.querySelectorAll('.hero-bg-line').forEach((e) => (e.style.display = ''));
-  const hc = document.getElementById('heroCanvas');
-  if (hc) hc.style.display = 'none';
-  const scroll = document.querySelector('.hero-scroll');
-  if (scroll) {
-    scroll.style.transition = 'opacity .8s ease';
-    scroll.style.opacity = '1';
-  }
-  const btn = document.getElementById('findBSideBtn');
-  if (btn) btn.classList.add('visible');
+// Monday and the no-Pixi fallback: a static gradient wordmark, zero Pixi.
+export function mountStaticWordmark(host) {
+  if (!host) return;
+  if (host.dataset.mounted === '1') return;
+  host.dataset.mounted = '1';
+  const { canvas, cssWidth, cssHeight } = brandTextCanvas({
+    text: 'SKAND', size: 200, weight: 500, letterSpacing: 4, supersample: 2,
+  });
+  canvas.style.cssText =
+    `position:absolute;inset:0;margin:auto;width:${cssWidth}px;height:${cssHeight}px;`;
+  host.appendChild(canvas);
 }
 
 // Create a Pixi Application. We target Pixi v8 (dual WebGPU/WebGL capable),
@@ -110,6 +89,18 @@ export async function makeApp(hero, { pointerEvents = false } = {}) {
   cv.style.zIndex = '2';
   cv.style.pointerEvents = pointerEvents ? 'auto' : 'none';
   hero.appendChild(cv);
+
+  // Stop drawing while the host is off-screen. This was a 120x44 footer slot, so
+  // it was cheap to leave running; the stage is now a full viewport of filtered
+  // WebGL, and a visitor who scrolls past it and then reads three more sections
+  // should not be paying for it. Done here rather than in the six day modules
+  // because all six of them go through makeApp and none of them return the app.
+  const io = new IntersectionObserver(
+    ([e]) => (e.isIntersecting ? app.ticker.start() : app.ticker.stop()),
+    { rootMargin: '120px 0px' }
+  );
+  io.observe(hero);
+
   return app;
 }
 
