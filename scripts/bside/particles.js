@@ -19,7 +19,7 @@
 
 import * as THREE from 'https://esm.sh/three@0.170.0';
 import { GPUComputationRenderer } from 'https://esm.sh/three@0.170.0/examples/jsm/misc/GPUComputationRenderer.js';
-import { PALETTE, LETTER_COLORS } from './config.js';
+import { PALETTE, LETTER_COLORS } from './config.js?v=20260925d';
 
 /* ---------- compute shaders ---------- */
 
@@ -42,6 +42,7 @@ const velocityShader = /* glsl */ `
   uniform float uImpulse;      // ignition radial burst (decays in JS)
   uniform vec3  uPointer;      // world-space pointer on the z=0 plane
   uniform float uPointerForce; // signed: + attract (dragging), − repel
+  uniform float uRevealed;
   uniform float uBounds;       // half-extent of the chaos volume
   uniform float uWorldScale;   // normalized target → world units
   uniform sampler2D uTarget;  // xyz = target, w = stagger 0..1
@@ -90,10 +91,14 @@ const velocityShader = /* glsl */ `
     // Pointer wake. Attract while dragging (builds charge), repel otherwise.
     vec3 toPointer = uPointer - pos;
     float pd = length(toPointer);
-    if (pd < 6.5 && pd > 0.001) {
-      float f = (6.5 - pd) / 6.5;
+    float pointerRadius = uRevealed > 0.5 ? 0.9 : 6.5;
+    if (pd < pointerRadius && pd > 0.001) {
+      float f = (pointerRadius - pd) / pointerRadius;
       f *= f;
       vel += (toPointer / pd) * f * uPointerForce;
+      if (uPointerForce > 0.0) {
+        vel += normalize(vec3(-toPointer.y, toPointer.x, 0.0)) * f * 0.85;
+      }
     }
 
     // Ignition: radial burst from the centre.
@@ -150,14 +155,14 @@ const renderVertex = /* glsl */ `
     col *= mix(1.0, tw, chaosT * 0.6);
 
     vColor = col;
-    vAlpha = mix(0.35, 1.0, mixT) * mix(0.7, 1.0, chaosT * 0.5 + 0.5);
+    vAlpha = mix(0.62, 1.0, mixT);
     vCore = 0.5 + 0.5 * aRandom;
 
     vec4 mv = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mv;
 
-    float size = uSize * (0.65 + aRandom * 0.7) * (1.0 + uIgnite * 0.5);
-    gl_PointSize = size * uPixelRatio * (uHeight / -mv.z) * 0.01;
+    float size = uSize * (0.65 + aRandom * 0.7) * mix(1.0, 0.58, uMorph) * (1.0 + uIgnite * 0.65);
+    gl_PointSize = max(1.0, size * uPixelRatio * (uHeight / -mv.z) * 0.01);
   }
 `;
 
@@ -171,10 +176,10 @@ const renderFragment = /* glsl */ `
     vec2 c = gl_PointCoord - 0.5;
     float d = length(c) * 2.0;
     if (d > 1.0) discard;
-    float glow = pow(1.0 - d, 2.2);
-    float core = pow(max(0.0, 1.0 - d * 2.2), 3.0);
-    vec3 col = vColor * (glow * 0.7 + core * 0.9 * vCore);
-    gl_FragColor = vec4(col, vAlpha * (glow * 0.6 + core * 0.8));
+    float body = 1.0 - smoothstep(0.15, 1.0, d);
+    float core = 1.0 - smoothstep(0.0, 0.38, d);
+    vec3 col = vColor * (body * 0.85 + core * 0.8 * vCore);
+    gl_FragColor = vec4(col, vAlpha * body);
   }
 `;
 
@@ -233,6 +238,7 @@ export function createParticleSystem(renderer, opts) {
     uImpulse: { value: 0 },
     uPointer: { value: new THREE.Vector3(0, 0, 0) },
     uPointerForce: { value: 0 },
+    uRevealed: { value: 0 },
     uBounds: { value: bounds },
     uWorldScale: { value: worldScale },
     uTarget: { value: targetTex },
@@ -261,7 +267,7 @@ export function createParticleSystem(renderer, opts) {
   const material = new THREE.ShaderMaterial({
     uniforms: {
       uPositions: { value: null },
-      uSize: { value: 2.2 },
+      uSize: { value: size >= 256 ? 3.8 : 5.0 },
       uPixelRatio: { value: pixelRatio },
       uHeight: { value: height },
       uMorph: shared.uMorph,
@@ -285,6 +291,7 @@ export function createParticleSystem(renderer, opts) {
     if (s.chaos !== undefined) shared.uChaos.value = s.chaos;
     if (s.impulse !== undefined) shared.uImpulse.value = s.impulse;
     if (s.pointerForce !== undefined) shared.uPointerForce.value = s.pointerForce;
+    if (s.revealed !== undefined) shared.uRevealed.value = s.revealed ? 1 : 0;
     if (s.ignite !== undefined) material.uniforms.uIgnite.value = s.ignite;
     if (s.pointer) shared.uPointer.value.copy(s.pointer);
   }
@@ -390,7 +397,7 @@ function buildParticles(size, targets, worldScale, bounds) {
     aRandom[i] = rnd;
     aSeed[i] = seed;
 
-    const col = letterIdx >= 0 ? LETTER_COLORS[letterIdx % LETTER_COLORS.length] : PALETTE.dim;
+    const col = rnd > 0.985 ? PALETTE.coral : (letterIdx >= 0 ? LETTER_COLORS[letterIdx % LETTER_COLORS.length] : PALETTE.dim);
     tmp.setHex(col);
     aColor[i * 3] = tmp.r;
     aColor[i * 3 + 1] = tmp.g;

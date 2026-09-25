@@ -25,7 +25,7 @@ export const PALETTE = {
 };
 
 // Per-letter accent, mirrors the accentColors array the old Pixi version used.
-export const LETTER_COLORS = [0xe8563a, 0x4052b5, 0xf0ede8, 0x7bbf9c, 0xffb5a7];
+export const LETTER_COLORS = [0xf0ede8, 0xf0ede8, 0xf0ede8, 0xf0ede8, 0xf0ede8];
 export const LETTERS = ['S', 'K', 'A', 'N', 'D'];
 
 // Pentatonic-ish charge notes, one per phase, reused by audio.js.
@@ -77,6 +77,7 @@ export const I18N = {
   revealed: { en: 'The mark is yours', zh: '标志已成形' },
   replay: { en: 'Replay', zh: '重玩' },
   sound: { en: 'Sound', zh: '音效' },
+  muted: { en: 'Unmute', zh: '开启音效' },
   reset: { en: 'Reset', zh: '重置' },
   loading: { en: 'Gathering particles…', zh: '粒子聚集中…' },
   fail: { en: 'Could not start 3D on this device', zh: '此设备无法启动 3D 效果' },

@@ -9,11 +9,11 @@
  */
 
 import * as THREE from 'https://esm.sh/three@0.170.0';
-import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER, PALETTE } from './config.js';
-import { createScene } from './scene.js';
-import { createParticleSystem } from './particles.js';
+import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER, PALETTE } from './config.js?v=20260925d';
+import { createScene } from './scene.js?v=20260925d';
+import { createParticleSystem } from './particles.js?v=20260925d';
 import { buildTargets } from './targets.js';
-import { createPhases } from './phases.js';
+import { createPhases } from './phases.js?v=20260925d';
 import { createAudio } from './audio.js';
 
 /* ---------- language ---------- */
@@ -70,10 +70,9 @@ let mx = px;
 let my = py;
 let rx = mx;
 let ry = my;
-const isTouch = window.matchMedia('(pointer: coarse)').matches ||
-                window.matchMedia('(max-width: 768px)').matches;
+const finePointer = window.matchMedia('(pointer: fine)');
 
-if (!isTouch && dot && ring) {
+if (dot && ring) {
   const follow = () => {
     rx += (mx - rx) * 0.14;
     ry += (my - ry) * 0.14;
@@ -107,6 +106,10 @@ function localizeHud() {
   document.getElementById('backBtn').textContent = t('back');
   startBtn.textContent = t('start');
   introKicker.textContent = t('kicker');
+  soundBtn.setAttribute('aria-label', t('sound'));
+  soundBtn.title = t('sound');
+  resetBtn.setAttribute('aria-label', t('reset'));
+  resetBtn.title = t('reset');
   buildPhaseSteps();
 }
 
@@ -124,8 +127,10 @@ function updateHud() {
     hintEl.textContent = t('revealed');
     hintEl.classList.add('is-revealed');
   } else if (phases.phase === 'attract' || phases.phase === 'converge') {
+    hintEl.classList.remove('is-revealed');
     hintEl.textContent = t('hintReady');
   } else {
+    hintEl.classList.remove('is-revealed');
     hintEl.textContent = t('hint');
   }
 }
@@ -144,12 +149,12 @@ function updatePointer() {
 function computeWorldScale() {
   // Visible height at z=0 for the current camera.
   const cam = scene ? scene.camera : null;
-  const dist = 11;
+  const dist = tier.name === 'mobile' ? 13.5 : 11;
   const fov = 40;
   const visH = 2 * dist * Math.tan((fov * Math.PI) / 180 / 2);
   const visW = visH * (window.innerWidth / window.innerHeight);
   // The frame is 2.0 wide in normalized space; fit it to ~62% of the width.
-  let scale = (visW * 0.62) / 2.0;
+  let scale = (visW * (tier.name === 'mobile' ? 0.76 : 0.62)) / 2.0;
   // On very tall/narrow screens, cap by height so the frame never crops.
   const frameH = 0.8 * scale;
   if (frameH > visH * 0.5) scale = (visH * 0.5) / 0.8;
@@ -183,8 +188,9 @@ function mountFallback(message) {
     hintEl.classList.add('is-error');
   }
   if (hud) hud.style.display = 'none';
-  startBtn.classList.add('ready');
-  startBtn.disabled = true;
+  introKicker.textContent = message;
+  intro.style.pointerEvents = 'none';
+  startBtn.hidden = true;
 }
 
 /* ---------- init ---------- */
@@ -200,7 +206,7 @@ function init() {
   const total = tier.count * tier.count;
   const targets = buildTargets(total, tier.frameShare);
   const worldScale = computeWorldScale();
-  const bounds = 9; // half-extent of the initial chaos cloud
+  const bounds = 6.5; // half-extent of the initial chaos cloud
 
   particles = createParticleSystem(scene.renderer, {
     size: tier.count,
@@ -225,6 +231,7 @@ function init() {
     onIgnite: () => {
       audio.onIgnite();
       shell.classList.add('is-revealed');
+      hud.setAttribute('aria-hidden', 'true');
       updateHud();
     },
   });
@@ -234,6 +241,7 @@ function init() {
 
   // First resize pass to sync pixel ratio / world scale with the real viewport.
   handleResize();
+  running = true;
   requestAnimationFrame(loop);
 }
 
@@ -264,6 +272,7 @@ function loop() {
     phases.update(dt, false, 0);
   }
   const u = phases.uniforms(pointerWorld, pointerDown);
+  if (!pointerInside || !started) u.pointerForce = 0;
   particles.setState(u);
   scene.setIgnite(u.ignite);
   scene.setParallaxTarget(pointerInside ? ndc.x : 0, pointerInside ? ndc.y : 0);
@@ -291,10 +300,13 @@ window.addEventListener('pointermove', (e) => {
   mx = e.clientX;
   my = e.clientY;
   pointerInside = true;
+  document.documentElement.classList.toggle('custom-cursor-enabled', finePointer.matches && window.innerWidth > 768);
 }, { passive: true });
 
 window.addEventListener('pointerdown', (e) => {
   if (e.target.closest('a, button')) return;
+  px = e.clientX;
+  py = e.clientY;
   pointerDown = true;
   audio.unlock();
 }, { passive: true });
@@ -311,6 +323,8 @@ startBtn.addEventListener('click', () => {
   audio.unlock();
   audio.onStart();
   intro.classList.add('is-hidden');
+  intro.setAttribute('aria-hidden', 'true');
+  startBtn.tabIndex = -1;
   hud.classList.add('visible');
   shell.classList.add('is-live');
 });
@@ -318,7 +332,7 @@ startBtn.addEventListener('click', () => {
 resetBtn.addEventListener('click', () => {
   phases.reset();
   shell.classList.remove('is-revealed');
-  resetBtn.textContent = t('reset');
+  hud.removeAttribute('aria-hidden');
   audio.onReset();
   updateHud();
 });
@@ -326,7 +340,8 @@ resetBtn.addEventListener('click', () => {
 soundBtn.addEventListener('click', () => {
   const on = audio.toggle();
   soundBtn.classList.toggle('is-active', on);
-  soundBtn.setAttribute('aria-label', on ? t('sound') : 'muted');
+  soundBtn.setAttribute('aria-label', on ? t('sound') : t('muted'));
+  soundBtn.title = on ? t('sound') : t('muted');
 });
 
 // Back to home, preserving the page-flip and language handoff the site uses.
@@ -342,12 +357,13 @@ document.querySelectorAll('a[href^="index.html"]').forEach((link) => {
 /* ---------- resize ---------- */
 let resizeTimer;
 window.addEventListener('resize', () => {
+  if (window.innerWidth <= 768) document.documentElement.classList.remove('custom-cursor-enabled');
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(handleResize, 140);
 });
 
 document.addEventListener('visibilitychange', () => {
-  running = !document.hidden && started;
+  running = !document.hidden && Boolean(scene && particles);
 });
 
 /* ---------- boot ---------- */

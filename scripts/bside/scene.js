@@ -14,7 +14,7 @@ import { EffectComposer } from 'https://esm.sh/three@0.170.0/examples/jsm/postpr
 import { RenderPass } from 'https://esm.sh/three@0.170.0/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'https://esm.sh/three@0.170.0/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { AfterimagePass } from 'https://esm.sh/three@0.170.0/examples/jsm/postprocessing/AfterimagePass.js';
-import { PALETTE } from './config.js';
+import { PALETTE } from './config.js?v=20260925d';
 
 export function createScene({ canvas, tier, reduced }) {
   let renderer;
@@ -63,13 +63,13 @@ export function createScene({ canvas, tier, reduced }) {
       composer.addPass(new RenderPass(scene, camera));
       bloomPass = new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth, window.innerHeight),
-        0.55, // strength — pushed higher at ignition
-        0.7,  // radius
-        0.2   // threshold; low so the particles bloom generously
+        0.22,
+        0.36,
+        0.72
       );
       composer.addPass(bloomPass);
       if (!reduced) {
-        afterimagePass = new AfterimagePass(0.82);
+        afterimagePass = new AfterimagePass(0.0);
         composer.addPass(afterimagePass);
       }
     } catch (e) {
@@ -107,11 +107,10 @@ export function createScene({ canvas, tier, reduced }) {
   function setIgnite(heat) {
     if (bloomPass) {
       // Bloom ramps hard at the ignition beat then relaxes.
-      bloomPass.strength = 0.55 + heat * 1.1;
+      bloomPass.strength = 0.22 + heat * 1.05;
     }
     if (afterimagePass) {
-      // 0.0 disables the trail effect; hold damp high only while igniting.
-      afterimagePass.uniforms.damp.value = 0.82 - heat * 0.34;
+      afterimagePass.uniforms.damp.value = heat * 0.88;
     }
   }
 
@@ -130,7 +129,7 @@ export function createScene({ canvas, tier, reduced }) {
     renderer.setSize(w, h, false);
     if (composer) composer.setSize(w, h);
     if (bloomPass) bloomPass.resolution.set(w, h);
-    return { w, h, pixelRatio: renderer.getPixelRatio() };
+    return { w, h, height: h, pixelRatio: renderer.getPixelRatio() };
   }
 
   function render() {

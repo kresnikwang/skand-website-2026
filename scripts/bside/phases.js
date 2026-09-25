@@ -17,12 +17,12 @@
  * from feeling like a chore, and idle decay means letting go drops the bar.
  */
 
-import { PHASE_STOPS, PHASE_ORDER } from './config.js';
+import { PHASE_STOPS, PHASE_ORDER } from './config.js?v=20260925d';
 
-const CHARGE_PER_SEC_DRAG = 0.62;   // full charge in ~1.6s of active dragging
+const CHARGE_PER_SEC_DRAG = 0.9;
 const CHARGE_PER_SEC_PASSIVE = 0.05; // gentle trickle from moving the pointer
-const IDLE_DECAY = 0.10;            // charge bleeds away when you stop
-const IGNITE_HOLD = 0.06;           // charge must exceed 1 by this to fire
+const IDLE_DECAY = 0.035;
+const IGNITE_HOLD = 0.02;
 const IMPULSE_DECAY = 2.6;          // how fast the ignition burst dies down
 const IGNITE_FADE = 0.55;           // how fast the ignite heat fades after burst
 
@@ -98,13 +98,14 @@ export function createPhases({ onPhaseChange, onIgnite } = {}) {
       // chaos fades as morph rises; keep a whisper of it until the very end.
       const chaos = ignited ? 0 : Math.max(0, 1 - morph * 1.15) * (1 - morph * 0.4);
       // Pointer pulls while dragging (builds the mark), pushes otherwise.
-      const pointerForce = ignited ? 0 : (pointerDown ? 5.5 : -1.6);
+      const pointerForce = ignited ? (pointerDown ? -7 : -3) : (pointerDown ? 5.5 : -1.6);
       return {
         morph,
         chaos,
         impulse,
         ignite: igniteHeat,
         pointerForce,
+        revealed: ignited,
         pointer,
       };
     },
