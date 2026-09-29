@@ -30,6 +30,7 @@ rsync -az --delete \
   --exclude='package.json' \
   --exclude='package-lock.json' \
   --exclude='test_ssh.exp' \
+  --exclude='DEPLOYMENT.md' \
   -e "${RSYNC_RSH}" \
   ./ "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_ROOT}/"
 
