@@ -1,0 +1,957 @@
+/* ============================================================
+   SKAND — THE GALLERY HALL
+   Replaces the Three.js hero + work ribbon carousel.
+   Pure CSS 3D: a long hall the camera walks down as you scroll.
+   ============================================================ */
+
+:root {
+  /* the site self-hosts only Cormorant + Outfit, so borrow the platform
+     mono rather than adding a webfont */
+  --gallery-mono: ui-monospace, 'SF Mono', SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+
+.gallery {
+  --hall-w: 6200px;   /* set by gallery.js from the work count */
+  --col-w: 320px;
+  --art-w: 264px;
+  --wall-h: 504px;    /* set by gallery.js from the pin height */
+  --end-w: 460px;     /* width of the terminal panel; the back wall stops here */
+  --row-gap: 148px;
+  --pad-x: 760px;     /* lead-in before the first bay, trail after the last */
+
+  position: relative;
+  height: 200vh;
+  height: 200dvh;
+  margin-bottom: -40vh;   /* overlap About upward, same trick the old hero used
+                             (see the note at index.html:33-38) so the pin
+                             hands over instead of leaving a dead gap */
+  padding: 0;
+  background: var(--black);
+}
+
+.gallery-pin {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 560px;
+  overflow: hidden;
+  /* No overflow:hidden on .gallery itself — it would make .gallery the scroll
+     container and the sticky pin would attach to a box that never scrolls. */
+}
+
+/* ---------- atmospheric light ---------- */
+.gallery-pin::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 45% at 46% 42%, rgba(232, 86, 58, .10), transparent 62%),
+    radial-gradient(ellipse 50% 40% at 12% 78%, rgba(64, 82, 181, .10), transparent 66%),
+    linear-gradient(180deg, #0a0a0a 0%, #101010 42%, #0a0a0a 100%);
+}
+/* Vignette keeps the eye in the middle of the hall */
+.gallery-pin::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, #0a0a0a 0%, rgba(10, 10, 10, .55) 16%, transparent 38%, transparent 66%, rgba(10, 10, 10, .72) 100%),
+    linear-gradient(0deg, #0a0a0a 0%, transparent 22%, transparent 74%, rgba(10, 10, 10, .5) 100%);
+}
+
+/* Fades the whole hall to black across the -40vh overlap, so the About
+   section that scrolls up over the pin never sits on top of live artwork. */
+.hall-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  background: var(--black);
+  opacity: var(--hall-fade, 0);
+}
+
+/* ============================================================
+   THE ROOM
+   ============================================================ */
+.gallery-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  /* The camera math in gallery.js reads these three back off the computed
+     style, so the end of the walk lands exactly on the end wall. Keep them
+     here rather than as literals in both places. */
+  --hall-persp: 1200;
+  --hall-origin-x: 42%;
+  --hall-tilt: 4deg;
+  perspective: calc(var(--hall-persp) * 1px);
+  perspective-origin: var(--hall-origin-x) 46%;
+  overflow: hidden;
+  touch-action: pan-y;
+  cursor: grab;
+}
+.gallery-scene.is-dragging { cursor: grabbing; }
+
+.gallery-room {
+  position: absolute;
+  top: 44%;
+  left: 0;
+  width: var(--hall-w);
+  height: var(--wall-h);
+  transform: translate3d(var(--cam-x, 0px), -50%, 0) rotateY(var(--hall-tilt));
+  transform-origin: 0% 50%;
+  transform-style: preserve-3d;
+}
+
+/* ---------- back wall ---------- */
+/* Stops short of the end wall. It used to span the whole hall, which put it
+   at z=0 in front of the end wall at z=-40 and painted over its title. */
+.hall-wall {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: calc(var(--hall-w) - var(--end-w, 460px));
+  background:
+    linear-gradient(180deg, rgba(240, 237, 232, .055) 0%, rgba(240, 237, 232, .012) 34%, rgba(240, 237, 232, .03) 78%, rgba(240, 237, 232, .06) 100%),
+    linear-gradient(90deg, #131313 0%, #191817 45%, #141413 100%);
+  box-shadow: inset 0 0 220px rgba(0, 0, 0, .85);
+}
+.hall-wall::after {
+  /* faint horizontal plaster banding */
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: .5;
+  background: repeating-linear-gradient(180deg, transparent 0 118px, rgba(240, 237, 232, .022) 118px 119px);
+}
+
+/* ---------- structural pilasters, one per bay ---------- */
+.hall-pilaster {
+  position: absolute;
+  top: -60px;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(240, 237, 232, .11) 22%, rgba(240, 237, 232, .05) 82%, transparent);
+}
+.hall-pilaster::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 -7px;
+  width: 15px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, .028), transparent 70%);
+}
+
+/* ---------- floor ---------- */
+.hall-floor {
+  position: absolute;
+  left: 0;
+  top: var(--wall-h);
+  width: 100%;
+  height: 1000px;
+  transform-origin: top center;
+  transform: rotateX(74deg);
+  background:
+    /* the wall's light spills onto the boards just under the hang */
+    linear-gradient(180deg, rgba(232, 86, 58, .10) 0%, transparent 16%),
+    repeating-linear-gradient(90deg, transparent 0 159px, rgba(240, 237, 232, .12) 159px 160px),
+    repeating-linear-gradient(0deg, transparent 0 159px, rgba(240, 237, 232, .12) 159px 160px),
+    linear-gradient(180deg, #2b2825 0%, #161514 38%, #0a0a0a 78%);
+  box-shadow: inset 0 30px 70px rgba(0, 0, 0, .55);
+}
+/* the wall/floor seam, where the two light sources meet */
+.hall-seam {
+  position: absolute;
+  left: 0;
+  top: var(--wall-h);
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(232, 86, 58, .5) 18%, rgba(240, 237, 232, .3) 50%, rgba(232, 86, 58, .5) 82%, transparent);
+  box-shadow: 0 0 26px 5px rgba(232, 86, 58, .3);
+}
+
+/* ---------- ceiling light shafts, every second bay ---------- */
+/* translateZ(120) puts these in front of the hang (z 0-28) without z-index,
+   which preserve-3d ignores. Height is tied to the wall so the shaft always
+   reaches the floor whatever the viewport. */
+.hall-beam {
+  position: absolute;
+  top: calc(-1 * var(--wall-h) * 0.55);
+  width: 210px;
+  height: calc(var(--wall-h) * 1.5);
+  transform: translateZ(120px);
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(255, 238, 214, .17) 0%,
+    rgba(240, 237, 232, .07) 46%,
+    rgba(240, 237, 232, 0) 88%);
+  filter: blur(11px);
+}
+.hall-beam::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: #fff3e2;
+  box-shadow: 0 0 26px 9px rgba(255, 231, 197, .5);
+}
+
+/* ---------- far end wall: where the walk finishes ---------- */
+.hall-endwall {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  width: var(--end-w, 460px);
+  height: calc(var(--wall-h) + 40px);
+  transform: translateZ(18px);   /* a shade proud of the back wall, not behind it */
+  display: grid;
+  place-content: center;
+  text-align: center;
+  color: var(--white);
+  border-left: 1px solid rgba(240, 237, 232, .12);
+  background: linear-gradient(160deg, rgba(232, 86, 58, .16), rgba(20, 19, 18, .92) 64%);
+  box-shadow: inset 0 0 70px rgba(232, 86, 58, .1);
+}
+.hall-endwall::before {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(240, 237, 232, .1);
+}
+.hall-endwall-title {
+  position: relative;
+  font-family: var(--font-body);
+  font-size: clamp(30px, 3.1vw, 46px);
+  font-weight: 800;
+  line-height: .86;
+  letter-spacing: -.05em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+.hall-endwall-title em {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  text-transform: none;
+  color: var(--coral);
+}
+.hall-endwall-glow {
+  /* a wash of light behind the type, not a bar across the panel */
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 150%;
+  height: 46%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(232, 86, 58, .22), transparent 68%);
+}
+.hall-endwall-coords {
+  margin-top: 34px;
+  color: #6f6b64;
+  font: 10px/1.9 var(--gallery-mono);
+  letter-spacing: .1em;
+}
+/* The video portfolio used to sit in the work section's lead-in. At the end of
+   the walk it reads as "you've seen the stills — here's the motion". */
+.hall-endwall-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 40px;
+  padding: 12px 20px;
+  border: 1px solid rgba(240, 237, 232, .3);
+  border-radius: 100px;
+  color: var(--white);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .3s ease, border-color .3s ease, color .3s ease;
+}
+.hall-endwall-cta:hover {
+  background: var(--coral);
+  border-color: var(--coral);
+  color: var(--black);
+}
+.hall-endwall-cta svg { transition: transform .25s ease; }
+.hall-endwall-cta:hover svg { transform: translate(3px, -3px); }
+
+/* ============================================================
+   THE WORKS
+   ============================================================ */
+.hall-art {
+  position: absolute;
+  width: var(--art-w);
+  transform-style: preserve-3d;
+}
+
+.hall-art-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--white);
+  text-align: left;
+  font-family: var(--font-body);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 16:9 — matches every source asset, so nothing is ever cropped on the wall.
+   (The demo used .82 + cover, which cut these 16:9 images in half.) */
+.hall-art-frame {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  padding: 8px;
+  /* a drag that starts on a work must still pan the hall: no native image
+     drag, no text selection getting in the way of the pointer */
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+  background: linear-gradient(150deg, #efece5 0%, #b9b5ad 55%, #8f8b83 100%);
+  box-shadow:
+    0 22px 44px rgba(0, 0, 0, .7),
+    0 0 0 1px rgba(255, 255, 255, .22),
+    inset 0 0 0 1px rgba(0, 0, 0, .25);
+  transition: transform .4s cubic-bezier(.2, .7, .2, 1), box-shadow .4s ease;
+}
+/* the inner bevel + the picture-light glint along the top edge */
+.hall-art-frame::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, .18);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .14), transparent 34%);
+}
+.hall-art-frame img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background-color: #232220;
+  opacity: 0;
+  transition: opacity .45s ease;
+}
+.hall-art-frame.is-loaded img { opacity: 1; }
+
+/* the 20x11 LQIP from IMAGE_MANIFEST, blown up and blurred until the real
+   webp lands — reuses the placeholder the old project cards already carried */
+.hall-art-lqip {
+  position: absolute;
+  inset: 8px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(16px) saturate(1.05);
+  transform: scale(1.12);
+  transition: opacity .45s ease;
+}
+.hall-art-frame.is-loaded .hall-art-lqip { opacity: 0; }
+.hall-art-btn:hover .hall-art-frame,
+.hall-art-btn:focus-visible .hall-art-frame {
+  transform: translateY(-10px);
+  box-shadow:
+    0 34px 60px rgba(0, 0, 0, .8),
+    0 0 0 1px rgba(255, 255, 255, .4),
+    0 0 40px rgba(232, 86, 58, .3);
+}
+.hall-art-btn:focus-visible {
+  outline: 1px solid var(--coral);
+  outline-offset: 12px;
+}
+
+/* label plate — a wall label, sitting on the work and riding its lift */
+.hall-art-tag {
+  position: absolute;
+  z-index: 2;
+  top: 8px;
+  left: 8px;
+  padding: 3px 7px;
+  border-radius: 2px;
+  background: rgba(10, 10, 10, .55);
+  backdrop-filter: blur(4px);
+  color: rgba(240, 237, 232, .72);
+  font: 8px var(--gallery-mono);
+  letter-spacing: .14em;
+  pointer-events: none;
+}
+.hall-art-caption {
+  position: absolute;
+  z-index: 2;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 30px 9px 7px;
+  background: linear-gradient(180deg, transparent, rgba(6, 6, 6, .55) 38%, rgba(6, 6, 6, .88));
+  pointer-events: none;
+  text-align: left;
+}
+.hall-art-brand {
+  color: var(--coral);
+  font: 9px var(--gallery-mono);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.hall-art-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -.005em;
+  color: rgba(240, 237, 232, .9);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .7);
+}
+
+/* works the camera has already left behind, and ones still far ahead */
+.gallery-room .hall-art {
+  transition: opacity .5s ease;
+}
+
+/* ============================================================
+   FIRST-SCREEN COPY
+   ============================================================ */
+.gallery-copy {
+  position: absolute;
+  z-index: 4;
+  left: 6vw;
+  top: 27%;
+  width: min(40vw, 540px);
+  pointer-events: none;
+  transition: opacity .5s ease, transform .5s ease;
+}
+.gallery.is-walking .gallery-copy {
+  opacity: 0;
+  transform: translateY(-26px);
+}
+
+.gallery-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 0 0 26px;
+  color: rgba(240, 237, 232, .55);
+  font: 10px var(--gallery-mono);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.gallery-eyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 14px var(--coral);
+}
+
+.gallery-title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: clamp(62px, 8.6vw, 138px);
+  font-weight: 800;
+  line-height: .82;
+  letter-spacing: -.06em;
+  text-transform: uppercase;
+}
+.gallery-title em {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  text-transform: none;
+  color: var(--coral);
+}
+
+.gallery-sub {
+  margin: 32px 0 0;
+  max-width: 22ch;
+  color: rgba(240, 237, 232, .62);
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.75;
+}
+.gallery-sub span {
+  display: block;
+  color: rgba(240, 237, 232, .9);
+  font-weight: 500;
+}
+
+/* ---------- Find B-Side (kept from the old hero) ---------- */
+.gallery-bside {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+  padding: 11px 18px;
+  border: 1px solid rgba(240, 237, 232, .28);
+  border-radius: 100px;
+  color: var(--white);
+  font-size: 12px;
+  letter-spacing: 1.6px;
+  text-decoration: none;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: background .3s ease, border-color .3s ease, color .3s ease;
+}
+.gallery-bside:hover {
+  background: var(--coral);
+  border-color: var(--coral);
+  color: var(--black);
+}
+.gallery-bside svg { transition: transform .25s ease; }
+.gallery-bside:hover svg { transform: translate(3px, -3px); }
+
+/* ============================================================
+   HUD
+   ============================================================ */
+.gallery-hint {
+  position: absolute;
+  z-index: 4;
+  left: 6vw;
+  bottom: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(240, 237, 232, .45);
+  font: 10px var(--gallery-mono);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  transition: opacity .4s ease;
+}
+.gallery-hint::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--coral);
+  border-radius: 50%;
+}
+.gallery.is-walking .gallery-hint { opacity: 0; }
+
+.gallery-coords {
+  position: absolute;
+  z-index: 4;
+  right: 4vw;
+  top: 108px;
+  color: #56534e;
+  text-align: right;
+  font: 10px/1.85 var(--gallery-mono);
+  letter-spacing: .1em;
+}
+
+/* ---------- progress rail ---------- */
+.gallery-rail {
+  position: absolute;
+  z-index: 5;
+  right: 4vw;
+  bottom: 42px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.gallery-rail-track {
+  position: relative;
+  width: clamp(140px, 22vw, 320px);
+  height: 22px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.gallery-rail-track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(240, 237, 232, .18);
+}
+.gallery-rail-fill {
+  position: absolute;
+  left: 0;
+  height: 1px;
+  width: 0;
+  background: var(--coral);
+  box-shadow: 0 0 10px rgba(232, 86, 58, .7);
+}
+.gallery-rail-knob {
+  position: absolute;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 12px 3px rgba(232, 86, 58, .55);
+}
+.gallery-rail-ticks {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.gallery-rail-ticks i {
+  width: 1px;
+  height: 7px;
+  background: rgba(240, 237, 232, .22);
+}
+.gallery-rail-count {
+  min-width: 84px;
+  color: rgba(240, 237, 232, .62);
+  font: 10px var(--gallery-mono);
+  letter-spacing: .14em;
+  text-align: right;
+}
+.gallery-rail-count b {
+  color: var(--white);
+  font-weight: 500;
+}
+
+/* ============================================================
+   WORK VIEWER — full-res, never cropped
+   ============================================================ */
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 370px);
+  /* opaque: at .97 the hall's picture frames ghosted through the backdrop and
+     read as a rendering artefact rather than depth */
+  background:
+    radial-gradient(ellipse 70% 60% at 42% 46%, #101010, #060606 72%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .32s ease;
+}
+.viewer.is-open { opacity: 1; pointer-events: auto; }
+.viewer[hidden] { display: none; }
+
+.viewer-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: clamp(56px, 7vh, 92px) clamp(20px, 4vw, 64px);
+}
+
+/* the frame is locked to the source ratio, so `contain` never letterboxes
+   and never crops — the whole picture is always on screen, edge to edge */
+.viewer-frame {
+  position: relative;
+  width: 100%;
+  max-width: min(100%, calc((100dvh - 200px) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #131313;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, .8);
+}
+.viewer-frame img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;   /* the guarantee: complete image, no crop */
+  opacity: 0;
+  transition: opacity .45s ease;
+}
+.viewer-frame img.is-loaded { opacity: 1; }
+/* the 20x11 LQIP sits underneath and cross-fades out */
+.viewer-lqip {
+  position: absolute;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  object-fit: cover;
+  filter: blur(26px) saturate(1.1);
+  transform: scale(1.06);
+}
+.viewer-frame.is-loaded .viewer-lqip { opacity: 0; transition: opacity .45s ease .1s; }
+
+/* the 3840px original takes a moment — say so rather than showing a stall */
+.viewer-loading {
+  position: absolute;
+  left: 50%;
+  bottom: -30px;
+  transform: translateX(-50%);
+  color: rgba(240, 237, 232, .45);
+  font: 9px var(--gallery-mono);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.viewer-loading[hidden] { display: none; }
+.viewer-loading::before {
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 9px;
+  border-radius: 50%;
+  background: var(--coral);
+  animation: viewer-pulse 1.1s ease-in-out infinite;
+}
+@keyframes viewer-pulse {
+  0%, 100% { opacity: .25; }
+  50%      { opacity: 1; }
+}
+
+/* ---------- side panel ---------- */
+.viewer-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: clamp(28px, 4vw, 56px) clamp(24px, 3vw, 44px);
+  border-left: 1px solid rgba(240, 237, 232, .11);
+  background: linear-gradient(180deg, rgba(240, 237, 232, .022), transparent 40%);
+  overflow-y: auto;
+}
+.viewer-kicker {
+  color: var(--coral);
+  font: 10px var(--gallery-mono);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+.viewer-brand {
+  margin-top: 16px;
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+.viewer-name {
+  margin: 12px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 2.7vw, 44px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -.015em;
+}
+.viewer-facts {
+  margin-top: 34px;
+  border-top: 1px solid rgba(240, 237, 232, .12);
+}
+.viewer-fact {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(240, 237, 232, .12);
+  font: 11px var(--gallery-mono);
+  letter-spacing: .1em;
+}
+.viewer-fact dt { color: rgba(240, 237, 232, .42); text-transform: uppercase; }
+.viewer-fact dd { color: var(--white); text-align: right; }
+
+.viewer-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 34px;
+}
+.viewer-nav button {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(240, 237, 232, .2);
+  border-radius: 50%;
+  background: none;
+  color: var(--white);
+  font-size: 17px;
+  cursor: pointer;
+  transition: background .22s ease, border-color .22s ease, color .22s ease;
+}
+.viewer-nav button:hover {
+  background: var(--coral);
+  border-color: var(--coral);
+  color: var(--black);
+}
+.viewer-nav-count {
+  color: rgba(240, 237, 232, .5);
+  font: 10px var(--gallery-mono);
+  letter-spacing: .14em;
+}
+.viewer-nav-count b { color: var(--white); font-weight: 500; }
+
+.viewer-close {
+  position: absolute;
+  z-index: 3;
+  top: clamp(16px, 3vh, 32px);
+  right: clamp(16px, 3vw, 40px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 4px;
+  border: 0;
+  background: none;
+  color: var(--white);
+  font: 10px var(--gallery-mono);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.viewer-close span {
+  color: var(--coral);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.viewer-arrow {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  border: 1px solid rgba(240, 237, 232, .2);
+  border-radius: 50%;
+  background: rgba(10, 10, 10, .4);
+  color: var(--white);
+  font-size: 22px;
+  cursor: pointer;
+  transition: background .22s ease, border-color .22s ease, color .22s ease;
+}
+.viewer-arrow:hover {
+  background: var(--coral);
+  border-color: var(--coral);
+  color: var(--black);
+}
+.viewer-arrow.prev { left: clamp(12px, 2vw, 32px); }
+.viewer-arrow.next { right: calc(min(300px, 370px) + clamp(12px, 2vw, 32px)); }
+
+.viewer-footnote {
+  position: absolute;
+  left: clamp(20px, 4vw, 64px);
+  bottom: clamp(16px, 2.5vh, 28px);
+  color: #56534e;
+  font: 9px var(--gallery-mono);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   RESPONSIVE — below 1024px the 3D hall is dropped entirely
+   and all 45 works become a plain vertical grid. A 45-item hall
+   squeezed into a phone viewport is unreadable; a grid is not.
+   ============================================================ */
+@media (max-width: 1023px) {
+  .gallery {
+    height: auto;
+    margin-bottom: 0;
+    padding: clamp(70px, 12vw, 110px) 0 clamp(50px, 8vw, 80px);
+  }
+  .gallery-pin {
+    position: static;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  .gallery-pin::before,
+  .gallery-pin::after { display: none; }
+
+  .gallery-copy {
+    position: static;
+    width: auto;
+    margin: 0 clamp(20px, 5vw, 40px) clamp(30px, 6vw, 46px);
+  }
+  .gallery-title { font-size: clamp(52px, 15vw, 92px); }
+  .gallery-sub { max-width: none; font-size: 14px; }
+
+  .gallery-scene {
+    position: static;
+    perspective: none;
+    overflow: visible;
+    touch-action: auto;
+    cursor: auto;
+  }
+  .gallery-room {
+    position: static;
+    width: 100%;
+    height: auto;
+    transform: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: clamp(24px, 4vw, 40px) clamp(16px, 2.5vw, 28px);
+    padding: 0 clamp(20px, 5vw, 40px);
+  }
+  .hall-wall,
+  .hall-floor,
+  .hall-seam,
+  .hall-beam,
+  .hall-pilaster,
+  .hall-endwall { display: none; }
+
+  .hall-art {
+    position: static;
+    width: auto;
+    transform: none !important;
+  }
+
+  .gallery-hint { display: none; }
+  .gallery-rail {
+    position: static;
+    margin: clamp(34px, 6vw, 52px) clamp(20px, 5vw, 40px) 0;
+  }
+  .gallery-coords { display: none; }
+
+  /* viewer stacks: image on top, panel below */
+  .viewer {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .viewer-stage { padding: clamp(56px, 9vh, 80px) clamp(16px, 4vw, 28px) 20px; }
+  .viewer-frame { max-width: 100%; max-height: 52dvh; aspect-ratio: 16 / 9; }
+  .viewer-panel {
+    justify-content: flex-start;
+    padding: 22px clamp(20px, 5vw, 28px) clamp(28px, 5vh, 40px);
+    border-left: 0;
+    border-top: 1px solid rgba(240, 237, 232, .11);
+  }
+  .viewer-name { font-size: clamp(24px, 6.5vw, 34px); }
+  .viewer-facts { margin-top: 20px; }
+  .viewer-nav { margin-top: 20px; }
+  .viewer-arrow { display: none; }
+  .viewer-footnote { display: none; }
+}
+
+@media (max-width: 520px) {
+  .gallery-room { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   The pan is navigation, not decoration, so it stays — but the
+   damping, the parallax tilt and the hover lift all go.
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .gallery-room { transform: translate3d(var(--cam-x, 0px), -50%, 0); }
+  .viewer-loading::before { animation: none; opacity: 1; }
+  .hall-art-btn,
+  .hall-art-frame,
+  .gallery-copy,
+  .gallery-hint,
+  .viewer,
+  .viewer-frame img { transition: none !important; }
+}
+
+/* mono stack lives at the top of this file, next to the rest of the tokens */

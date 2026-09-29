@@ -33,7 +33,7 @@
 html{scroll-behavior:smooth;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--coral) var(--black);scroll-snap-type:y proximity}
 /* No overflow-x:hidden on body. It would make body a scroll container (a
    non-visible overflow-x forces overflow-y to compute to auto), and the sticky
-   .hero-pin would then pin to a box that never scrolls. html carries the
+   .gallery-pin would then pin to a box that never scrolls. html carries the
    clipping instead — a root element's overflow propagates to the viewport, so
    it still suppresses horizontal scrollbars while leaving sticky working. */
 body{background:var(--black);color:var(--white);font-family:var(--font-body);font-weight:300;line-height:1.6;cursor:auto}
@@ -56,23 +56,19 @@ html.custom-cursor-enabled body,
 html.custom-cursor-enabled a,
 html.custom-cursor-enabled button,
 html.custom-cursor-enabled .nav-dropdown-toggle,
-html.custom-cursor-enabled .project-card,
-html.custom-cursor-enabled .filter-tab,
-html.custom-cursor-enabled .video-cta-btn,
 html.custom-cursor-enabled .service-card,
-html.custom-cursor-enabled .work-carousel-stage,
-html.custom-cursor-enabled .lightbox-close,
-html.custom-cursor-enabled .lightbox-arrow,
-html.custom-cursor-enabled #heroStage.is-clickable,
-html.custom-cursor-enabled .hero-hud-tag{cursor:none!important}
+html.custom-cursor-enabled .hall-art-btn,
+html.custom-cursor-enabled .gallery-bside,
+html.custom-cursor-enabled .viewer-close,
+html.custom-cursor-enabled .viewer-arrow,
+html.custom-cursor-enabled .viewer-nav button{cursor:none!important}
 html:not(.custom-cursor-enabled) a,
 html:not(.custom-cursor-enabled) button,
-html:not(.custom-cursor-enabled) .project-card,
-html:not(.custom-cursor-enabled) .filter-tab,
-html:not(.custom-cursor-enabled) #heroStage.is-clickable,
-html:not(.custom-cursor-enabled) .video-cta-btn{cursor:pointer!important}
-html:not(.custom-cursor-enabled) .work-carousel-stage{cursor:grab!important}
-html:not(.custom-cursor-enabled) .work-carousel-stage.is-dragging{cursor:grabbing!important}
+html:not(.custom-cursor-enabled) .service-card,
+html:not(.custom-cursor-enabled) .hall-art-btn,
+html:not(.custom-cursor-enabled) .gallery-bside{cursor:pointer!important}
+html:not(.custom-cursor-enabled) .gallery-scene{cursor:grab!important}
+html:not(.custom-cursor-enabled) .gallery-scene.is-dragging{cursor:grabbing!important}
 
 /* === NAVIGATION === */
 nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;display:flex;justify-content:space-between;align-items:center;mix-blend-mode:difference}
@@ -103,223 +99,7 @@ nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;displa
 .nav-dropdown-menu a span{display:block;font-size:10px;color:var(--grey);margin-top:2px;text-transform:none;letter-spacing:0}
 .nav-dropdown-menu a:hover span{color:rgba(0,0,0,.6)}
 
-/* === HERO === */
-/* No overflow:hidden here on purpose. It would make .hero a scroll container,
-   and a sticky child pins to its nearest scrolling ancestor — so the pin would
-   attach to a box that never scrolls and never stick. .hero-pin clips instead.
-   Padding is zeroed because the generic `section` rule adds up to 160px, which
-   with border-box sizing would eat into the taller hero and shove the pin off
-   its intended top edge. The pin centres its own contents. */
-.hero{
-  height:100vh;
-  height:100dvh;
-  min-height:560px;
-  padding:0;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  position:relative;
-}
-/* Everything that makes up the visible hero lives in .hero-pin, which is one
-   viewport tall and sticks. The .hero box around it provides scroll travel.
-   Absolutely-positioned children (meta, scroll cue, bg rings) now resolve
-   against the pin, so at rest the layout is pixel-identical to an unpinned
-   hero — the pin only starts mattering once the user scrolls. */
-.hero-pin{
-  position:sticky;top:0;
-  width:100%;height:100vh;height:100dvh;min-height:560px;
-  display:flex;flex-direction:column;
-  justify-content:center;align-items:center;
-  overflow:hidden;
-}
-/* Scroll travel is added ONLY when the 3D scene boots. A visitor who gets the
-   static grid or the plain-text hero should not have to scroll through 100vh of
-   nothing to reach Work, so the extra height is opt-in from explode.js. */
-/* The pin is one viewport tall and sticky, so once the dive has used up the
-   scroll travel the pin still has a full viewport of scrolling to clear the
-   screen — and during that exit the next section is only now arriving from the
-   bottom. Left alone that reads as ~340px of nothing between the two screens.
-   Pulling Work up by a slice of a viewport overlaps the two, so its label is
-   already rising into frame as the last plates fade, and the pin hands over
-   instead of hanging around empty. It is a bottom margin, so the hero keeps its
-   own 200vh box and the pin's sticky travel is unchanged. */
-.hero.has-stage{height:200vh;height:200dvh;justify-content:flex-start;margin-bottom:-40vh}
-/* Stage hosts the Three.js explosion scene; HUD holds projected DOM callouts.
-   Both default to hidden — explode.js reveals them only when it actually boots,
-   so a failed module load leaves the plain text hero (the tier-2 fallback). */
-#heroStage{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;transition:opacity .6s ease}
-/* The live 3D stage takes pointer input so plates can be picked. It sits at
-   z-index 2, below .hero-meta (4) and the nav, so the B-Side CTA and the menu
-   still win the hit test. .is-clickable is the hover state, not the gate. */
-#heroStage.is-live{opacity:1;pointer-events:auto}
-#heroStage.is-clickable{cursor:pointer}
-#heroStage canvas{display:block;width:100%;height:100%}
-#heroStage.is-done{opacity:0}
-#heroHud{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;transition:opacity .6s ease}
-#heroHud.is-live{opacity:1}
-#heroHud.is-done{opacity:0}
-.hero-hud-tag{
-  position:absolute;top:0;left:0;
-  display:flex;align-items:baseline;gap:8px;
-  padding:3px 8px 3px 11px;
-  white-space:nowrap;
-  font-family:var(--font-body);
-  font-size:12px;letter-spacing:1.5px;font-weight:500;
-  /* Callouts sit on top of the artwork, which ranges from near-black to blown
-     white. A tight shadow plus a wide soft one keeps them readable over both
-     without needing a box that would break the hairline-drawing look. */
-  text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 12px rgba(0,0,0,.75);
-  will-change:transform,opacity;
-  /* The callout is a real <button>: it is the keyboard- and screen-reader-
-     reachable way into a plate, since a bare canvas offers neither. Reset the
-     native chrome so it still reads as a drawing annotation. Each font
-     property is set explicitly — a `font:inherit` shorthand here would win over
-     the size above it and silently restore the inherited 16px. */
-  background:none;border:0;color:inherit;line-height:normal;
-  text-align:left;cursor:pointer;
-  /* #heroHud is pointer-events:none so the projection layer never eats clicks;
-     a descendant can opt back in, which is what makes these the accessible
-     hit targets for a plate. */
-  pointer-events:auto;
-  -webkit-tap-highlight-color:transparent;
-}
-.hero-hud-tag:focus-visible{outline:1px solid var(--coral);outline-offset:2px;border-radius:2px}
-.hero-hud-tag:hover .hero-hud-brand{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.95),0 0 14px rgba(232,86,58,.7)}
-/* Leader-line stub: the 11px L before the label mirrors the 3D hairlines. */
-.hero-hud-tag::before{
-  content:'';position:absolute;left:0;top:50%;
-  width:11px;height:1px;background:rgba(120,140,255,.8);
-  box-shadow:0 0 4px rgba(0,0,0,.8);
-}
-.hero-hud-num{color:#ff7a5c;font-variant-numeric:tabular-nums}
-.hero-hud-brand{color:#fff}
-.hero-hud-cat{color:rgba(206,206,206,.95)}
-/* Tier-1 fallback: plain responsive grid, no canvas. Sits in the flex flow
-   below the wordmark rather than overlaying it. */
-#heroStaticGrid{
-  display:none;position:relative;z-index:2;
-  grid-template-columns:repeat(4,1fr);gap:10px;
-  width:min(92vw,980px);
-  margin:clamp(18px,3.2vh,34px) 0 clamp(96px,15vh,150px);
-}
-.hero.has-static-grid #heroStaticGrid{display:grid}
-/* Tier 1 lays out top-down: the grid's row height is solved in JS against the
-   space left over, so centring the column would only push the overflowing top
-   off-screen. The flex container is .hero-pin, not .hero. The title's offset
-   clears the fixed header. */
-.hero.has-static-grid .hero-pin{justify-content:flex-start}
-.hero.has-static-grid .hero-bg-line{display:none}
-.hero.has-static-grid .hero-title{margin-top:clamp(78px,11vh,116px);flex:none}
-.hero-static-cell{
-  position:relative;overflow:hidden;border-radius:2px;
-  background:#1a1a1a center/cover no-repeat;
-  box-shadow:0 14px 40px rgba(0,0,0,.5);
-  /* A button so tier-1 visitors get the same "click a plate, land on that
-     project" behaviour as tier 0. Reset the native chrome, keep the card look. */
-  border:0;padding:0;font:inherit;color:inherit;appearance:none;
-  -webkit-appearance:none;cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-  transition:box-shadow .3s ease,transform .3s ease;
-}
-.hero-static-cell:hover,.hero-static-cell:focus-visible{
-  box-shadow:0 18px 46px rgba(0,0,0,.6),0 0 0 1px rgba(232,86,58,.7);
-  transform:translateY(-2px);
-}
-.hero-static-cell:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
-.hero-static-cell img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .45s ease;pointer-events:none}
-.hero-static-cell.loaded img{opacity:1}
-.hero-static-cell.loaded{background-image:none}
-.hero-static-cell span{
-  position:absolute;left:0;bottom:0;right:0;
-  display:flex;justify-content:space-between;gap:8px;
-  padding:18px 9px 7px;
-  background:linear-gradient(to top,rgba(10,10,10,.94),rgba(10,10,10,.55) 55%,transparent);
-  font-family:var(--font-body);font-size:11px;letter-spacing:1px;font-weight:500;
-  color:#fff;
-  text-shadow:0 1px 2px rgba(0,0,0,.9);
-  pointer-events:none;
-}
-.hero-static-cell span i{font-style:normal;color:#ff7a5c}
-.hero.has-static-grid .hero-title{font-size:clamp(44px,8vw,104px)}
-@media (max-width:900px){
-  #heroStaticGrid{grid-template-columns:repeat(3,1fr)}
-}
-@media (max-width:768px){
-  .hero-hud-tag{font-size:11px;letter-spacing:1px}
-  #heroStaticGrid{grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:clamp(104px,18vh,170px)}
-}
-.hero-bg-line{position:absolute;width:500px;height:500px;border:1px solid rgba(64,82,181,.15);border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
-.hero-bg-line:nth-child(2){width:700px;height:700px;border-color:rgba(232,86,58,.1)}
-.hero-bg-line:nth-child(3){width:900px;height:900px;border-color:rgba(64,82,181,.07)}
-.hero-title{font-family:var(--font-display);font-size:clamp(60px,15vw,220px);font-weight:500;letter-spacing:clamp(4px,2vw,30px);line-height:.9;text-align:center;position:relative;white-space:nowrap;background:linear-gradient(to right,var(--coral) 20%,var(--white) 30%,var(--white) 70%,var(--coral) 80%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:moonshotShine 5s linear infinite;transition:opacity .6s ease}
-/* Set only once the 3D scene has booted and taken the wordmark over. Default
-   visible, so tiers 1 (static grid) and 2 (no JS) keep their heading. */
-.hero-title.is-replaced{opacity:0}
-/* The same hiding, but decided in the head before the first paint. This is the
-   one that matters: waiting for .is-replaced means the H1 is on screen for the
-   whole of module load plus the font race, and the swap that follows is the
-   flash. The head script also removes the class again after 4s if the module
-   never arrives, so a blocked CDN leaves the heading visible rather than gone.
-   .is-replaced (0,2,0) outranks this (0,1,1) anyway, so the scene keeps the
-   heading hidden for the rest of the session even if the failsafe fires late. */
-html.hero-3d .hero-title{opacity:0}
-@keyframes moonshotShine{0%{background-position:0% center}100%{background-position:200% center}}
-/* Meta cluster: slogan + B-Side sit above Scroll with reserved clearance */
-.hero-meta{
-  position:absolute;
-  left:50%;
-  bottom:clamp(92px, 14vh, 128px);
-  transform:translateX(-50%);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:clamp(8px, 1.2vh, 14px);
-  z-index:4;
-  width:min(92vw, 520px);
-  text-align:center;
-  pointer-events:none;
-}
-.hero-tagline{
-  font-family:var(--font-display);
-  font-size:clamp(20px,2.8vw,38px);
-  font-weight:300;
-  font-style:italic;
-  color:var(--coral);
-  margin:0;
-  letter-spacing:2px;
-  transform:translateY(16px);
-  transition:opacity .8s ease, transform .8s ease;
-}
-.hero-cn{
-  font-size:clamp(13px,1.3vw,17px);
-  color:var(--grey);
-  margin:0;
-  letter-spacing:3px;
-  transform:translateY(12px);
-  transition:opacity .8s ease .1s, transform .8s ease .1s;
-}
-.hero-meta.is-ready .hero-tagline,
-.hero-meta.is-ready .hero-cn{
-  opacity:1;
-  transform:translateY(0);
-}
-.hero-scroll{
-  position:absolute;
-  bottom:clamp(18px, 3vh, 28px);
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
-  z-index:3;
-}
-.hero-scroll span{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--grey)}
-.hero-scroll-line{width:1px;height:clamp(24px, 4vh, 36px);background:linear-gradient(to bottom,var(--coral),transparent);animation:scrollPulse 2s ease infinite}
-@keyframes scrollPulse{0%,100%{opacity:.3;transform:scaleY(.6)}50%{opacity:1;transform:scaleY(1)}}
-
-/* === PAGE FLIP & FIND B-SIDE BUTTON === */
+/* === PAGE FLIP === */
 body {
   background: var(--black);
 }
@@ -334,86 +114,6 @@ body {
   transform: perspective(1500px) rotateY(-90deg) scale(0.9);
   opacity: 0;
 }
-.find-b-side-btn {
-  position: relative;
-  top: auto;
-  left: auto;
-  z-index: 4;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: clamp(4px, 0.8vh, 10px);
-  padding: 11px 28px;
-  border: 1px solid rgba(240, 237, 232, 0.25);
-  color: var(--white);
-  text-decoration: none;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  border-radius: 100px;
-  cursor: none;
-  overflow: hidden;
-  pointer-events: auto;
-  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 1s cubic-bezier(0.25, 1, 0.5, 1), transform 1s cubic-bezier(0.25, 1, 0.5, 1);
-  background: transparent;
-}
-.find-b-side-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--coral);
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-  z-index: -1;
-}
-.find-b-side-btn:hover::before {
-  transform: scaleX(1);
-  transform-origin: left;
-}
-.find-b-side-btn:hover {
-  color: var(--black);
-  border-color: var(--coral);
-  box-shadow: 0 0 24px rgba(232, 86, 58, 0.25);
-}
-.find-b-side-btn.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-.find-b-side-btn svg {
-  transition: transform 0.3s ease;
-}
-.find-b-side-btn:hover svg {
-  transform: translateX(3px);
-}
-@media (max-width: 768px) {
-  .hero-meta{
-    bottom: clamp(84px, 13vh, 110px);
-    gap: 8px;
-  }
-  .find-b-side-btn {
-    padding: 10px 22px;
-    font-size: 10px;
-  }
-  .hero-scroll{
-    bottom: 16px;
-  }
-}
-@media (max-height: 700px) {
-  .hero-meta{
-    bottom: 78px;
-    gap: 6px;
-  }
-  .hero-tagline{font-size:clamp(18px, 4.2vh, 28px)}
-  .hero-cn{font-size:clamp(12px, 2.2vh, 14px);letter-spacing:2px}
-  .find-b-side-btn{padding:9px 20px;margin-top:2px}
-  .hero-scroll{bottom:12px}
-  .hero-scroll-line{height:22px}
-}
-
 /* === SECTIONS SHARED === */
 section{padding:clamp(80px,12vw,160px) clamp(24px,5vw,80px)}
 .section-label{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--coral);margin-bottom:12px;font-weight:500}
@@ -648,214 +348,6 @@ section{padding:clamp(80px,12vw,160px) clamp(24px,5vw,80px)}
 }
 .services-rail-dot.is-active{background:var(--coral);transform:scale(1.25)}
 
-/* === WORK / PORTFOLIO CAROUSEL === */
-.work-section{
-  background:var(--dark);
-  /* First content block after Hero */
-  padding-top:clamp(64px,8vw,100px);
-  padding-bottom:clamp(48px,6vw,80px);
-  scroll-snap-align:start;
-  scroll-snap-stop:normal;
-  overflow:hidden;
-}
-
-/* Filter chips: single-row horizontal scroll (esp. mobile) */
-.filter-tabs{
-  display:flex;
-  gap:8px;
-  flex-wrap:nowrap;
-  overflow-x:auto;
-  overflow-y:hidden;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-  overscroll-behavior-x:contain;
-  touch-action:pan-x;
-  margin-bottom:clamp(20px,3vw,36px);
-  padding:2px 0 6px;
-  /* bleed to section edges on small screens for easier swipe */
-  margin-left:calc(-1 * clamp(0px, 2vw, 0px));
-}
-.filter-tabs::-webkit-scrollbar{display:none}
-.filter-tab{
-  flex:0 0 auto;
-  white-space:nowrap;
-  padding:8px 18px;
-  border:1px solid rgba(240,237,232,.15);
-  border-radius:100px;
-  background:transparent;
-  color:var(--white);
-  font-family:var(--font-body);
-  font-size:13px;
-  letter-spacing:1px;
-  cursor:none;
-  transition:all .3s ease;
-  -webkit-tap-highlight-color:transparent;
-}
-.filter-tab:hover,.filter-tab.active{background:var(--coral);border-color:var(--coral);color:var(--black)}
-@media(max-width:768px){
-  .filter-tabs{
-    margin-left:calc(-1 * clamp(20px,5vw,24px));
-    margin-right:calc(-1 * clamp(20px,5vw,24px));
-    padding-left:clamp(20px,5vw,24px);
-    padding-right:clamp(20px,5vw,24px);
-  }
-  .filter-tab{padding:8px 14px;font-size:12px;letter-spacing:.5px}
-}
-
-/* Cylindrical project strip (inspired by aristidebenoist.com) */
-.work-carousel{
-  position:relative;
-  width:100vw;
-  margin-left:calc(50% - 50vw);
-  margin-right:calc(50% - 50vw);
-  user-select:none;
-  -webkit-user-select:none;
-}
-.work-carousel-meta{
-  text-align:center;
-  min-height:clamp(72px,10vw,96px);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:flex-end;
-  gap:8px;
-  margin-bottom:clamp(20px,2.5vw,32px);
-  padding:0 24px;
-  pointer-events:none;
-}
-.work-carousel-brand{
-  font-size:11px;
-  letter-spacing:3px;
-  text-transform:uppercase;
-  color:var(--coral);
-  font-weight:500;
-  transition:opacity .25s ease, transform .25s ease;
-}
-.work-carousel-name{
-  font-family:var(--font-display);
-  font-size:clamp(22px,2.8vw,40px);
-  font-weight:400;
-  line-height:1.15;
-  max-width:min(920px,92vw);
-  transition:opacity .25s ease, transform .25s ease;
-}
-.work-carousel-meta.is-switching .work-carousel-brand,
-.work-carousel-meta.is-switching .work-carousel-name{
-  opacity:0;
-  transform:translateY(6px);
-}
-.work-carousel-stage{
-  position:relative;
-  /* Tall enough for native landscape covers + center scale-up */
-  height:clamp(240px,32vw,420px);
-  perspective:1800px;
-  perspective-origin:50% 48%;
-  overflow:hidden;
-  cursor:grab;
-  outline:none;
-  /* pan-y: page still scrolls; JS axis-locks horizontal carousel drag */
-  touch-action:pan-y;
-  -webkit-tap-highlight-color:transparent;
-  /* Soft edge fade — ribbon vanishing into darkness */
-  mask-image:linear-gradient(90deg,transparent 0%,#000 6%,#000 94%,transparent 100%);
-  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 6%,#000 94%,transparent 100%);
-}
-.work-carousel-stage:focus-visible{
-  box-shadow:inset 0 0 0 1px rgba(232,86,58,.35);
-}
-.work-carousel-stage.is-dragging{cursor:grabbing}
-.work-carousel-track{
-  position:absolute;
-  inset:0;
-  transform-style:preserve-3d;
-}
-/* Project blades — width/height set from native image aspect via JS */
-.project-card{
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:var(--blade-w, 280px);
-  height:var(--blade-h, 158px);
-  overflow:hidden;
-  border-radius:2px;
-  border:none;
-  padding:0;
-  margin:0;
-  font:inherit;
-  color:inherit;
-  appearance:none;
-  -webkit-appearance:none;
-  cursor:pointer;
-  background-color:#1a1a1a;
-  background-image:var(--blur-bg);
-  background-size:cover;
-  background-position:center;
-  transform-style:preserve-3d;
-  will-change:transform, opacity, filter;
-  backface-visibility:hidden;
-  box-shadow:0 14px 40px rgba(0,0,0,.5);
-  /* Hit-testing on transformed 3D faces can be flaky — keep cards interactive */
-  transform:translate3d(-50%,-50%,0);
-}
-.project-card:focus-visible{
-  outline:2px solid var(--coral);
-  outline-offset:3px;
-}
-.project-card.hidden{display:none!important}
-.project-card.is-center{
-  box-shadow:0 28px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(240,237,232,.1);
-}
-/* "You clicked this one up in the hero" — a coral ring plus a slow pulse, so
-   the eye finds it even though the carousel is still settling. */
-.project-card.is-hero-target{
-  box-shadow:0 28px 70px rgba(0,0,0,.6), 0 0 0 2px var(--coral);
-  animation:heroTargetPulse 1.4s ease-in-out 3;
-}
-@keyframes heroTargetPulse{
-  0%,100%{box-shadow:0 28px 70px rgba(0,0,0,.6), 0 0 0 2px var(--coral)}
-  50%{box-shadow:0 28px 70px rgba(0,0,0,.6), 0 0 0 5px rgba(232,86,58,.35)}
-}
-.project-card img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  opacity:0;
-  transition:opacity .45s ease;
-  pointer-events:none;
-  -webkit-user-drag:none;
-  user-select:none;
-  display:block;
-}
-.project-card img.loaded,
-.project-card.loaded img{opacity:1}
-.project-card.loaded{background-image:none}
-/* Keep brand/name data in DOM for lightbox, hide on blade */
-.project-overlay{
-  position:absolute;
-  width:1px;height:1px;
-  padding:0;margin:-1px;
-  overflow:hidden;clip:rect(0,0,0,0);
-  white-space:nowrap;border:0;
-}
-.project-brand,.project-name{/* data only */}
-.work-carousel-hint{
-  text-align:center;
-  margin-top:clamp(18px,2.2vw,28px);
-  font-size:11px;
-  letter-spacing:2px;
-  text-transform:uppercase;
-  color:rgba(240,237,232,.32);
-}
-
-/* === VIDEO CTA === */
-.video-cta-container{text-align:left;margin:-12px 0 42px;display:flex;justify-content:flex-start}
-.video-cta-btn{display:inline-flex;align-items:center;gap:12px;padding:16px 40px;border:1px solid var(--white);color:var(--white);text-decoration:none;font-size:13px;letter-spacing:3px;text-transform:uppercase;font-family:var(--font-body);font-weight:400;transition:all 0.4s cubic-bezier(0.25, 1, 0.5, 1);position:relative;overflow:hidden;z-index:1;background:transparent;cursor:none}
-.video-cta-btn::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:var(--coral);transform:scaleX(0);transform-origin:right;transition:transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);z-index:-1}
-.video-cta-btn:hover::before{transform:scaleX(1);transform-origin:left}
-.video-cta-btn:hover{color:var(--black);border-color:var(--coral);box-shadow:0 0 25px rgba(232,86,58,0.25);transform:translateY(-2px)}
-.video-cta-btn .arrow-icon{transition:transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)}
-.video-cta-btn:hover .arrow-icon{transform:translateX(6px)}
-
 /* === CONTACT (+ brand marquee) === */
 .contact-section{
   text-align:center;
@@ -938,72 +430,6 @@ footer a{color:var(--grey);text-decoration:none}
   pointer-events:none;
 }
 
-/* === LIGHTBOX / PROJECT OVERLAY === */
-.lightbox{
-  position:fixed;inset:0;z-index:10001;
-  background:rgba(8,8,8,.94);
-  backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;pointer-events:none;
-  transition:opacity .35s ease;
-  touch-action:none;
-}
-.lightbox.active{opacity:1;pointer-events:auto}
-.lightbox img{
-  max-width:min(92vw,1280px);
-  max-height:78vh;
-  width:auto;height:auto;
-  object-fit:contain;
-  border-radius:4px;
-  transform:scale(.94);
-  transition:transform .4s cubic-bezier(.25,.1,.25,1), opacity .25s ease;
-  box-shadow:0 24px 90px rgba(0,0,0,.65);
-  pointer-events:none;
-  user-select:none;
-  -webkit-user-drag:none;
-}
-.lightbox.active img{transform:scale(1)}
-.lightbox-info{
-  position:absolute;
-  bottom:clamp(20px,3.5vw,44px);
-  left:50%;
-  transform:translateX(-50%);
-  text-align:center;
-  opacity:0;
-  transition:opacity .35s ease .1s;
-  max-width:min(90vw,720px);
-  padding:0 16px;
-  pointer-events:none;
-}
-.lightbox.active .lightbox-info{opacity:1}
-.lightbox-brand{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--coral);margin-bottom:6px;font-weight:500}
-.lightbox-name{font-family:var(--font-display);font-size:clamp(18px,2.2vw,30px);font-weight:400;line-height:1.2}
-.lightbox-close{
-  position:absolute;top:clamp(16px,3vw,36px);right:clamp(16px,3vw,36px);
-  width:48px;height:48px;
-  border:1px solid rgba(240,237,232,.22);border-radius:50%;
-  background:rgba(10,10,10,.35);color:var(--white);font-size:22px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:all .3s ease;z-index:3;
-}
-.lightbox-close:hover{background:var(--coral);border-color:var(--coral);color:var(--black)}
-.lightbox-arrow{
-  position:absolute;top:50%;transform:translateY(-50%);
-  width:52px;height:52px;
-  border:1px solid rgba(240,237,232,.22);border-radius:50%;
-  background:rgba(10,10,10,.35);color:var(--white);font-size:24px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:all .3s ease;z-index:3;
-}
-.lightbox-arrow:hover{background:var(--coral);border-color:var(--coral);color:var(--black)}
-.lightbox-arrow.prev{left:clamp(12px,2.5vw,36px)}
-.lightbox-arrow.next{right:clamp(12px,2.5vw,36px)}
-@media(max-width:640px){
-  .lightbox-arrow{width:44px;height:44px;font-size:20px}
-  .lightbox img{max-height:70vh}
-}
-
 /* === REVEAL ANIMATIONS === */
 .reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease}
 .reveal.visible{opacity:1;transform:translateY(0)}
@@ -1012,7 +438,6 @@ footer a{color:var(--grey);text-decoration:none}
 
 /* === RESPONSIVE === */
 @media(max-width:1024px){
-  .work-carousel-stage{height:clamp(200px,38vw,340px)}
   .about{grid-template-columns:1fr}
   .about-right{border-left:none;padding-left:0;border-top:1px solid rgba(232,86,58,.35);padding-top:24px;min-height:0}
   .about-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
@@ -1085,19 +510,18 @@ footer a{color:var(--grey);text-decoration:none}
   }
   .nav-dropdown-menu a::after{display:none}
   .nav-dropdown-menu a:hover{padding-left:18px}
-  .work-carousel-stage{height:clamp(170px,48vw,260px);cursor:grab}
-  .work-carousel-name{font-size:clamp(18px,5.2vw,28px)}
   .about-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
   .stat-label{letter-spacing:1.2px;font-size:10px}
   .service-card{flex-basis:min(78vw,220px);padding:14px}
   .cursor-dot,.cursor-ring{display:none}
   body{cursor:auto}
-  .filter-tab,.project-card,.nav-links a,.nav-hamburger,.service-card,.services-rail-dot,.contact-email{cursor:pointer}
+  .nav-links a,.nav-hamburger,.service-card,.services-rail-dot,.contact-email{cursor:pointer}
   .services-rail{cursor:auto}
-  .work-carousel-stage{cursor:grab}
-  .work-carousel-stage.is-dragging{cursor:grabbing}
 }
 </style>
+<!-- Gallery hall. Loaded after the inline block so it wins on equal
+     specificity; everything in it is scoped under .gallery / .viewer. -->
+<link rel="stylesheet" href="styles/gallery.css?v=1">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -1145,64 +569,40 @@ footer a{color:var(--grey);text-decoration:none}
 }
 </script>
 
-<!-- HERO TIER — decides, before the first paint, whether this device gets the
-     full 3D hero. It has to run here rather than in explode.js because the only
-     thing it is FOR is to let CSS hide the H1: the scene draws its own SKAND in
-     the same place, and explode.js is a deferred module that then waits on
-     document.fonts.ready, so a heading stays on screen for the best part of a
-     second and then visibly swaps to a near-identical one. That swap is the
-     flash of the big logo on every cold load. CSS cannot wait that long; the H1
-     has to be out of the first frame or the flash is unavoidable.
-
-     explode.js reads window.__HERO_TIER0 rather than re-deciding — two
-     implementations of one gate is how they drift apart, and the failure mode
-     is a device that gets neither the scene nor a heading. The 4s failsafe
-     hands the heading back if the module never arrives at all (CDN blocked,
-     import failed): if the script that was going to replace the wordmark will
-     not run, the heading has to stay. -->
-<script>
-(function () {
-  var mq = function (q) { return window.matchMedia(q).matches; };
-  var lowPower = mq('(pointer: coarse)') ||
-    mq('(max-width: 768px)') ||
-    (navigator.hardwareConcurrency || 8) <= 4 ||
-    (navigator.deviceMemory || 8) <= 4;
-  var webgl = false;
-  try {
-    var gl = document.createElement('canvas').getContext('webgl2');
-    if (gl) {
-      webgl = true;
-      // Hand the context straight back — the real one is created later, and
-      // browsers cap how many can be alive at once.
-      var lose = gl.getExtension('WEBGL_lose_context');
-      if (lose) lose.loseContext();
-    }
-  } catch (_) { webgl = false; }
-
-  window.__HERO_LOWPOWER = lowPower;
-  window.__HERO_TIER0 = !mq('(prefers-reduced-motion: reduce)') && !lowPower && webgl;
-  if (!window.__HERO_TIER0) return;
-
-  var el = document.documentElement;
-  el.classList.add('hero-3d');
-  setTimeout(function () {
-    if (!el.classList.contains('hero-3d-ready')) el.classList.remove('hero-3d');
-  }, 4000);
-})();
-</script>
 </head>
 <body>
 
-<!-- LIGHTBOX / PROJECT OVERLAY -->
-<div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Project viewer">
-  <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
-  <button type="button" class="lightbox-arrow prev" id="lightboxPrev" aria-label="Previous project">&#8249;</button>
-  <button type="button" class="lightbox-arrow next" id="lightboxNext" aria-label="Next project">&#8250;</button>
-  <img src="" alt="" id="lightboxImg">
-  <div class="lightbox-info">
-    <div class="lightbox-brand" id="lightboxBrand"></div>
-    <div class="lightbox-name" id="lightboxName"></div>
+<!-- WORK VIEWER / PROJECT OVERLAY -->
+<!-- The image box is locked to the source 16:9 ratio and the img uses
+     object-fit:contain, so a work is always shown whole — never cropped.
+     gallery.js feeds it the 3840x2160 original, not the 1000px webp. -->
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewerName" hidden>
+  <div class="viewer-stage">
+    <div class="viewer-frame" id="viewerFrame">
+      <img class="viewer-lqip" id="viewerLqip" alt="" aria-hidden="true" draggable="false">
+      <img id="viewerImage" alt="" draggable="false">
+    </div>
+    <span class="viewer-loading" id="viewerLoading" data-tk="viewer-loading" hidden>Loading full resolution</span>
+    <span class="viewer-footnote" data-tk="viewer-footnote">SKAND — Create For More</span>
   </div>
+  <aside class="viewer-panel">
+    <div class="viewer-kicker" id="viewerKicker"></div>
+    <div class="viewer-brand" id="viewerBrand"></div>
+    <h2 class="viewer-name" id="viewerName"></h2>
+    <dl class="viewer-facts">
+      <div class="viewer-fact"><dt data-tk="viewer-client">Client</dt><dd id="viewerClient"></dd></div>
+      <div class="viewer-fact"><dt data-tk="viewer-category">Category</dt><dd id="viewerCategory"></dd></div>
+      <div class="viewer-fact"><dt data-tk="viewer-index">Index</dt><dd id="viewerIndex"></dd></div>
+    </dl>
+    <div class="viewer-nav">
+      <button type="button" id="viewerPrev" data-tk="viewer-prev" aria-label="Previous work">&#8249;</button>
+      <button type="button" id="viewerNext" data-tk="viewer-next" aria-label="Next work">&#8250;</button>
+      <span class="viewer-nav-count"><b id="viewerCurrent">01</b> / <span id="viewerTotal">45</span></span>
+    </div>
+  </aside>
+  <button type="button" class="viewer-arrow prev" id="viewerArrowPrev" data-tk="viewer-prev" aria-label="Previous work">&#8249;</button>
+  <button type="button" class="viewer-arrow next" id="viewerArrowNext" data-tk="viewer-next" aria-label="Next work">&#8250;</button>
+  <button type="button" class="viewer-close" id="viewerClose"><span data-tk="viewer-close">Close</span><i aria-hidden="true">&times;</i></button>
 </div>
 
 <!-- GRAIN OVERLAY -->
@@ -1215,7 +615,7 @@ footer a{color:var(--grey);text-decoration:none}
 <!-- NAVIGATION -->
 <div class="page-wrapper" id="pageWrapper">
 <nav>
-  <div class="nav-logo"><a href="#hero" style="display:flex;align-items:center"><img src="logo.png" alt="SKAND Creative Studio — Independent Creative Agency in Shanghai, China" style="height:28px;filter:invert(1)"></a></div>
+  <div class="nav-logo"><a href="#work" style="display:flex;align-items:center"><img src="logo.png" alt="SKAND Creative Studio — Independent Creative Agency in Shanghai, China" style="height:28px;filter:invert(1)"></a></div>
   <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu" aria-expanded="false">
     <span></span><span></span><span></span>
   </button>
@@ -1238,64 +638,52 @@ footer a{color:var(--grey);text-decoration:none}
   </ul>
 </nav>
 
-<!-- HERO -->
-<section class="hero" id="hero">
- <div class="hero-pin">
-  <div class="hero-bg-line"></div>
-  <div class="hero-bg-line"></div>
-  <div class="hero-bg-line"></div>
-  <div id="heroStage" aria-hidden="true"></div>
-  <div id="heroHud" aria-hidden="true"></div>
-  <h1 class="hero-title" id="heroTitle">SKAND</h1>
-  <!-- After the title on purpose: in tier 1 these two are the only in-flow
-       children, and the wordmark belongs above the grid, not below it. -->
-  <div id="heroStaticGrid" aria-hidden="true"></div>
-  <div class="hero-meta" id="heroMeta">
-    <p class="hero-tagline" data-tk="tagline">Create For More</p>
-    <p class="hero-cn" data-tk="subtitle">and be seen by the world</p>
-    <a href="b-side.html?v=1.4" class="find-b-side-btn" id="findBSideBtn" data-t="hero-find-b-side" data-tk="findBSide">
+<!-- GALLERY HALL — replaces the old Three.js hero + work ribbon carousel.
+     #work is kept as the id so the nav "Work" link keeps working; the nav
+     logo points here too now that there is no separate #hero. -->
+<section class="gallery" id="work">
+ <div class="gallery-pin">
+
+  <div class="gallery-scene" id="galleryScene">
+   <div class="gallery-room" id="galleryRoom">
+    <!-- wall, pilasters, floor, beams, end wall and all 45 works are
+         injected by scripts/gallery/gallery.js from PROJECTS -->
+   </div>
+  </div>
+
+  <div class="gallery-copy">
+    <p class="gallery-eyebrow" data-tk="gallery-eyebrow">Independent Creative Agency · Shanghai</p>
+    <h1 class="gallery-title">Create<br><em>For More</em></h1>
+    <p class="gallery-sub">
+      <span data-tk="tagline">Create For More</span>
+      <span data-tk="subtitle">and be seen by the world</span>
+    </p>
+    <a href="b-side.html?v=1.4" class="gallery-bside" id="findBSideBtn" data-t="hero-find-b-side" data-tk="findBSide">
       <span>Find B-Side</span>
       <svg viewBox="0 0 24 24" width="14" height="14">
         <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </a>
   </div>
-  <div class="hero-scroll">
-    <span data-tk="scroll">Scroll</span>
-    <div class="hero-scroll-line"></div>
-  </div>
- </div>
-</section>
 
-<!-- WORK -->
-<section class="work-section" id="work">
-  <div class="reveal">
-    <div class="section-label" data-t="work-label">Selected Work</div>
-    <h2 class="section-heading" data-t="work-heading">Stories we've <em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">shaped</em></h2>
+  <!-- blacked out as the next section scrolls up over the pin, so About never
+       lands on top of the last works (gallery.js drives --hall-fade) -->
+  <div class="hall-scrim" aria-hidden="true"></div>
+
+  <div class="gallery-coords" aria-hidden="true">31°13′49.4″N<br>121°28′25.7″E</div>
+  <p class="gallery-hint" id="galleryHint" data-tk="gallery-hint">Scroll to walk the hall · Drag · Click a work</p>
+
+  <div class="gallery-rail">
+   <span class="gallery-rail-count"><b id="galleryRailCount">01</b> / <span id="galleryRailTotal">45</span></span>
+   <div class="gallery-rail-track" id="galleryRailTrack" role="slider" tabindex="0"
+        aria-label="Exhibition position" aria-valuemin="1" aria-valuemax="45" aria-valuenow="1">
+    <div class="gallery-rail-ticks" id="galleryRailTicks" aria-hidden="true"></div>
+    <div class="gallery-rail-fill" id="galleryRailFill"></div>
+    <div class="gallery-rail-knob" id="galleryRailKnob"></div>
+   </div>
   </div>
-  <div class="video-cta-container reveal">
-    <a href="https://www.xinpianchang.com/u10430477" target="_blank" class="video-cta-btn" data-t="video-cta">
-      <span data-tk="video-cta-text">Watch Video Portfolio</span>
-      <svg class="arrow-icon" viewBox="0 0 24 24" width="16" height="16">
-        <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </a>
-  </div>
-  <div class="filter-tabs reveal" id="filterTabs">
-    <!-- placeholder: filter buttons -->
-  </div>
-  <div class="work-carousel reveal" id="workCarousel" aria-label="Selected work carousel">
-    <div class="work-carousel-meta" aria-live="polite">
-      <div class="work-carousel-brand" id="workCarouselBrand"></div>
-      <div class="work-carousel-name" id="workCarouselName"></div>
-    </div>
-    <div class="work-carousel-stage" id="workCarouselStage" tabindex="0">
-      <div class="work-carousel-track" id="workCarouselTrack">
-        <!-- project blades injected -->
-      </div>
-    </div>
-    <p class="work-carousel-hint" data-t="work-hint">Drag to explore · Click to open</p>
-  </div>
+
+ </div>
 </section>
 
 <!-- ABOUT -->
@@ -1414,6 +802,21 @@ const T = {
     heading:{en:"Stories we've shaped",zh:'我们讲述的故事'},
     videoCta:{en:'Watch Video Portfolio',zh:'观看完整视频作品'},
     hint:{en:'Drag to explore · Click to open',zh:'拖动浏览 · 点击展开'}
+  },
+  /* The gallery hall. Strings the hall and the work viewer need; captions and
+     project names themselves stay in PROJECTS (English-only, as before). */
+  gallery: {
+    kicker:{en:'Selected Work',zh:'精选作品'},
+    eyebrow:{en:'Independent Creative Agency · Shanghai',zh:'独立创意机构 · 上海'},
+    hint:{en:'Scroll to walk the hall · Drag · Click a work',zh:'滚动穿行展厅 · 拖拽 · 点击作品'},
+    loading:{en:'Loading full resolution',zh:'正在载入原图'},
+    footnote:{en:'SKAND — Create For More',zh:'SKAND — Create For More'},
+    close:{en:'Close',zh:'关闭'},
+    prev:{en:'Previous work',zh:'上一个作品'},
+    next:{en:'Next work',zh:'下一个作品'},
+    client:{en:'Client',zh:'客户'},
+    category:{en:'Category',zh:'类别'},
+    index:{en:'Index',zh:'编号'}
   },
   contact: { 
     label:{en:'Get In Touch',zh:'联系我们'}, 
@@ -1549,72 +952,6 @@ const IMAGE_MANIFEST = {
   'page_72':{webp:'images/page_72.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAUGBP/EACMQAAIBBAEDBQAAAAAAAAAAAAECAwAEERIhBRNRFCIxQWH/xAAVAQEBAAAAAAAAAAAAAAAAAAABAv/EABkRAAIDAQAAAAAAAAAAAAAAAAABAhETEv/aAAwDAQACEQMRAD8AoXmiTO8iqM8++pu7a7fqM6QbkdxtQq/PimsFtDcZaaNXYjJJH5W2cD1PawNHhGw881SdESXQkTpHUmXLFVJ+i4zRTy0UNG2wBwxHPNFOjDJH/9k='}
 };
 
-/* === HERO EXPLOSION MEDIA ===
-   The first screen showcases 12 projects across all six categories, chosen for
-   category coverage then brand spread then file weight. Referenced by PROJECTS
-   index rather than copied, so PROJECTS + IMAGE_MANIFEST stay the single source
-   of truth shared with the Work carousel. Consumed by scripts/hero/explode.js.
-
-   `catLabel` is a function, not a precomputed string: `lang` is declared below
-   this block, so reading it here would hit the temporal dead zone — and a live
-   lookup also keeps HUD callouts correct across language switches. */
-// Stratified, day-seeded selection: two projects per category, so the ring keeps
-// the "every discipline represented" shape the layout is designed around, while
-// the actual picks rotate daily. Seeding from the date (not Math.random) means a
-// reload mid-day doesn't reshuffle the hero under the visitor, and the choice is
-// identical for everyone on a given day — a plain random draw would routinely
-// come up lopsided, e.g. five of the fifteen `content` projects and no `social`.
-// Eleven of the twelve picks are kept; see the note on the slice below.
-function heroIdxForDay() {
-  let seed = Math.floor(Date.now() / 86400000) >>> 0;
-  const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
-  const byCat = new Map();
-  PROJECTS.forEach((p, i) => {
-    if (!byCat.has(p.cat)) byCat.set(p.cat, []);
-    byCat.get(p.cat).push(i);
-  });
-  const picked = [];
-  for (const pool of byCat.values()) {
-    const rest = pool.slice();
-    for (let k = 0; k < 2 && rest.length; k++) {
-      picked.push(rest.splice(Math.floor(rnd() * rest.length), 1)[0]);
-    }
-  }
-  // Top up to 11 if the library ever has fewer than two projects in some
-  // categories, so the hero always has a full set to show.
-  if (picked.length < 11) {
-    const rest = PROJECTS.map((_, i) => i).filter(i => !picked.includes(i));
-    while (picked.length < 11 && rest.length) {
-      picked.push(rest.splice(Math.floor(rnd() * rest.length), 1)[0]);
-    }
-  }
-  // Eleven, not twelve. The ring was six plates left against five right, and the
-  // extra left one landed in the middle of the left-hand stack, where it only
-  // added to the pile-up. LAYOUT in scripts/hero/explode.js is the other half of
-  // this decision — the two must stay the same length, since the ring indexes it
-  // positionally.
-  return picked.slice(0, 11);
-}
-const HERO_IDX = heroIdxForDay();
-window.__HERO_MEDIA = {
-  items: HERO_IDX.map((i, n) => {
-    const p = PROJECTS[i];
-    if (!p) return null;
-    const base = p.img.replace('pdf_images/', '').replace('.jpg', '');
-    const info = IMAGE_MANIFEST[base] || {};
-    return {
-      n,
-      srcIdx: i,                       // lets the hero jump to this card in Work
-      brand: p.brand,
-      name: p.name,
-      cat: p.cat,
-      webp: info.webp || p.img,
-      blur: info.blur || '',
-    };
-  }).filter(Boolean),
-  catLabel: (cat) => FILTER_LABELS[cat]?.[lang] || cat,
-};
-
 /* === LANGUAGE SYSTEM === */
 const urlParams = new URLSearchParams(window.location.search);
 let lang = urlParams.get('lang') || localStorage.getItem('skand-lang') || 'en';
@@ -1653,10 +990,22 @@ function applyLang() {
     if (label) label.textContent = text;
     else el.textContent = text;
   });
-  // Hero
+  // Gallery hall — tagline/subtitle/findB-Side are reused from T.hero
   document.querySelectorAll('[data-tk="tagline"]').forEach(el => el.textContent = T.hero.tagline[lang]);
   document.querySelectorAll('[data-tk="subtitle"]').forEach(el => el.textContent = T.hero.subtitle[lang]);
-  document.querySelectorAll('[data-tk="scroll"]').forEach(el => el.textContent = T.hero.scroll[lang]);
+  const gSet = (k, v) => document.querySelectorAll('[data-tk="' + k + '"]').forEach(el => el.textContent = v);
+  const gAria = (k, v) => document.querySelectorAll('[data-tk="' + k + '"]').forEach(el => el.setAttribute('aria-label', v));
+  gSet('gallery-eyebrow', T.gallery.eyebrow[lang]);
+  gSet('gallery-hint', T.gallery.hint[lang]);
+  gSet('viewer-loading', T.gallery.loading[lang]);
+  gSet('viewer-footnote', T.gallery.footnote[lang]);
+  gSet('viewer-close', T.gallery.close[lang]);
+  // the arrows carry a glyph, so they get a localised aria-label, not text
+  gAria('viewer-prev', T.gallery.prev[lang]);
+  gAria('viewer-next', T.gallery.next[lang]);
+  gSet('viewer-client', T.gallery.client[lang]);
+  gSet('viewer-category', T.gallery.category[lang]);
+  gSet('viewer-index', T.gallery.index[lang]);
   if (q('[data-t="hero-find-b-side"]')) {
     q('[data-t="hero-find-b-side"]').querySelector('span').textContent = T.hero.findBSide[lang];
   }
@@ -1671,9 +1020,10 @@ function applyLang() {
   // Services
   q('[data-t="services-label"]').textContent = T.services.label[lang];
   q('[data-t="services-heading"]').innerHTML = T.services.heading[lang];
-  // Work
-  q('[data-t="work-label"]').textContent = T.work.label[lang];
-  q('[data-t="work-heading"]').textContent = T.work.heading[lang];
+  // Work — the old #work lead-in markup is gone (the gallery replaced it),
+  // so these are all optional lookups now.
+  if (q('[data-t="work-label"]')) q('[data-t="work-label"]').textContent = T.work.label[lang];
+  if (q('[data-t="work-heading"]')) q('[data-t="work-heading"]').textContent = T.work.heading[lang];
   if (q('[data-t="video-cta"]')) {
     q('[data-t="video-cta"]').querySelector('[data-tk="video-cta-text"]').textContent = T.work.videoCta[lang];
   }
@@ -1702,9 +1052,9 @@ function applyLang() {
       tagsEl.innerHTML = (data.tags?.[lang] || []).map(t => `<span class="service-tag">${t}</span>`).join('');
     }
   });
-  // Filter tabs
-  document.querySelectorAll('.filter-tab').forEach(btn => {
-    btn.textContent = FILTER_LABELS[btn.dataset.cat]?.[lang] || btn.dataset.cat;
+  // Category labels for the gallery captions
+  document.querySelectorAll('[data-cat-label]').forEach(el => {
+    el.textContent = FILTER_LABELS[el.dataset.catLabel]?.[lang] || el.dataset.catLabel;
   });
   // Marquee + reverse
   const marqueeHTML = CLIENTS.map(c => `<span class="marquee-item">${c}</span><span class="marquee-sep">◆</span>`).join('');
@@ -1733,7 +1083,7 @@ function applyLang() {
   if (canonicalLink) {
     canonicalLink.href = lang === 'zh' ? 'https://skandstudio.com/?lang=zh' : 'https://skandstudio.com/?lang=en';
   }
-  // Let the hero scene relabel its HUD callouts (category names are localised).
+  // Let any listener relabel itself (category names are localised).
   window.dispatchEvent(new CustomEvent('skand:lang', { detail: { lang } }));
 }
 
@@ -1758,46 +1108,6 @@ function applyLang() {
     ).join('');
   }
 
-  // Render filter tabs
-  const cats = ['all','imc','content','social','digital','visual','connections'];
-  document.getElementById('filterTabs').innerHTML = cats.map(c =>
-    `<button class="filter-tab${c==='all'?' active':''}" data-cat="${c}">${FILTER_LABELS[c][lang]}</button>`
-  ).join('');
-
-  // Render project blades with WebP + blur-up (native aspect set on load)
-  const track = document.getElementById('workCarouselTrack');
-  if (track) {
-    track.innerHTML = PROJECTS.map((p, idx) => {
-      const base = p.img.replace('pdf_images/', '').replace('.jpg', '');
-      const info = IMAGE_MANIFEST[base] || {};
-      const webpSrc = info.webp || p.img;
-      const blurData = info.blur || '';
-      // Default landscape ~16:9 until natural size is known
-      return `<button type="button" class="project-card" data-cat="${p.cat}" data-idx="${idx}" data-aspect="1.777" style="--blur-bg:url(${blurData})" aria-label="${p.brand} — ${p.name}">
-         <img src="${webpSrc}" alt="${p.brand} — ${p.name}" loading="lazy" decoding="async" draggable="false">
-         <div class="project-overlay">
-           <div class="project-brand">${p.brand}</div>
-           <div class="project-name">${p.name}</div>
-         </div>
-       </button>`;
-    }).join('');
-
-    track.querySelectorAll('.project-card img').forEach(img => {
-      const applyAspect = () => {
-        const card = img.closest('.project-card');
-        if (!card) return;
-        card.classList.add('loaded');
-        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-          const ar = img.naturalWidth / img.naturalHeight;
-          card.dataset.aspect = String(Math.max(0.5, Math.min(3, ar)));
-          // Safe: carousel module may not be booted yet when cached images fire load
-          if (typeof window.__wcRequestRender === 'function') window.__wcRequestRender();
-        }
-      };
-      if (img.complete && img.naturalWidth) applyAspect();
-      else img.addEventListener('load', applyAspect, { once: true });
-    });
-  }
 
   // Render dual marquees
   const mItems = CLIENTS.map(c => `<span class="marquee-item">${c}</span><span class="marquee-sep">◆</span>`).join('');
@@ -2068,700 +1378,6 @@ function initAboutStats() {
 /* === RENDER MARQUEE (duplicated for seamless loop) === */
 /* (merged into init above) */
 
-/* === WORK RIBBON CAROUSEL (aristidebenoist-inspired) === */
-const workCarousel = {
-  stage: null,
-  track: null,
-  meta: null,
-  brandEl: null,
-  nameEl: null,
-  pos: 0,
-  vel: 0,
-  bend: 0,          // 0..1 ribbon curvature intensity (smoothed)
-  activeIdx: 0,
-  filter: 'all',
-  dragging: false,
-  moved: false,
-  dragDist: 0,
-  pointerId: null,
-  startX: 0,
-  startY: 0,
-  lastX: 0,
-  lastT: 0,
-  raf: 0,
-  needsRender: true,
-  reducedMotion: false,
-  suppressClickUntil: 0,
-  // Auto loop: ~1 case every ~3.2s — slightly brisker reading pace
-  autoSpeed: 0.31, // cards per second
-  hovering: false,
-  inView: false, // true once ribbon is on-screen (keeps random start until then)
-  userPausedUntil: 0,
-  lastAutoTs: 0,
-};
-
-function isWorkLightboxOpen() {
-  return !!document.getElementById('lightbox')?.classList.contains('active');
-}
-
-function pauseWorkAuto(ms = 2200) {
-  workCarousel.userPausedUntil = performance.now() + ms;
-}
-
-function shouldWorkAutoScroll() {
-  if (workCarousel.reducedMotion) return false;
-  if (workCarousel.dragging) return false;
-  if (workCarousel.hovering) return false;
-  if (!workCarousel.inView) return false;
-  if (document.hidden) return false;
-  if (isWorkLightboxOpen()) return false;
-  if (performance.now() < workCarousel.userPausedUntil) return false;
-  if (Math.abs(workCarousel.vel) > 0.0006) return false;
-  return getVisibleCards().length > 1;
-}
-
-function getVisibleCards() {
-  return Array.from(document.querySelectorAll('#workCarouselTrack .project-card:not(.hidden)'));
-}
-
-function getRibbonMetrics() {
-  const w = window.innerWidth;
-  const stageH = workCarousel.stage?.clientHeight || Math.min(420, Math.max(200, w * 0.32));
-  // Base card height (center will scale up from this)
-  const bladeH = stageH * (w < 768 ? 0.62 : 0.58);
-  // Spacing uses average landscape width; actual widths vary by aspect
-  const avgAspect = 1.777;
-  const bladeW = bladeH * avgAspect;
-  return { w, stageH, bladeH, bladeW, avgAspect };
-}
-
-function updateWorkMeta(card, force) {
-  if (!card || !workCarousel.brandEl || !workCarousel.nameEl) return;
-  const brand = card.querySelector('.project-brand')?.textContent || '';
-  const name = card.querySelector('.project-name')?.textContent || '';
-  if (!force && workCarousel.brandEl.textContent === brand && workCarousel.nameEl.textContent === name) return;
-
-  const meta = workCarousel.meta;
-  if (!meta || workCarousel.reducedMotion) {
-    workCarousel.brandEl.textContent = brand;
-    workCarousel.nameEl.textContent = name;
-    return;
-  }
-  meta.classList.add('is-switching');
-  window.setTimeout(() => {
-    workCarousel.brandEl.textContent = brand;
-    workCarousel.nameEl.textContent = name;
-    meta.classList.remove('is-switching');
-  }, 160);
-}
-
-/** Shortest signed offset on a circular list of length n */
-function circularOffset(i, pos, n) {
-  let d = i - pos;
-  d = d - n * Math.round(d / n);
-  return d;
-}
-
-function wrapIndex(i, n) {
-  return ((Math.round(i) % n) + n) % n;
-}
-
-function renderWorkCarousel() {
-  const cards = getVisibleCards();
-  const n = cards.length;
-  if (!workCarousel.stage) return;
-  if (!n) {
-    if (workCarousel.brandEl) workCarousel.brandEl.textContent = '';
-    if (workCarousel.nameEl) workCarousel.nameEl.textContent = '';
-    return;
-  }
-
-  const { bladeH, bladeW } = getRibbonMetrics();
-
-  // Ribbon bend: stronger while scrolling/dragging → smaller radius, larger angle step
-  // Rest state still has gentle curve; motion tightens the "satin ribbon"
-  // Gentle auto-scroll also contributes a little motion so the ribbon stays “alive”
-  const autoMotion = (!workCarousel.dragging && shouldWorkAutoScroll()) ? 0.12 : 0;
-  const speed = Math.min(1, Math.abs(workCarousel.vel) * 7 + (workCarousel.dragging ? 0.35 : 0) + autoMotion);
-  const targetBend = workCarousel.reducedMotion ? 0.25 : (0.35 + speed * 0.65);
-  workCarousel.bend += (targetBend - workCarousel.bend) * 0.14;
-
-  // angle between neighboring cards (deg). Higher bend → more wrap
-  const angleStep = 9 + workCarousel.bend * 14; // ~9° rest → ~23° when spinning
-  // chord ≈ average card width with slight overlap for continuous ribbon
-  const chord = bladeW * (0.78 - workCarousel.bend * 0.08);
-  const halfStepRad = (angleStep * Math.PI) / 360;
-  const radius = chord / (2 * Math.sin(Math.max(0.001, halfStepRad)));
-
-  // Keep pos numerically stable while allowing infinite drag
-  if (workCarousel.pos > n * 4 || workCarousel.pos < -n * 3) {
-    workCarousel.pos = ((workCarousel.pos % n) + n) % n;
-  }
-
-  const center = wrapIndex(workCarousel.pos, n);
-  if (center !== workCarousel.activeIdx) {
-    workCarousel.activeIdx = center;
-    updateWorkMeta(cards[center]);
-  }
-
-  cards.forEach((card, i) => {
-    const offset = circularOffset(i, workCarousel.pos, n);
-    const abs = Math.abs(offset);
-    if (abs > 6.5) {
-      card.style.visibility = 'hidden';
-      card.style.pointerEvents = 'none';
-      return;
-    }
-    card.style.visibility = 'visible';
-    // Stage handles all pointer input (3D hit-testing is unreliable on mobile)
-    card.style.pointerEvents = 'none';
-
-    const aspect = parseFloat(card.dataset.aspect || '1.777') || 1.777;
-    const w = bladeH * aspect;
-    const h = bladeH;
-    card.style.setProperty('--blade-w', w.toFixed(1) + 'px');
-    card.style.setProperty('--blade-h', h.toFixed(1) + 'px');
-    card.style.width = w.toFixed(1) + 'px';
-    card.style.height = h.toFixed(1) + 'px';
-
-    const angle = offset * angleStep;
-    const rad = (angle * Math.PI) / 180;
-    const x = Math.sin(rad) * radius;
-    const z = (Math.cos(rad) - 1) * radius;
-
-    // Center case larger; sides shrink — ribbon “focus”
-    // abs=0 → ~1.28, abs=1 → ~1.05, abs=2 → ~0.88
-    const focus = Math.exp(-abs * abs * 0.55);
-    const scale = 0.82 + focus * 0.46; // 0.82..1.28
-    const brightness = 0.28 + focus * 0.72;
-    const opacity = Math.max(0, 1 - Math.max(0, abs - 3.8) * 0.7);
-    // Slight Y-tilt sells the ribbon fold without breaking readability
-    const rotX = Math.sin(rad) * (workCarousel.bend * 4);
-
-    card.style.transform =
-      `translate3d(calc(-50% + ${x.toFixed(2)}px), -50%, ${z.toFixed(2)}px) ` +
-      `rotateY(${(-angle).toFixed(2)}deg) rotateX(${rotX.toFixed(2)}deg) scale(${scale.toFixed(3)})`;
-    card.style.opacity = opacity.toFixed(3);
-    card.style.filter = `brightness(${brightness.toFixed(3)})`;
-    card.style.zIndex = String(300 - Math.round(abs * 20));
-    card.classList.toggle('is-center', i === center);
-
-    if (abs < 3.2) {
-      const img = card.querySelector('img');
-      if (img && img.loading === 'lazy') img.loading = 'eager';
-    }
-  });
-}
-
-function workCarouselTick(ts) {
-  workCarousel.raf = requestAnimationFrame(workCarouselTick);
-
-  const now = typeof ts === 'number' ? ts : performance.now();
-  const dt = workCarousel.lastAutoTs
-    ? Math.min(0.05, (now - workCarousel.lastAutoTs) / 1000)
-    : 0;
-  workCarousel.lastAutoTs = now;
-
-  // Always ease bend toward rest when idle → continuous subtle animation of curvature
-  let animating = false;
-  const autoOn = shouldWorkAutoScroll();
-
-  if (!workCarousel.dragging) {
-    if (Math.abs(workCarousel.vel) > 0.0006) {
-      // Residual flick momentum from drag / wheel
-      workCarousel.pos += workCarousel.vel;
-      workCarousel.vel *= 0.935;
-      animating = true;
-    } else {
-      if (Math.abs(workCarousel.vel) > 0) workCarousel.vel = 0;
-      if (autoOn) {
-        // Continuous infinite loop at normal speed (pos wraps via circular layout)
-        workCarousel.pos += workCarousel.autoSpeed * dt;
-        animating = true;
-      } else if (!workCarousel.hovering && !isWorkLightboxOpen()) {
-        // When paused (not hover/lightbox freeze), gently settle onto a card center
-        const target = Math.round(workCarousel.pos);
-        const diff = target - workCarousel.pos;
-        if (Math.abs(diff) > 0.001) {
-          workCarousel.pos += diff * 0.18;
-          animating = true;
-        } else if (diff !== 0) {
-          workCarousel.pos = target;
-          animating = true;
-        }
-      }
-    }
-  } else {
-    animating = true;
-  }
-
-  // Keep rendering while bend is still settling
-  if (Math.abs(workCarousel.bend - 0.35) > 0.008 && !workCarousel.dragging && Math.abs(workCarousel.vel) < 0.001 && !autoOn) {
-    animating = true;
-  }
-
-  if (workCarousel.needsRender || animating) {
-    renderWorkCarousel();
-    workCarousel.needsRender = false;
-  }
-}
-
-function applyFilter(cat) {
-  workCarousel.filter = cat || 'all';
-  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll(`.filter-tab[data-cat="${cat}"]`).forEach(b => b.classList.add('active'));
-  document.querySelectorAll('#workCarouselTrack .project-card').forEach(card => {
-    const visible = cat === 'all' || card.dataset.cat === cat;
-    card.classList.toggle('hidden', !visible);
-  });
-  workCarousel.vel = 0;
-  workCarousel.activeIdx = -1;
-  const cards = getVisibleCards();
-  // Fresh random center among the filtered set (same spirit as page-load random)
-  const start = cards.length ? Math.floor(Math.random() * cards.length) : 0;
-  workCarousel.pos = start;
-  if (cards[start]) updateWorkMeta(cards[start], true);
-  pauseWorkAuto(900);
-  workCarousel.needsRender = true;
-  renderWorkCarousel();
-}
-
-/* Called by the hero when one of its plates is clicked: land on that exact
-   project in the carousel rather than merely scrolling to the section. The
-   carousel is a moving target on its own, so without pinning pos the card you
-   asked for would drift off centre while the page was still scrolling. */
-function focusWorkProject(srcIdx) {
-  const work = document.getElementById('work');
-  if (!work) return;
-  // The target may be hidden by an active category filter, and pos is an index
-  // into the *visible* set — so the filter has to be cleared before anything
-  // else, or the lookup below silently misses.
-  if (workCarousel.filter !== 'all') applyFilter('all');
-  const cards = getVisibleCards();
-  const i = cards.findIndex((c) => Number(c.dataset.idx) === srcIdx);
-  if (i === -1) return;
-
-  workCarousel.pos = i;
-  workCarousel.vel = 0;
-  workCarousel.activeIdx = i;
-  workCarousel.needsRender = true;
-  // Long enough to actually read the highlight — the default pause is under a
-  // second, after which autoscroll slides the card away again.
-  pauseWorkAuto(6000);
-  updateWorkMeta(cards[i], true);
-  renderWorkCarousel();
-
-  document.querySelectorAll('.project-card.is-hero-target').forEach((c) => c.classList.remove('is-hero-target'));
-  const card = cards[i];
-  card.classList.add('is-hero-target');
-  clearTimeout(focusWorkProject._t);
-  focusWorkProject._t = setTimeout(() => card.classList.remove('is-hero-target'), 3600);
-
-  work.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-window.__skandFocusProject = focusWorkProject;
-
-function initWorkCarousel() {
-  workCarousel.stage = document.getElementById('workCarouselStage');
-  workCarousel.track = document.getElementById('workCarouselTrack');
-  workCarousel.meta = document.querySelector('.work-carousel-meta');
-  workCarousel.brandEl = document.getElementById('workCarouselBrand');
-  workCarousel.nameEl = document.getElementById('workCarouselName');
-  workCarousel.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!workCarousel.stage || !workCarousel.track) return;
-
-  const filterTabs = document.getElementById('filterTabs');
-  if (filterTabs) {
-    filterTabs.addEventListener('click', (e) => {
-      const btn = e.target.closest('.filter-tab');
-      if (!btn) return;
-      applyFilter(btn.dataset.cat);
-      // Keep active chip visible in the horizontal strip
-      try {
-        btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-      } catch (_) {}
-    });
-  }
-
-  // Mobile browsers often end a quick tap with pointercancel (scroll arbitration),
-  // not pointerup — treat small-movement cancel as a tap. touchend is a second path.
-  const isCoarse = window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches;
-  const TAP_THRESHOLD = isCoarse ? 28 : 12;
-  const AXIS_LOCK = isCoarse ? 12 : 6;
-  let dragAxis = null; // null | 'x' | 'y'
-  let openedThisGesture = false;
-  let gestureActive = false;
-
-  const openCenterProject = () => {
-    if (openedThisGesture) return;
-    const lb = document.getElementById('lightbox');
-    if (lb?.classList.contains('active')) return;
-    const cards = getVisibleCards();
-    const card = cards[workCarousel.activeIdx] || cards[0];
-    if (!card) return;
-    openedThisGesture = true;
-    workCarousel.suppressClickUntil = performance.now() + 700;
-    openLightboxFromCard(card);
-  };
-
-  const beginGesture = (x, y, pointerId) => {
-    gestureActive = true;
-    workCarousel.dragging = true;
-    workCarousel.moved = false;
-    workCarousel.dragDist = 0;
-    workCarousel.pointerId = pointerId;
-    workCarousel.startX = x;
-    workCarousel.startY = y;
-    workCarousel.lastX = x;
-    workCarousel.lastT = performance.now();
-    openedThisGesture = false;
-    dragAxis = null;
-    workCarousel.vel = 0;
-    workCarousel.pos = Math.round(workCarousel.pos);
-    workCarousel.needsRender = true;
-  };
-
-  const moveGesture = (x, y, opts = {}) => {
-    if (!gestureActive) return;
-    const totalX = x - workCarousel.startX;
-    const totalY = y - workCarousel.startY;
-    workCarousel.dragDist = Math.hypot(totalX, totalY);
-
-    if (!dragAxis && (Math.abs(totalX) > AXIS_LOCK || Math.abs(totalY) > AXIS_LOCK)) {
-      dragAxis = Math.abs(totalX) >= Math.abs(totalY) ? 'x' : 'y';
-      if (dragAxis === 'x' && opts.capturePointerId != null) {
-        workCarousel.stage.classList.add('is-dragging');
-        try { workCarousel.stage.setPointerCapture(opts.capturePointerId); } catch (_) {}
-      }
-    }
-    if (dragAxis !== 'x') return;
-
-    const now = performance.now();
-    const dx = x - workCarousel.lastX;
-    if (Math.abs(totalX) > TAP_THRESHOLD) workCarousel.moved = true;
-    const dt = Math.max(8, now - workCarousel.lastT);
-    const { bladeW } = getRibbonMetrics();
-    const delta = -dx / (bladeW * 0.72);
-    workCarousel.pos += delta;
-    workCarousel.vel = delta * (16 / dt);
-    workCarousel.lastX = x;
-    workCarousel.lastT = now;
-    workCarousel.needsRender = true;
-  };
-
-  const endGesture = () => {
-    if (!gestureActive) return;
-    const wasTap = dragAxis !== 'y' && !workCarousel.moved && workCarousel.dragDist <= TAP_THRESHOLD;
-    gestureActive = false;
-    workCarousel.dragging = false;
-    workCarousel.pointerId = null;
-    dragAxis = null;
-    workCarousel.stage.classList.remove('is-dragging');
-    if (wasTap) openCenterProject();
-    else if (workCarousel.moved) {
-      workCarousel.suppressClickUntil = performance.now() + 400;
-      pauseWorkAuto(1800); // let flick momentum finish, then resume loop
-    }
-  };
-
-  // Pointer events (mouse + modern touch)
-  workCarousel.stage.addEventListener('pointerdown', (e) => {
-    if (e.button != null && e.button !== 0) return;
-    beginGesture(e.clientX, e.clientY, e.pointerId);
-    if (e.pointerType !== 'touch') {
-      workCarousel.stage.classList.add('is-dragging');
-      try { workCarousel.stage.setPointerCapture(e.pointerId); } catch (_) {}
-    }
-  });
-  workCarousel.stage.addEventListener('pointermove', (e) => {
-    if (!gestureActive) return;
-    if (workCarousel.pointerId != null && e.pointerId !== workCarousel.pointerId) return;
-    // Ignore bogus 0,0 from some cancel paths mid-stream
-    if (e.pointerType === 'touch' && e.clientX === 0 && e.clientY === 0) return;
-    moveGesture(e.clientX, e.clientY, {
-      capturePointerId: e.pointerType === 'touch' ? e.pointerId : null
-    });
-  });
-  // pointercancel must open on tap — short taps on iOS often cancel instead of up
-  workCarousel.stage.addEventListener('pointerup', endGesture);
-  workCarousel.stage.addEventListener('pointercancel', endGesture);
-
-  // Touch fallback (covers browsers where pointercancel drops the gesture without a clean end)
-  workCarousel.stage.addEventListener('touchend', (e) => {
-    if (!gestureActive) return;
-    const t = e.changedTouches?.[0];
-    if (t) {
-      const totalX = t.clientX - workCarousel.startX;
-      const totalY = t.clientY - workCarousel.startY;
-      workCarousel.dragDist = Math.max(workCarousel.dragDist, Math.hypot(totalX, totalY));
-      if (!dragAxis && workCarousel.dragDist > AXIS_LOCK) {
-        dragAxis = Math.abs(totalX) >= Math.abs(totalY) ? 'x' : 'y';
-      }
-      if (dragAxis === 'x' && Math.abs(totalX) > TAP_THRESHOLD) workCarousel.moved = true;
-    }
-    endGesture();
-  }, { passive: true });
-
-  workCarousel.stage.addEventListener('click', (e) => {
-    if (performance.now() < workCarousel.suppressClickUntil) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
-    if (workCarousel.moved) {
-      e.preventDefault();
-      workCarousel.moved = false;
-      return;
-    }
-    openCenterProject();
-  });
-
-  // Wheel / trackpad: horizontal gesture or Shift+wheel scrubs the ribbon.
-  // Pure vertical wheel is left alone so the page can still scroll.
-  workCarousel.stage.addEventListener('wheel', (e) => {
-    const absX = Math.abs(e.deltaX);
-    const absY = Math.abs(e.deltaY);
-    let delta = 0;
-    if (absX > absY && absX > 0.4) {
-      delta = e.deltaX;
-      e.preventDefault();
-    } else if (e.shiftKey && absY > 0.4) {
-      delta = e.deltaY;
-      e.preventDefault();
-    } else {
-      return;
-    }
-    const { bladeW } = getRibbonMetrics();
-    workCarousel.pos += delta / (bladeW * 0.95);
-    workCarousel.vel = delta / (bladeW * 14);
-    pauseWorkAuto(1600);
-    workCarousel.needsRender = true;
-  }, { passive: false });
-
-  workCarousel.stage.addEventListener('keydown', (e) => {
-    const lb = document.getElementById('lightbox');
-    if (lb?.classList.contains('active')) return;
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      workCarousel.pos = Math.round(workCarousel.pos) - 1;
-      workCarousel.vel = -0.08;
-      pauseWorkAuto(2200);
-      workCarousel.needsRender = true;
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      workCarousel.pos = Math.round(workCarousel.pos) + 1;
-      workCarousel.vel = 0.08;
-      pauseWorkAuto(2200);
-      workCarousel.needsRender = true;
-    } else if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      const cards = getVisibleCards();
-      const card = cards[workCarousel.activeIdx];
-      if (card) openLightboxFromCard(card);
-    }
-  });
-
-  // Pause auto-loop while pointer rests on the stage (desktop hover only —
-  // coarse/touch pointers would otherwise stick "hovering" after a tap)
-  const canHover = window.matchMedia('(hover: hover)').matches;
-  if (canHover) {
-    workCarousel.stage.addEventListener('pointerenter', () => {
-      workCarousel.hovering = true;
-    });
-    workCarousel.stage.addEventListener('pointerleave', () => {
-      workCarousel.hovering = false;
-    });
-  }
-
-  // Only auto-loop while the ribbon is on screen (preserves random center until first view)
-  if (typeof IntersectionObserver !== 'undefined') {
-    const io = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      workCarousel.inView = entry.isIntersecting;
-      if (entry.isIntersecting) workCarousel.lastAutoTs = 0;
-      workCarousel.needsRender = true;
-    }, { threshold: 0.12 });
-    io.observe(workCarousel.stage);
-  } else {
-    workCarousel.inView = true;
-  }
-
-  window.addEventListener('resize', () => {
-    workCarousel.needsRender = true;
-    renderWorkCarousel();
-  }, { passive: true });
-
-  document.addEventListener('visibilitychange', () => {
-    // Avoid a big jump after a long background tab
-    workCarousel.lastAutoTs = 0;
-    workCarousel.needsRender = true;
-  });
-
-  // Each page open: random case starts in the center, then auto-loop at normal speed
-  const cards = getVisibleCards();
-  if (cards.length) {
-    const start = Math.floor(Math.random() * cards.length);
-    workCarousel.pos = start;
-    workCarousel.activeIdx = start;
-    updateWorkMeta(cards[start], true);
-  }
-  workCarousel.lastAutoTs = 0;
-  renderWorkCarousel();
-  cancelAnimationFrame(workCarousel.raf);
-  workCarousel.raf = requestAnimationFrame(workCarouselTick);
-}
-
-// Boot after module definition — project blades already rendered in init()
-window.__wcRequestRender = () => { workCarousel.needsRender = true; };
-initWorkCarousel();
-
-/* === LIGHTBOX / PROJECT OVERLAY === */
-const lightbox = document.getElementById('lightbox');
-const lbImg = document.getElementById('lightboxImg');
-const lbBrand = document.getElementById('lightboxBrand');
-const lbName = document.getElementById('lightboxName');
-const lbClose = document.getElementById('lightboxClose');
-const lbPrev = document.getElementById('lightboxPrev');
-const lbNext = document.getElementById('lightboxNext');
-let currentLbIndex = -1;
-let lightboxScrollY = 0;
-let lbPointerId = null;
-let lbStartX = 0;
-let lbStartY = 0;
-let lbSwiped = false;
-
-function setCursorAboveLightbox(active) {
-  const d = document.querySelector('.cursor-dot');
-  const r = document.querySelector('.cursor-ring');
-  if (d) d.style.zIndex = active ? '10002' : '';
-  if (r) r.style.zIndex = active ? '10002' : '';
-}
-
-if (lightbox) {
-  // Pointer-based swipe for mouse + touch
-  lightbox.addEventListener('pointerdown', (e) => {
-    if (!lightbox.classList.contains('active')) return;
-    if (e.target.closest('.lightbox-close, .lightbox-arrow')) return;
-    lbPointerId = e.pointerId;
-    lbStartX = e.clientX;
-    lbStartY = e.clientY;
-    lbSwiped = false;
-    try { lightbox.setPointerCapture(e.pointerId); } catch (_) {}
-  });
-  lightbox.addEventListener('pointerup', (e) => {
-    if (lbPointerId != null && e.pointerId !== lbPointerId) return;
-    const dx = e.clientX - lbStartX;
-    const dy = e.clientY - lbStartY;
-    lbPointerId = null;
-    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.25) {
-      lbSwiped = true;
-      navigateLightbox(dx > 0 ? -1 : 1);
-    }
-  });
-  lightbox.addEventListener('pointercancel', () => { lbPointerId = null; });
-}
-
-function openLightboxFromCard(card) {
-  const cards = getVisibleCards();
-  const idx = cards.indexOf(card);
-  if (idx === -1) return;
-  lightboxScrollY = window.scrollY || window.pageYOffset;
-  const n = cards.length;
-  const cur = wrapIndex(workCarousel.pos, n);
-  let delta = idx - cur;
-  if (n > 1) delta -= n * Math.round(delta / n);
-  workCarousel.pos = Math.round(workCarousel.pos) + delta;
-  workCarousel.vel = 0;
-  showLightbox(idx);
-}
-
-function showLightbox(index) {
-  if (!lightbox || !lbImg) return;
-  const cards = getVisibleCards();
-  if (index < 0 || index >= cards.length) return;
-  currentLbIndex = index;
-  const card = cards[index];
-  const img = card.querySelector('img');
-  const brand = card.querySelector('.project-brand')?.textContent || '';
-  const name = card.querySelector('.project-name')?.textContent || '';
-
-  // Prefer full-res path from PROJECTS when available
-  const pIdx = Number(card.dataset.idx);
-  const project = Number.isFinite(pIdx) ? PROJECTS[pIdx] : null;
-  const base = project?.img?.replace('pdf_images/', '').replace('.jpg', '') || '';
-  const manifest = base ? IMAGE_MANIFEST[base] : null;
-  lbImg.src = manifest?.webp || img?.src || '';
-  lbImg.alt = img?.alt || `${brand} — ${name}`;
-  if (lbBrand) lbBrand.textContent = brand;
-  if (lbName) lbName.textContent = name;
-
-  lightbox.classList.add('active');
-  lightbox.setAttribute('aria-hidden', 'false');
-  document.body.style.position = 'fixed';
-  document.body.style.top = '-' + lightboxScrollY + 'px';
-  document.body.style.left = '0';
-  document.body.style.right = '0';
-  document.body.style.overflow = 'hidden';
-  setCursorAboveLightbox(true);
-
-  // Sync ribbon to opened project
-  const n = cards.length;
-  if (n) {
-    const cur = wrapIndex(workCarousel.pos, n);
-    let delta = index - cur;
-    if (n > 1) delta -= n * Math.round(delta / n);
-    workCarousel.pos = Math.round(workCarousel.pos) + delta;
-  }
-  workCarousel.vel = 0;
-  workCarousel.activeIdx = index;
-  updateWorkMeta(card, true);
-  workCarousel.needsRender = true;
-}
-
-function navigateLightbox(dir) {
-  const cards = getVisibleCards();
-  if (!cards.length) return;
-  let next = currentLbIndex + dir;
-  if (next < 0) next = cards.length - 1;
-  if (next >= cards.length) next = 0;
-  showLightbox(next);
-}
-
-function closeLightbox() {
-  if (!lightbox) return;
-  lightbox.classList.remove('active');
-  lightbox.setAttribute('aria-hidden', 'true');
-  const htmlEl = document.documentElement;
-  const prevSB = htmlEl.style.scrollBehavior;
-  htmlEl.style.scrollBehavior = 'auto';
-  document.body.style.position = '';
-  document.body.style.top = '';
-  document.body.style.left = '';
-  document.body.style.right = '';
-  document.body.style.overflow = '';
-  window.scrollTo(0, lightboxScrollY);
-  htmlEl.style.scrollBehavior = prevSB;
-  currentLbIndex = -1;
-  setCursorAboveLightbox(false);
-}
-
-if (lbClose) lbClose.addEventListener('click', (e) => { e.stopPropagation(); closeLightbox(); });
-if (lbPrev) lbPrev.addEventListener('click', e => { e.stopPropagation(); navigateLightbox(-1); });
-if (lbNext) lbNext.addEventListener('click', e => { e.stopPropagation(); navigateLightbox(1); });
-if (lightbox) {
-  lightbox.addEventListener('click', e => {
-    if (lbSwiped) { lbSwiped = false; return; }
-    if (e.target === lightbox) closeLightbox();
-  });
-}
-document.addEventListener('keydown', e => {
-  if (!lightbox?.classList.contains('active')) return;
-  if (e.key === 'Escape') { e.preventDefault(); closeLightbox(); }
-  if (e.key === 'ArrowLeft') { e.preventDefault(); navigateLightbox(-1); }
-  if (e.key === 'ArrowRight') { e.preventDefault(); navigateLightbox(1); }
-});
-
 /* === NAV DROPDOWN (desktop hover + mobile tap) === */
 const dropdown = document.querySelector('.nav-dropdown');
 const dropdownToggle = dropdown?.querySelector('.nav-dropdown-toggle');
@@ -2824,9 +1440,15 @@ function animCursor(){
   requestAnimationFrame(animCursor);
 }
 animCursor();
-document.querySelectorAll('a,.filter-tab,.project-card,.service-card,.nav-links a,.lightbox-close,.lightbox-arrow,.work-carousel-stage,#heroStage').forEach(el => {
-  el.addEventListener('mouseenter', () => ring && ring.classList.add('hovering'));
-  el.addEventListener('mouseleave', () => ring && ring.classList.remove('hovering'));
+// Delegated: the gallery's 45 .hall-art-btn elements are built by
+// scripts/gallery/gallery.js, which runs after this inline script, so a
+// querySelectorAll pass here would find none of them.
+const HOVER_SEL = 'a,.service-card,.nav-links a,.hall-art-btn,.viewer-close,.viewer-arrow,.viewer-nav button';
+document.addEventListener('mouseover', e => {
+  if (ring && e.target.closest && e.target.closest(HOVER_SEL)) ring.classList.add('hovering');
+});
+document.addEventListener('mouseout', e => {
+  if (ring && e.target.closest && e.target.closest(HOVER_SEL)) ring.classList.remove('hovering');
 });
 
 /* === REVEAL ON SCROLL === */
@@ -2841,27 +1463,8 @@ const observeReveal = (el) => {
   revealObserver.observe(el);
 };
 document.querySelectorAll('.reveal,.reveal-stagger .reveal-item').forEach(el => {
-  if (!el.closest('#work')) observeReveal(el);
+  observeReveal(el);
 });
-
-/* Work's lead-in waits for the hero to hand the screen over.
-   The 3D stage is pinned for a viewport after its dive and then needs a second
-   viewport of scrolling to clear the top, so Work is pulled up to close that
-   gap — which means its heading is already inside the viewport while the plates
-   are still flying past. A plain observer fires on that overlap and the heading
-   fades up *through* the images, which reads as a layering fault rather than a
-   cut. So the stage announces the handover (scripts/hero/explode.js) and Work
-   fades in then. The timeout is the backstop for the hero module never
-   reporting at all — CDN blocked, import failed: a late fade is recoverable, a
-   heading that never appears is not. */
-let heroReported = false;
-const workReveals = [...document.querySelectorAll('#work .reveal,#work .reveal-item')];
-const releaseWorkReveals = () => workReveals.forEach(observeReveal);
-document.addEventListener('skand:hero-handoff', e => {
-  heroReported = true;
-  if (e.detail && e.detail.done) releaseWorkReveals();
-});
-setTimeout(() => { if (!heroReported) releaseWorkReveals(); }, 3000);
 
 /* === LANGUAGE TOGGLE BUTTON === */
 document.getElementById('langToggle').addEventListener('click', () => {
@@ -2894,13 +1497,6 @@ if (hamburger && navLinks) {
     });
   });
 }
-
-/* === HERO BG PARALLAX === */
-const heroLines = document.querySelectorAll('.hero-bg-line');
-window.addEventListener('scroll', () => {
-  const sy = window.scrollY;
-  heroLines.forEach((line,i) => { line.style.transform = `translate(-50%,-50%) scale(${1 + sy*0.0003*(i+1)}) rotate(${sy*0.01*(i+1)}deg)`; });
-});
 
 /* === PAGE FLIP REDIRECTS & SWOOSH SOUND === */
 function playSwoosh() {
@@ -2940,7 +1536,10 @@ function bindPageFlip(selector, buildUrl) {
 bindPageFlip('a[href^="b-side.html"]', () => 'b-side.html?v=1.4&lang=' + lang);
 bindPageFlip('a[href^="egg.html"]', () => 'egg.html?v=8&lang=' + lang);
 </script>
-<script type="module" src="scripts/hero/explode.js?v=20"></script>
+<!-- Gallery hall. Classic script, not a module: it reads PROJECTS,
+     IMAGE_MANIFEST, T and `lang` from the lexical scope above. Must load
+     after the inline script, hence no `defer` and no `type=module`. -->
+<script src="scripts/gallery/gallery.js?v=1"></script>
 <script type="module" src="scripts/logo/dispatcher.js?v=17"></script>
 </body>
 </html>
