@@ -1,3 +1,7 @@
 node_modules/
 .workbuddy/
 package-lock.json
+
+# Local-only: contains internal server details / a hardcoded credential
+DEPLOYMENT.md
+test_ssh.exp

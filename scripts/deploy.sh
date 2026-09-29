@@ -12,7 +12,11 @@ if [[ -n "${SKAND_DEPLOY_PASSWORD:-}" ]]; then
     echo "SKAND_DEPLOY_PASSWORD is set, but sshpass is not installed." >&2
     exit 1
   fi
-  RSYNC_RSH="sshpass -p ${SKAND_DEPLOY_PASSWORD} ssh ${SSH_OPTS}"
+  # Use sshpass -e (read from $SSHPASS) instead of -p <password> on the
+  # command line: the password is passed through the environment, so it
+  # survives spaces/special characters and never shows up in `ps` output.
+  export SSHPASS="${SKAND_DEPLOY_PASSWORD}"
+  RSYNC_RSH="sshpass -e ssh ${SSH_OPTS}"
 fi
 
 rsync -az --delete \
