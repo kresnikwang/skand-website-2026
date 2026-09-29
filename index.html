@@ -58,7 +58,8 @@ html.custom-cursor-enabled button,
 html.custom-cursor-enabled .nav-dropdown-toggle,
 html.custom-cursor-enabled .service-card,
 html.custom-cursor-enabled .hall-art-btn,
-html.custom-cursor-enabled .gallery-bside,
+html.custom-cursor-enabled .gallery-video-cta,
+html.custom-cursor-enabled .bside-float,
 html.custom-cursor-enabled .viewer-close,
 html.custom-cursor-enabled .viewer-arrow,
 html.custom-cursor-enabled .viewer-nav button{cursor:none!important}
@@ -66,7 +67,7 @@ html:not(.custom-cursor-enabled) a,
 html:not(.custom-cursor-enabled) button,
 html:not(.custom-cursor-enabled) .service-card,
 html:not(.custom-cursor-enabled) .hall-art-btn,
-html:not(.custom-cursor-enabled) .gallery-bside{cursor:pointer!important}
+html:not(.custom-cursor-enabled) .bside-float{cursor:pointer!important}
 html:not(.custom-cursor-enabled) .gallery-scene{cursor:grab!important}
 html:not(.custom-cursor-enabled) .gallery-scene.is-dragging{cursor:grabbing!important}
 
@@ -429,6 +430,45 @@ footer a{color:var(--grey);text-decoration:none}
   overflow:hidden;
   pointer-events:none;
 }
+/* Full-width row rather than left:50%+translateX(-50%) so the pill inside can
+   carry .reveal, whose transform is translateY(40px) — combining the two would
+   have the entrance animation clobber the horizontal centring. */
+.logo-showcase-float{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:clamp(36px,10vh,104px);
+  z-index:2;
+  display:flex;
+  justify-content:center;
+  padding:0 20px;
+}
+.bside-float{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 20px;
+  border:1px solid rgba(240,237,232,.24);
+  border-radius:100px;
+  /* The day's logo effect can be a full-bleed bloom or pixel melt, so the pill
+     carries its own ground rather than relying on what is behind it. */
+  background:rgba(8,8,8,.5);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  color:rgba(240,237,232,.86);
+  font-size:12px;
+  letter-spacing:1.6px;
+  text-decoration:none;
+  white-space:nowrap;
+  transition:background .3s ease,border-color .3s ease,color .3s ease;
+}
+.bside-float:hover{background:var(--coral);border-color:var(--coral);color:var(--black)}
+.bside-float svg{transition:transform .25s ease}
+.bside-float:hover svg{transform:translate(3px,-3px)}
+@media(max-width:768px){
+  .logo-showcase-float{bottom:clamp(28px,7vh,64px)}
+  .bside-float{font-size:11px;letter-spacing:1.2px;padding:10px 16px}
+}
 
 /* === REVEAL ANIMATIONS === */
 .reveal{opacity:0;transform:translateY(40px);transition:opacity .8s ease,transform .8s ease}
@@ -658,9 +698,14 @@ footer a{color:var(--grey);text-decoration:none}
       <span data-tk="tagline">Create For More</span>
       <span data-tk="subtitle">and be seen by the world</span>
     </p>
-    <a href="b-side.html?v=1.4" class="gallery-bside" id="findBSideBtn" data-t="hero-find-b-side" data-tk="findBSide">
-      <span>Find B-Side</span>
-      <svg viewBox="0 0 24 24" width="14" height="14">
+    <!-- The video portfolio used to end the walk on the end wall. It reads
+         better as the first screen's single call to action: "here are the
+         stills, here is the same work in motion" sets up the hall rather than
+         capping it. Find B-Side moved down to the daily-logo screen. -->
+    <a href="https://www.xinpianchang.com/u10430477" class="gallery-video-cta" id="videoCtaBtn"
+       target="_blank" rel="noopener noreferrer" data-t="video-cta">
+      <span data-tk="video-cta-text">Watch Video Portfolio</span>
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
         <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </a>
@@ -760,6 +805,18 @@ footer a{color:var(--grey);text-decoration:none}
      its ticker whenever the screen is off-screen. -->
 <section class="logo-showcase" id="logoShowcase" aria-label="Daily logo study">
   <div id="dailyLogoStage" class="daily-logo-stage" aria-hidden="true"></div>
+  <!-- Find B-Side lived on the gallery's first screen. It is a self-contained
+       detour rather than a portfolio filter, and the hall needs its lead-in to
+       be about the work — so it floats here instead, under the day's wordmark,
+       as the last quiet thing on the page before the footer. -->
+  <div class="logo-showcase-float">
+    <a href="b-side.html?v=1.4" class="bside-float reveal" id="findBSideBtn" data-t="hero-find-b-side" data-tk="findBSide">
+      <span>Find B-Side</span>
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+        <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+  </div>
 </section>
 
 <!-- FOOTER -->

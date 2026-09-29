@@ -1,11 +1,10 @@
 // Daily logo effect dispatcher — its own full-screen section below Contact.
 //
-// The hero is a permanent Three.js exploded-view project showcase
-// (scripts/hero/explode.js). These day effects live in their own 100vh section,
-// but they still lazy-load on approach rather than on page load: the hero is the
-// LCP path and should not share the main thread and GPU with a decorative effect
-// that is four sections away. Once loaded, shared.js's makeApp stops the Pixi
-// ticker whenever the section scrolls out of view.
+// These day effects live in their own 100vh section, but they still lazy-load on
+// approach rather than on page load: the gallery hall is the LCP path and should
+// not share the main thread and GPU with a decorative effect that is four
+// sections away. Once loaded, shared.js's makeApp stops the Pixi ticker whenever
+// the section scrolls out of view.
 //
 // China local day (UTC+8): Mon=1 .. Sun=7.
 // URL override: ?fx=1..7 or ?fx=monday..sunday

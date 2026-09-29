@@ -129,16 +129,14 @@
 
     const end = document.createElement('div');
     end.className = 'hall-endwall';
-    // The video portfolio link used to live in the work section's lead-in.
-    // It belongs at the end of the walk, not at the top of it.
+    // The end wall is a threshold, not a pitch. It used to carry the video
+    // portfolio CTA and repeated the studio tagline; both moved — the CTA to
+    // the first screen, the tagline is already the hero and the footer. What
+    // is left is just the line that hands you off to About.
     end.innerHTML =
       '<div class="hall-endwall-glow"></div>' +
-      '<div class="hall-endwall-title">Create<br><em>For More</em></div>' +
-      '<div class="hall-endwall-coords">31°13′49.4″N<br>121°28′25.7″E</div>' +
-      '<a class="hall-endwall-cta" href="https://www.xinpianchang.com/u10430477" target="_blank" rel="noopener noreferrer">' +
-        '<span data-tk="video-cta-text">Watch Video Portfolio</span>' +
-        '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-      '</a>';
+      '<div class="hall-endwall-title">Our Story<br><em>Starts</em></div>' +
+      '<div class="hall-endwall-coords">31°13′49.4″N<br>121°28′25.7″E</div>';
     room.appendChild(end);
 
     const frag = document.createDocumentFragment();
@@ -670,26 +668,16 @@
     window.applyLang = function () {
       _applyLang();
       renderCaptions();
-      relabelEndWall();
       // relabel only — re-running fillViewer would restart the image fetch
       if (viewer.open) paintPanel();
     };
   }
   if (hintEl) hintEl.textContent = T.gallery.hint[lang];
 
-  /* The end wall is injected after the first applyLang() has already run, so
-     it has to label itself — data-t alone would leave it in English on a
-     zh load and only catch up on the next toggle. */
-  function relabelEndWall() {
-    const s = room.querySelector('.hall-endwall-cta [data-tk="video-cta-text"]');
-    if (s) s.textContent = T.work.videoCta[lang];
-  }
-
   /* ============================================================
      BOOT
      ============================================================ */
   buildRoom();
-  relabelEndWall();   // the end wall is built here, so label it here too
   measure();
   cam = targetCam = scrollCam();
   render();

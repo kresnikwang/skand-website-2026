@@ -261,31 +261,6 @@
   font: 10px/1.9 var(--gallery-mono);
   letter-spacing: .1em;
 }
-/* The video portfolio used to sit in the work section's lead-in. At the end of
-   the walk it reads as "you've seen the stills — here's the motion". */
-.hall-endwall-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 40px;
-  padding: 12px 20px;
-  border: 1px solid rgba(240, 237, 232, .3);
-  border-radius: 100px;
-  color: var(--white);
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background .3s ease, border-color .3s ease, color .3s ease;
-}
-.hall-endwall-cta:hover {
-  background: var(--coral);
-  border-color: var(--coral);
-  color: var(--black);
-}
-.hall-endwall-cta svg { transition: transform .25s ease; }
-.hall-endwall-cta:hover svg { transform: translate(3px, -3px); }
 
 /* ============================================================
    THE WORKS
@@ -495,8 +470,8 @@
   font-weight: 500;
 }
 
-/* ---------- Find B-Side (kept from the old hero) ---------- */
-.gallery-bside {
+/* ---------- Watch Video Portfolio (the first screen's one call to action) ---------- */
+.gallery-video-cta {
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -512,13 +487,13 @@
   cursor: pointer;
   transition: background .3s ease, border-color .3s ease, color .3s ease;
 }
-.gallery-bside:hover {
+.gallery-video-cta:hover {
   background: var(--coral);
   border-color: var(--coral);
   color: var(--black);
 }
-.gallery-bside svg { transition: transform .25s ease; }
-.gallery-bside:hover svg { transform: translate(3px, -3px); }
+.gallery-video-cta svg { transition: transform .25s ease; }
+.gallery-video-cta:hover svg { transform: translate(3px, -3px); }
 
 /* ============================================================
    HUD
