@@ -74,6 +74,28 @@ export function createAudio() {
     onReset() {
       tone(PHASE_NOTES.chaos, { duration: 0.18, type: 'sine', volume: 0.04 });
     },
+
+    /* ---- Squeeze mode ---- */
+
+    /**
+     * Squeeze mode pressure, 0..1. Rather than a held drone (which fights the
+     * reveal tone and gets tedious within seconds) this fires a short tick that
+     * climbs in pitch as the mark compresses, so the pressure is audible as a
+     * rising line the player is authoring themselves. Silent below 0.12 so
+     * an idle mark costs nothing.
+     */
+    onTension(level) {
+      if (level < 0.12) return;
+      const f = 180 + level * level * 900;
+      tone(f, { duration: 0.06, type: 'square', volume: 0.012 + level * 0.018 });
+    },
+
+    /** The mark letting go: a downward body plus a bright transient. */
+    onPop() {
+      tone(320, { duration: 0.5, type: 'sawtooth', volume: 0.06 });
+      tone(96, { duration: 0.7, type: 'sine', volume: 0.09 });
+      tone(1400, { duration: 0.16, type: 'square', volume: 0.03, delay: 0.01 });
+    },
     toggle() {
       this.setEnabled(!enabled);
       if (enabled) tone(330, { duration: 0.1 });

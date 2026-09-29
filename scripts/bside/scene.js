@@ -85,6 +85,15 @@ export function createScene({ canvas, tier, reduced }) {
   let parallaxY = 0;
   let targetPX = 0;
   let targetPY = 0;
+  // Impact shake, 0..1. Squeeze mode kicks this on every pop and the pop timeline
+  // decays it; at that magnitude the kick is large enough to feel in the frame
+  // edges but small enough that nothing on screen goes unreadable.
+  let shakeAmt = 0;
+  let shakeT = 0;
+
+  function setShake(v) {
+    shakeAmt = Math.max(0, Math.min(1, v || 0));
+  }
 
   function setParallaxTarget(nx, ny) {
     // nx, ny are normalized device coords (-1..1) from the pointer.
@@ -101,6 +110,15 @@ export function createScene({ canvas, tier, reduced }) {
     // A slow idle breathing on z keeps the frame alive when the pointer is still.
     const t = performance.now() * 0.001;
     camera.position.z = camBaseZ + (reduced ? 0 : Math.sin(t * 0.25) * 0.25);
+    if (shakeAmt > 0.0001) {
+      shakeT += dt;
+      const s = shakeAmt * shakeAmt * 0.5;
+      camera.position.x += Math.sin(shakeT * 61) * s;
+      camera.position.y += Math.sin(shakeT * 47 + 1.3) * s;
+      camera.rotation.z = Math.sin(shakeT * 53) * s * 0.02;
+    } else {
+      camera.rotation.z *= 0.9;
+    }
     camera.lookAt(0, 0, 0);
   }
 
@@ -145,6 +163,7 @@ export function createScene({ canvas, tier, reduced }) {
     bloomPass,
     setParallaxTarget,
     setIgnite,
+    setShake,
     setBloomBase,
     updateCamera,
     resize,

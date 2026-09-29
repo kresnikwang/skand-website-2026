@@ -63,6 +63,9 @@ export const PHASE_LABEL = {
 
 export const I18N = {
   kicker: { en: 'B-Side — Form the Mark', zh: 'B-Side — 聚成形' },
+  kickerSqueeze: { en: 'B-Side — Squeeze the Mark', zh: 'B-Side — 捏碎标志' },
+  modeGather: { en: 'Gather', zh: '聚形' },
+  modeSqueeze: { en: 'Squeeze', zh: '捏碎' },
   start: { en: 'Start', zh: '开始' },
   back: { en: 'Back', zh: '返回' },
   charge: { en: 'Charge', zh: '充能' },
@@ -75,6 +78,20 @@ export const I18N = {
     zh: '继续 — 标志正在成形',
   },
   revealed: { en: 'The mark is yours', zh: '标志已成形' },
+  tension: { en: 'Pressure', zh: '压力' },
+  hintSqueeze: {
+    en: 'Press and hold on the mark — squeeze until it gives',
+    zh: '按住标志 — 一直捏到它炸开',
+  },
+  hintSqueezeTight: {
+    en: 'Keep squeezing — it is about to give',
+    zh: '继续捏 — 快撑不住了',
+  },
+  popped: { en: 'It gave. Again.', zh: '炸开了。再来。' },
+  pops: { en: 'Pops', zh: '爆开' },
+  press: { en: 'Press', zh: '按压' },
+  strain: { en: 'Strain', zh: '形变' },
+  burst: { en: 'Burst', zh: '爆裂' },
   replay: { en: 'Replay', zh: '重玩' },
   sound: { en: 'Sound', zh: '音效' },
   muted: { en: 'Unmute', zh: '开启音效' },

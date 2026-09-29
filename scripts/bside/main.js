@@ -6,14 +6,22 @@
  * charge bar, the phase steps and the scene all read from the same state
  * machine (phases.js), so the UI is always telling the truth about what's on
  * screen.
+ *
+ * Two games share all of that:
+ *   gather  — phases.js drives charge 0→1 and the mark assembles (squeeze.js idle)
+ *   squeeze — squeeze.js drives a press into the assembled mark and pops it
+ * They swap by swapping which state machine feeds the particle uniforms, so
+ * there is one mark, one renderer and one HUD, and the mode switch never tears
+ * down any GPU resources.
  */
 
 import * as THREE from 'https://esm.sh/three@0.170.0';
-import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER, PALETTE } from './config.js?v=20260925d';
-import { createScene } from './scene.js?v=20260925d';
-import { createParticleSystem } from './particles.js?v=20260925d';
+import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER, PALETTE } from './config.js?v=20260929b';
+import { createScene } from './scene.js?v=20260929b';
+import { createParticleSystem } from './particles.js?v=20260929b';
 import { buildTargets } from './targets.js';
-import { createPhases } from './phases.js?v=20260925d';
+import { createPhases } from './phases.js?v=20260929b';
+import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20260929b';
 import { createAudio } from './audio.js';
 
 /* ---------- language ---------- */
@@ -37,6 +45,11 @@ const hintEl = document.getElementById('hint');
 const phaseRow = document.getElementById('phaseRow');
 const soundBtn = document.getElementById('soundBtn');
 const resetBtn = document.getElementById('resetBtn');
+const modeGatherBtn = document.getElementById('modeGatherBtn');
+const modeSqueezeBtn = document.getElementById('modeSqueezeBtn');
+const popsBlock = document.getElementById('popsBlock');
+const popsLabel = document.getElementById('popsLabel');
+const popsCount = document.getElementById('popsCount');
 
 /* ---------- state ---------- */
 const tier = detectTier();
@@ -44,9 +57,18 @@ const audio = createAudio();
 let scene = null;
 let particles = null;
 let phases = null;
+let squeeze = null;
 let clock = null;
 let running = false;
 let started = false;
+
+// 'gather' assembles the mark, 'squeeze' tries to take it apart. One mark, two
+// games; see the file header.
+let mode = 'gather';
+// Throttles the squeeze tension tick so the riser reads as a line, not a buzz.
+let tensionTick = 0;
+// Timestamp of the last pop, for the "It gave" hint flash.
+let poppedAt = -10;
 
 // Pointer, in CSS pixels and normalized device coords.
 let px = window.innerWidth / 2;
@@ -91,29 +113,41 @@ if (dot && ring) {
 function buildPhaseSteps() {
   if (!phaseRow) return;
   phaseRow.innerHTML = '';
-  PHASE_ORDER.forEach((key, i) => {
+  const order = mode === 'squeeze' ? SQUEEZE_ORDER : PHASE_ORDER;
+  order.forEach((key, i) => {
     const step = document.createElement('span');
     step.className = 'phase-step';
     step.dataset.phase = key;
-    step.innerHTML = `<b>${i + 1}</b><span>${PHASE_LABEL[key][lang]}</span>`;
+    const label = mode === 'squeeze' ? I18N[key][lang] : PHASE_LABEL[key][lang];
+    step.innerHTML = `<b>${i + 1}</b><span>${label}</span>`;
     phaseRow.appendChild(step);
   });
 }
 
 function localizeHud() {
-  chargeLabel.textContent = t('charge');
+  chargeLabel.textContent = mode === 'squeeze' ? t('tension') : t('charge');
   hintEl.textContent = t('hint');
   document.getElementById('backBtn').textContent = t('back');
   startBtn.textContent = t('start');
-  introKicker.textContent = t('kicker');
+  introKicker.textContent = mode === 'squeeze' ? t('kickerSqueeze') : t('kicker');
   soundBtn.setAttribute('aria-label', t('sound'));
   soundBtn.title = t('sound');
   resetBtn.setAttribute('aria-label', t('reset'));
   resetBtn.title = t('reset');
+  if (modeGatherBtn) modeGatherBtn.textContent = t('modeGather');
+  if (modeSqueezeBtn) modeSqueezeBtn.textContent = t('modeSqueeze');
+  // The label, not the container: writing textContent on the wrapper would
+  // delete the counter node inside it.
+  if (popsLabel) popsLabel.textContent = t('pops');
   buildPhaseSteps();
 }
 
 function updateHud() {
+  // Called from setMode() and from the frame loop, and the first of those can
+  // run before either state machine exists. Nothing to show yet.
+  if (!phases && !squeeze) return;
+  if (mode === 'squeeze') return updateSqueezeHud();
+
   const pct = Math.round(phases.charge * 100);
   chargeFill.style.transform = `scaleX(${Math.min(1, phases.charge)})`;
   chargePct.textContent = `${pct}%`;
@@ -135,6 +169,40 @@ function updateHud() {
   }
 }
 
+/**
+ * Squeeze mode HUD. The bar is pressure, not charge, and it reads the other
+ * way conceptually: it is a countdown to the pop rather than a progress bar
+ * to a reveal. Everything still reads off the single number the game is
+ * using, so the bar can never disagree with what the mark is actually doing.
+ */
+function updateSqueezeHud() {
+  if (!squeeze || !phases) return;
+  const s = squeeze.hud;
+  const pct = Math.round(s.tension * 100);
+  chargeFill.style.transform = `scaleX(${Math.min(1, s.tension)})`;
+  chargePct.textContent = `${pct}%`;
+  if (popsCount) popsCount.textContent = String(s.pops).padStart(2, '0');
+  document.querySelectorAll('.phase-step').forEach((el) => {
+    const idx = SQUEEZE_ORDER.indexOf(el.dataset.phase);
+    const cur = SQUEEZE_ORDER.indexOf(s.phase);
+    el.classList.toggle('is-active', idx === cur);
+    el.classList.toggle('is-done', idx < cur);
+  });
+
+  // The "It gave" line wins for two seconds after a pop, then hands back to
+  // whichever stage the player is back at.
+  if (clock && clock.elapsedTime - poppedAt < 2) {
+    hintEl.textContent = t('popped');
+    hintEl.classList.add('is-revealed');
+  } else if (s.phase === 'burst') {
+    hintEl.classList.remove('is-revealed');
+    hintEl.textContent = t('hintSqueezeTight');
+  } else {
+    hintEl.classList.remove('is-revealed');
+    hintEl.textContent = t('hintSqueeze');
+  }
+}
+
 /* ---------- pointer → world ---------- */
 function updatePointer() {
   ndc.x = (px / window.innerWidth) * 2 - 1;
@@ -146,13 +214,24 @@ function updatePointer() {
 }
 
 /* ---------- world scale (fit the mark to the viewport) ---------- */
-function computeWorldScale() {
-  // Visible height at z=0 for the current camera.
-  const cam = scene ? scene.camera : null;
+
+/* Visible extent of the z=0 plane, in world units. The camera framing differs
+   per tier (scene.js), so this is the single place that knows it — the mark
+   fitting and the press field's radius both derive from these two numbers,
+   which is what keeps the two modes agreeing about where the frame is. */
+function visibleHeight() {
   const dist = tier.name === 'mobile' ? 13.5 : 11;
   const fov = 40;
-  const visH = 2 * dist * Math.tan((fov * Math.PI) / 180 / 2);
-  const visW = visH * (window.innerWidth / window.innerHeight);
+  return 2 * dist * Math.tan((fov * Math.PI) / 180 / 2);
+}
+function visibleWidth() {
+  return visibleHeight() * (window.innerWidth / window.innerHeight);
+}
+
+function computeWorldScale() {
+  // Visible height at z=0 for the current camera.
+  const visH = visibleHeight();
+  const visW = visibleWidth();
   // The frame is 2.0 wide in normalized space; fit it to ~62% of the width.
   let scale = (visW * (tier.name === 'mobile' ? 0.76 : 0.62)) / 2.0;
   // On very tall/narrow screens, cap by height so the frame never crops.
@@ -223,6 +302,16 @@ function init() {
 
   scene.scene.add(particles.points);
 
+  // Squeeze lives in its own scene so the mode switch is a single `.visible`
+  // toggle rather than an add/remove — nothing is rebuilt, nothing is
+  // reallocated, and switching modes mid-pop is safe.
+  // No targets needed: the press is a field in world space, not a collision
+  // query against the logo, so there is no distance field to rasterise.
+  squeeze = createSqueeze({ reduced: reducedMotion });
+  squeeze.resize(visibleWidth(), visibleHeight());
+  squeeze.scene.visible = false;
+  scene.scene.add(squeeze.scene);
+
   phases = createPhases({
     onPhaseChange: (phase) => {
       audio.onPhase(phase);
@@ -239,8 +328,10 @@ function init() {
   clock = new THREE.Clock();
   startBtn.classList.add('ready');
 
-  // First resize pass to sync pixel ratio / world scale with the real viewport.
+  // First resize pass to sync pixel ratio / world scale with the real viewport,
+  // then paint the HUD once now that both state machines exist.
   handleResize();
+  updateHud();
   running = true;
   requestAnimationFrame(loop);
 }
@@ -265,16 +356,50 @@ function loop() {
 
   updatePointer();
 
-  // State machine → uniforms.
-  if (started && !phases.ignited) {
-    phases.update(dt, pointerDown, pointerSpeed);
-  } else if (phases.ignited) {
-    phases.update(dt, false, 0);
+  let u;
+  if (mode === 'squeeze') {
+    // The mark is already assembled in squeeze mode; the press is the only
+    // thing driving the uniforms. Pointer force stays at zero — in this mode
+    // the pointer is the hand, not a stirrer, and letting it also push the
+    // cloud just fights the press.
+    u = squeeze.update(
+      dt,
+      {
+        pointer: pointerWorld,
+        dragging: started && pointerDown,
+        // Working the mark faster than holding still builds pressure faster,
+        // so the game rewards the same active gesture Gather does.
+        speed: pointerSpeed,
+      },
+      {
+        onPop: () => {
+          poppedAt = time;
+          audio.onPop();
+          flashImpact();
+        },
+        onPhase: () => {},
+      },
+    );
+    // Tension riser, on a fixed cadence so it stays a line at any frame rate.
+    tensionTick += dt;
+    if (tensionTick > 0.085) {
+      tensionTick = 0;
+      audio.onTension(u.tension);
+    }
+  } else {
+    // State machine → uniforms.
+    if (started && !phases.ignited) {
+      phases.update(dt, pointerDown, pointerSpeed);
+    } else if (phases.ignited) {
+      phases.update(dt, false, 0);
+    }
+    u = phases.uniforms(pointerWorld, pointerDown);
+    if (!pointerInside || !started) u.pointerForce = 0;
   }
-  const u = phases.uniforms(pointerWorld, pointerDown);
-  if (!pointerInside || !started) u.pointerForce = 0;
+
   particles.setState(u);
   scene.setIgnite(u.ignite);
+  scene.setShake(u.shake || 0);
   scene.setParallaxTarget(pointerInside ? ndc.x : 0, pointerInside ? ndc.y : 0);
 
   scene.updateCamera(dt);
@@ -285,12 +410,23 @@ function loop() {
   if (Math.floor(time * 60) % 2 === 0) updateHud();
 }
 
+/* Retrigger the impact flash. A CSS animation only fires on a class change, so
+   the class has to come off and go back on for two pops in a row. */
+function flashImpact() {
+  shell.classList.remove('is-popped');
+  void shell.offsetWidth; // force reflow so the animation restarts
+  shell.classList.add('is-popped');
+}
+
 function handleResize() {
   if (!scene) return;
   const { pixelRatio, height } = scene.resize();
   particles.setPixelRatio(pixelRatio);
   particles.setHeight(height);
-  particles.setWorldScale(computeWorldScale());
+  if (squeeze) squeeze.resize(visibleWidth(), visibleHeight());
+  // Squeeze mode fits the mark to its own framing, so each mode owns the
+  // scale its own layout expects.
+  particles.setWorldScale(mode === 'squeeze' ? squeeze.worldScale : computeWorldScale());
 }
 
 /* ---------- input ---------- */
@@ -316,6 +452,52 @@ window.addEventListener('pointercancel', () => { pointerDown = false; }, { passi
 document.addEventListener('mouseleave', () => { pointerInside = false; });
 
 /* ---------- controls ---------- */
+
+/**
+ * Switch between the two games.
+ *
+ * Deliberately cheap: the mark, the targets, the renderer and the press all
+ * already exist, so this only flips which state machine feeds the uniforms and
+ * re-fits the mark for that mode's framing. Switching back to gather restores
+ * the reveal exactly where it was — the charge is not reset, so a visitor who
+ * peeks at Squeeze and comes back has not lost their progress.
+ */
+function setMode(next) {
+  if (next === mode || !squeeze) return;
+  mode = next;
+
+  squeeze.scene.visible = mode === 'squeeze';
+  if (mode === 'squeeze') {
+    squeeze.reset();
+    // The mark belongs assembled in this mode; hand it straight there rather
+    // than making the player sit through a charge bar first.
+    particles.setWorldScale(squeeze.worldScale);
+  } else {
+    particles.setWorldScale(computeWorldScale());
+    scene.setShake(0);
+  }
+
+  if (modeGatherBtn) {
+    modeGatherBtn.classList.toggle('is-active', mode === 'gather');
+    modeGatherBtn.setAttribute('aria-pressed', String(mode === 'gather'));
+  }
+  if (modeSqueezeBtn) {
+    modeSqueezeBtn.classList.toggle('is-active', mode === 'squeeze');
+    modeSqueezeBtn.setAttribute('aria-pressed', String(mode === 'squeeze'));
+  }
+  if (popsBlock) popsBlock.hidden = mode !== 'squeeze';
+
+  audio.onReset();
+  localizeHud();
+}
+
+if (modeGatherBtn) {
+  modeGatherBtn.addEventListener('click', () => setMode('gather'));
+}
+if (modeSqueezeBtn) {
+  modeSqueezeBtn.addEventListener('click', () => setMode('squeeze'));
+}
+
 startBtn.addEventListener('click', () => {
   if (startBtn.disabled) return;
   started = true;
@@ -330,6 +512,12 @@ startBtn.addEventListener('click', () => {
 });
 
 resetBtn.addEventListener('click', () => {
+  if (mode === 'squeeze') {
+    squeeze.reset();
+    audio.onReset();
+    updateHud();
+    return;
+  }
   phases.reset();
   shell.classList.remove('is-revealed');
   hud.removeAttribute('aria-hidden');

@@ -47,6 +47,9 @@ const velocityShader = /* glsl */ `
   uniform float uWorldScale;   // normalized target → world units
   uniform sampler2D uTarget;  // xyz = target, w = stagger 0..1
   uniform sampler2D uMeta;    // x = random, y = group, z = seed, w = letterIdx
+  uniform float uSqueeze;     // Squeeze mode: 0 → 1 compression of the whole mark
+  uniform vec3  uPress;       // Squeeze mode: xy = contact point in world, z = strength
+  uniform float uPressRadius; // Squeeze mode: contact radius in world units
 
   void main() {
     vec2 uv = gl_FragCoord.xy / resolution.xy;
@@ -84,6 +87,54 @@ const velocityShader = /* glsl */ `
     // Spring toward the target, gated by morph.
     vec3 toTarget = target - pos;
     vel += toTarget * (m * 2.8);
+
+    // Squeeze mode: the mark is under pressure. Compress along X and let the
+    // mark bulge in Y and Z, so it reads as a body under pressure rather than
+    // a shape being scaled. The wobble term is what sells it — a real thing
+    // being squeezed does not stay perfectly symmetric, and the per-seed phase
+    // keeps the shiver from looking like a global pulse.
+    if (uSqueeze > 0.001) {
+      float s = uSqueeze;
+      vec3 sq = target;
+      sq.x *= 1.0 - 0.13 * s;
+      sq.y *= 1.0 + 0.17 * s;
+      sq.z *= 1.0 + 0.12 * s;
+      // Higher-frequency shiver the closer it gets to letting go.
+      sq.y += sin(time * 34.0 + seed * 21.0) * 0.035 * s * s;
+      sq.x += sin(time * 27.0 + seed * 13.0) * 0.020 * s * s;
+      vel += (sq - pos) * (m * s * 7.5);
+    }
+
+    // Squeeze mode: the press itself. The global squeeze above contracts the
+    // WHOLE mark; this is the local part, and it is what makes the gesture
+    // read as a hand rather than a slider — a dent forms under the contact
+    // point and the material it displaces piles up just outside the rim.
+    //
+    // Critically this displaces the TARGET and lets the existing spring pull
+    // toward it, exactly like the global squeeze does. An earlier version added
+    // a raw force to the velocity instead, which has no counter-term: the
+    // particles accelerated without limit and the mark blew apart, because
+    // nothing was pulling them back. A displaced target is bounded by
+    // construction — the worst case is the mark sitting in a dent, which is
+    // exactly the pose we want.
+    if (uPress.z > 0.001) {
+      vec3 rel = target - uPress.xyz;
+      float d = length(rel);
+      float t = d / uPressRadius;
+      if (t < 2.0) {
+        float k = uPress.z * m;
+        // Bowl: cosine falloff, 1 at the contact point → 0 at the rim. Pulls
+        // the target in by at most 42% of the local radius.
+        float bowl = t < 1.0 ? 0.5 + 0.5 * cos(t * 3.14159265) : 0.0;
+        // Rim: material squeezed out of the bowl has to go somewhere. Peaks
+        // just past the contact radius and is gone by 2×.
+        float rim = smoothstep(0.85, 1.15, t) * (1.0 - smoothstep(1.15, 2.0, t));
+        vec3 dir = rel / max(d, 0.001);
+        vec3 to = uPress.xyz + dir * d * (1.0 - 0.42 * bowl * k);
+        to += dir * rim * uPressRadius * 0.10 * k;
+        vel += (to - pos) * (m * uPress.z * 7.0);
+      }
+    }
 
     // Chaos flow.
     vel += flow * (uChaos * 1.5);
@@ -131,6 +182,8 @@ const renderVertex = /* glsl */ `
   uniform float uIgnite;
   uniform vec3  uIdleColor;
   uniform float uTime;
+  uniform vec3  uPress;       // Squeeze mode: xy = contact point, z = strength
+  uniform float uPressRadius;
 
   attribute vec2  aRef;       // uv into the compute position texture
   attribute vec3  aColor;     // per-letter accent
@@ -149,19 +202,39 @@ const renderVertex = /* glsl */ `
     vec3 col = mix(uIdleColor, aColor, mixT);
     col = mix(col, vec3(1.0, 0.94, 0.88), uIgnite * 0.8);
 
+    /* Squeeze mode: the contact patch runs hot. Without this there is no cue at
+       all for WHERE the press is landing — the mark deforms globally and a
+       player cannot tell what they are holding. Scoped to the contact radius so
+       it reads as pressure under a fingertip, not a second ignition.
+
+       Capped at 0.45 and reached over a fairly narrow band: pushed harder it
+       blew straight through the letterform and burned a hole in the A, which
+       loses more than the heat cue gains. The mark has to stay readable while
+       it is being squeezed — that legibility IS the effect. */
+    float hot = 0.0;
+    if (uPress.z > 0.001) {
+      hot = uPress.z * (1.0 - smoothstep(uPressRadius * 0.2, uPressRadius * 1.1, distance(pos, uPress.xyz)));
+      col = mix(col, vec3(1.0, 0.93, 0.86), hot * 0.45);
+    }
+
     // Twinkle: subtle per-particle flicker, stronger in chaos.
     float tw = 0.85 + 0.15 * sin(uTime * 2.0 + aSeed * 40.0);
     float chaosT = 1.0 - clamp(uMorph, 0.0, 1.0);
     col *= mix(1.0, tw, chaosT * 0.6);
 
     vColor = col;
-    vAlpha = mix(0.62, 1.0, mixT);
+    vAlpha = mix(0.62, 1.0, mixT) + hot * 0.12;
     vCore = 0.5 + 0.5 * aRandom;
 
     vec4 mv = modelViewMatrix * vec4(pos, 1.0);
     gl_Position = projectionMatrix * mv;
 
     float size = uSize * (0.65 + aRandom * 0.7) * mix(1.0, 0.58, uMorph) * (1.0 + uIgnite * 0.65);
+    // Particles crushed into the contact bowl overlap more than the rest of the
+    // mark; a little extra size there turns that density into a readable
+    // hotspot. Kept modest — the same bump at 0.8 merged into one white blob
+    // and swallowed the letterform underneath it.
+    size *= 1.0 + hot * 0.3;
     gl_PointSize = max(1.0, size * uPixelRatio * (uHeight / -mv.z) * 0.01);
   }
 `;
@@ -241,6 +314,9 @@ export function createParticleSystem(renderer, opts) {
     uRevealed: { value: 0 },
     uBounds: { value: bounds },
     uWorldScale: { value: worldScale },
+    uSqueeze: { value: 0 },
+    uPress: { value: new THREE.Vector3(0, 0, 0) },
+    uPressRadius: { value: 1 },
     uTarget: { value: targetTex },
     uMeta: { value: metaTex },
   };
@@ -274,6 +350,10 @@ export function createParticleSystem(renderer, opts) {
       uIgnite: { value: 0 },
       uIdleColor: { value: idleColor },
       uTime: shared.time,
+      // Shares the velocity shader's uPress object, so one write per frame in
+      // setState feeds both the dent and its hotspot.
+      uPress: shared.uPress,
+      uPressRadius: shared.uPressRadius,
     },
     vertexShader: renderVertex,
     fragmentShader: renderFragment,
@@ -284,6 +364,10 @@ export function createParticleSystem(renderer, opts) {
   });
 
   const points = new THREE.Points(geometry, material);
+  // Nothing else shares the frame any more — the press highlight and the mark
+  // are the only things on screen — but keeping an explicit order documents
+  // that the contact glow is meant to sit over the particles.
+  points.renderOrder = 2;
   points.frustumCulled = false;
 
   function setState(s) {
@@ -292,6 +376,11 @@ export function createParticleSystem(renderer, opts) {
     if (s.impulse !== undefined) shared.uImpulse.value = s.impulse;
     if (s.pointerForce !== undefined) shared.uPointerForce.value = s.pointerForce;
     if (s.revealed !== undefined) shared.uRevealed.value = s.revealed ? 1 : 0;
+    if (s.squeeze !== undefined) shared.uSqueeze.value = s.squeeze;
+    if (s.press) {
+      shared.uPress.value.set(s.press.x, s.press.y, s.press.strength);
+    }
+    if (s.pressRadius !== undefined) shared.uPressRadius.value = s.pressRadius;
     if (s.ignite !== undefined) material.uniforms.uIgnite.value = s.ignite;
     if (s.pointer) shared.uPointer.value.copy(s.pointer);
   }
