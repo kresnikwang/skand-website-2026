@@ -20,8 +20,11 @@
   --pad-x: 760px;     /* lead-in before the first bay, trail after the last */
 
   position: relative;
-  height: 200vh;
-  height: 200dvh;
+  /* Scroll length is the walk length: height minus one pin = travel. At 200dvh
+     the whole 6000px+ hall was crossed in one viewport of scrolling (~63px per
+     column); 280dvh gives it 1.8x the road. Tune here if it feels long/short. */
+  height: 280vh;
+  height: 280dvh;
   margin-bottom: -40vh;   /* overlap About upward, same trick the old hero used
                              (see the note at index.html:33-38) so the pin
                              hands over instead of leaving a dead gap */
@@ -406,6 +409,9 @@
 /* ============================================================
    FIRST-SCREEN COPY
    ============================================================ */
+/* --walk (0..1) is written by gallery.js from the camera position, so the copy
+   dissolves continuously over the first 15% of the walk. No CSS transition on
+   purpose: the camera is already eased, a second ease would lag behind it. */
 .gallery-copy {
   position: absolute;
   z-index: 4;
@@ -413,12 +419,11 @@
   top: 27%;
   width: min(40vw, 540px);
   pointer-events: none;
-  transition: opacity .5s ease, transform .5s ease;
+  opacity: calc(1 - var(--walk, 0));
+  transform: translateY(calc(var(--walk, 0) * -26px));
 }
-.gallery.is-walking .gallery-copy {
-  opacity: 0;
-  transform: translateY(-26px);
-}
+/* fully gone: also take the CTA out of hit-testing and tab order */
+.gallery.is-away .gallery-copy { visibility: hidden; }
 
 .gallery-eyebrow {
   display: flex;

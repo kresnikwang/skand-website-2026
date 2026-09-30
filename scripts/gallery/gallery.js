@@ -256,7 +256,7 @@
      pushed away. maxCam therefore has to be solved against the projection,
      otherwise the walk stops short and the end wall never arrives. These
      three values are read back off the CSS so there is one source of truth. */
-  let persp = 1200, originX = 0, tiltRad = 0, lastFade = -1;
+  let persp = 1200, originX = 0, tiltRad = 0, lastFade = -1, lastWalk = -1;
 
   function readPerspective() {
     const cs = getComputedStyle(scene);
@@ -348,7 +348,18 @@
     if (railKnob) railKnob.style.left = (frac * 100) + '%';
 
     const y = frozenScrollY !== null ? frozenScrollY : window.scrollY;
-    gallery.classList.toggle('is-walking', (y - sectionTop) > travel * 0.03);
+
+    // First-screen copy leaves over the first 15% of the walk. Keyed to the
+    // camera (not to raw scroll px against `travel`, which was 27px) and fed to
+    // CSS as a continuous --walk, so it dissolves as you go instead of snapping.
+    // Desktop only: below 1024 the copy is an ordinary block in the grid.
+    const walk = isHall() ? Math.min(1, Math.max(0, frac / 0.15)) : 0;
+    if (Math.abs(walk - lastWalk) > 0.004 || (walk === 0) !== (lastWalk === 0)) {
+      lastWalk = walk;
+      gallery.style.setProperty('--walk', walk.toFixed(3));
+      gallery.classList.toggle('is-away', walk >= 0.98);
+    }
+    gallery.classList.toggle('is-walking', isHall() && frac > 0.02);
 
     // black the hall out across the overlap so the incoming section never
     // renders on top of live artwork
@@ -383,63 +394,84 @@
      Keys and the rail scroll the page; drag previews live and
      commits on release. Nothing fights the scroll position.
      ============================================================ */
+  /* `smooth: false` must be 'instant', not 'auto': 'auto' defers to the CSS
+     scroll-behavior, and html sets `scroll-behavior: smooth` (index.html:33),
+     so 'auto' would still animate. */
   function scrollToCam(c, smooth = true) {
     const frac = maxCam > 0 ? Math.min(1, Math.max(0, c / maxCam)) : 0;
-    window.scrollTo({ top: sectionTop + frac * travel, behavior: smooth ? 'smooth' : 'auto' });
+    window.scrollTo({ top: sectionTop + frac * travel, behavior: smooth ? 'smooth' : 'instant' });
   }
 
-  let dragging = false, dragX = 0, dragMoved = 0;
+  let dragging = false, dragX = 0, startX = 0, startY = 0, didDrag = false;
 
-  const DRAG_SLOP = 6;   // px before a press is a drag rather than a click
+  const DRAG_SLOP = 8;   // px from the press point before it is a drag, not a click
 
   scene.addEventListener('pointerdown', (e) => {
     if (!isHall() || e.button !== 0) return;
     dragging = true;
-    dragX = e.clientX;
-    dragMoved = 0;
+    dragX = startX = e.clientX;
+    startY = e.clientY;
+    didDrag = false;
     // No setPointerCapture anywhere in this drag. Capturing on press retargets
     // pointerup/click to .gallery-scene, so a tap on a work never opens it;
     // capturing later (once past the slop) silently starves pointermove of
-    // everything after the first event. The scene fills the viewport, so
-    // moves stay inside it anyway and pointercancel covers the edges.
+    // everything after the first event. Release is listened for on window
+    // instead (below), so letting go over the nav or outside the page still
+    // ends the drag.
   });
 
   scene.addEventListener('pointermove', (e) => {
     if (!dragging) return;
+    if (!didDrag) {
+      // straight-line distance from the press, not accumulated movement: a slow
+      // press with a little hand jitter must still count as a click
+      if (Math.hypot(e.clientX - startX, e.clientY - startY) <= DRAG_SLOP) return;
+      didDrag = true;
+      dragX = startX;   // pan from the press point so the hall tracks the cursor 1:1
+      scene.classList.add('is-dragging');
+    }
     const dx = e.clientX - dragX;
     dragX = e.clientX;
-    dragMoved += Math.abs(dx);
-    if (dragMoved > DRAG_SLOP) scene.classList.add('is-dragging');
-    if (dragMoved <= DRAG_SLOP) return;   // don't pan on a jittery press
     dragOffset -= dx;
     const raw = scrollCam() + dragOffset;
     if (raw < 0) dragOffset -= raw;
     if (raw > maxCam) dragOffset -= raw - maxCam;
   });
 
-  function endDrag(e) {
+  function endDrag() {
     if (!dragging) return;
     dragging = false;
     scene.classList.remove('is-dragging');
-    try { scene.releasePointerCapture(e.pointerId); } catch (_) {}
+    // didDrag must outlive this pointerup so the click that follows it can be
+    // recognised as the tail of a drag, but not longer: a later keyboard
+    // Enter on a work is also a click and must open it.
+    setTimeout(() => { didDrag = false; }, 0);
+    if (!didDrag || dragOffset === 0) { dragOffset = 0; return; }
+    // Hand the drag over to the page scroll in the same frame. The old smooth
+    // scroll ran with dragOffset already zeroed, so the target fell back to the
+    // pre-drag scroll position and then crawled forward again: the rebound.
+    // An instant scroll plus a zeroed offset leaves the target unchanged, and
+    // the camera's own easing does the settling.
     const committed = Math.min(maxCam, Math.max(0, scrollCam() + dragOffset));
+    scrollToCam(committed, false);
     dragOffset = 0;
-    if (dragMoved > DRAG_SLOP) scrollToCam(committed);
   }
-  scene.addEventListener('pointerup', endDrag);
-  scene.addEventListener('pointercancel', endDrag);
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+  window.addEventListener('blur', endDrag);
 
-  // a click on an artwork is a click, not a 3px drag
+  // a click on an artwork is a click, not a drag (dragging back to the press
+  // point is still a drag, hence a latched flag rather than a distance test)
   scene.addEventListener('click', (e) => {
-    if (dragMoved > DRAG_SLOP) return;
+    if (didDrag) return;
     const btn = e.target.closest('.hall-art-btn');
     if (!btn) return;
     openViewer(Number(btn.dataset.idx));
   });
 
   document.addEventListener('keydown', (e) => {
-    if (!isHall() || gallery.hidden) return;
-    if (viewer.isOpen) return;
+    if (!pinned || !isHall() || gallery.hidden) return;
+    if (viewer.open) return;
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
@@ -451,20 +483,24 @@
   /* ---------- progress rail: click and drag ---------- */
   if (railTrack) {
     let railDrag = false;
-    const railTo = (clientX) => {
+    // a tap glides; a drag follows the pointer exactly, otherwise every move
+    // restarts a smooth scroll and the knob trails the cursor
+    const railTo = (clientX, smooth) => {
       const r = railTrack.getBoundingClientRect();
-      scrollToCam(Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * maxCam);
+      scrollToCam(Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * maxCam, smooth);
+    };
+    const railEnd = (e) => {
+      railDrag = false;
+      try { railTrack.releasePointerCapture(e.pointerId); } catch (_) {}
     };
     railTrack.addEventListener('pointerdown', (e) => {
       railDrag = true;
       railTrack.setPointerCapture(e.pointerId);
-      railTo(e.clientX);
+      railTo(e.clientX, true);
     });
-    railTrack.addEventListener('pointermove', (e) => { if (railDrag) railTo(e.clientX); });
-    railTrack.addEventListener('pointerup', (e) => {
-      railDrag = false;
-      try { railTrack.releasePointerCapture(e.pointerId); } catch (_) {}
-    });
+    railTrack.addEventListener('pointermove', (e) => { if (railDrag) railTo(e.clientX, false); });
+    railTrack.addEventListener('pointerup', railEnd);
+    railTrack.addEventListener('pointercancel', railEnd);
   }
 
   /* ============================================================
@@ -685,9 +721,17 @@
 
   // Stop the rAF loop whenever the hall is off-screen. scripts/logo/* runs a
   // Pixi app with its own ticker, and the two must not compete for the frame.
-  if ('IntersectionObserver' in window) {
+  // While the hall is on screen the page must not snap: html carries
+  // `scroll-snap-type: y proximity`, and a snap point near the pin fights both
+  // the wheel walk and the scroll a drag hands over to.
+  const hasIO = 'IntersectionObserver' in window;
+  function syncHallActive() {
+    document.documentElement.classList.toggle('hall-active', hasIO && pinned && isHall());
+  }
+  if (hasIO) {
     new IntersectionObserver((entries) => {
       pinned = entries[0].isIntersecting;
+      syncHallActive();
       if (pinned) startLoop(); else stopLoop();
     }, { rootMargin: '200px 0px' }).observe(gallery);
   }
@@ -708,6 +752,7 @@
         loadAllArtwork();
       }
       cam = targetCam = scrollCam();
+      syncHallActive();
       render();
     }, 140);
   }, { passive: true });

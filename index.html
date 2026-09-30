@@ -31,6 +31,9 @@
   --font-body:'Outfit','Helvetica Neue',sans-serif;
 }
 html{scroll-behavior:smooth;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--coral) var(--black);scroll-snap-type:y proximity}
+/* gallery.js sets .hall-active while the pinned hall is on screen: the hall is
+   walked by scroll position, and a snap point nearby would drag it back */
+html.hall-active{scroll-snap-type:none}
 /* No overflow-x:hidden on body. It would make body a scroll container (a
    non-visible overflow-x forces overflow-y to compute to auto), and the sticky
    .gallery-pin would then pin to a box that never scrolls. html carries the
