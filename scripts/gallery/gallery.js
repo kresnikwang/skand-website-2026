@@ -71,10 +71,16 @@
     room.querySelectorAll('.hall-pilaster').forEach((p) => {
       p.style.left = (L.PAD_X + Number(p.dataset.col) * L.COL_W) + 'px';
     });
+    // The beam is a cone from a lamp, wider than a bay. It is centred on the
+    // bay's centre (the same x the works use) and its width is shared with CSS
+    // through --beam-w, so positioning and drawing cannot drift apart.
+    const beamW = Math.round(L.wallH * 1.5 * 0.62);
+    gallery.style.setProperty('--beam-w', beamW + 'px');
+    beams.length = 0;
     room.querySelectorAll('.hall-beam').forEach((b) => {
-      // 105 = half of the 210px shaft in gallery.css, so it hangs over the
-      // centre of its bay rather than 10px left of it
-      b.style.left = (L.PAD_X + Number(b.dataset.col) * L.COL_W + L.COL_W / 2 - 105) + 'px';
+      const centre = L.PAD_X + Number(b.dataset.col) * L.COL_W + L.COL_W / 2;
+      b.style.left = (centre - beamW / 2) + 'px';
+      beams.push({ el: b, centre, opacity: -1 });
     });
     const end = room.querySelector('.hall-endwall');
     if (end) end.style.height = (L.wallH + 40) + 'px';
@@ -97,7 +103,7 @@
      BUILD THE HALL
      ============================================================ */
   const arts = [];
-
+  const beams = [];
   function buildRoom() {
     room.innerHTML = '';
 
@@ -120,7 +126,8 @@
     seam.className = 'hall-seam';
     room.appendChild(seam);
 
-    for (let c = 0; c < cols; c += 2) {
+    // one lamp per bay (was every second bay, which made a fixed rhythm)
+    for (let c = 0; c < cols; c++) {
       const beam = document.createElement('div');
       beam.className = 'hall-beam';
       beam.dataset.col = c;
@@ -333,6 +340,20 @@
         const live = o > 0.3;
         if (rec.btn.style.pointerEvents !== (live ? '' : 'none')) {
           rec.btn.style.pointerEvents = live ? '' : 'none';
+        }
+      }
+
+      // Only the lamp nearest the middle of the screen is lit, and the light
+      // hands over smoothly (smoothstep of the projected distance). The reach is
+      // 1.5 bays, so at most two beams are visible during a handover.
+      const reach = L.COL_W * 1.5;
+      for (let i = 0; i < beams.length; i++) {
+        const b = beams[i];
+        const k = Math.max(0, 1 - Math.abs(projectX(b.centre, -cam) - vw / 2) / reach);
+        const o = k * k * (3 - 2 * k);
+        if (Math.abs(o - b.opacity) > 0.01) {
+          b.el.style.opacity = o.toFixed(3);
+          b.opacity = o;
         }
       }
     }

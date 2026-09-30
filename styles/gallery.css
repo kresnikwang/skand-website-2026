@@ -178,22 +178,39 @@
   box-shadow: 0 0 26px 5px rgba(232, 86, 58, .3);
 }
 
-/* ---------- ceiling light shafts, every second bay ---------- */
-/* translateZ(120) puts these in front of the hang (z 0-28) without z-index,
-   which preserve-3d ignores. Height is tied to the wall so the shaft always
-   reaches the floor whatever the viewport. */
+/* ---------- ceiling light: one lamp per bay, but only the one nearest the
+   centre of the screen is lit ---------- */
+/* gallery.js sets each beam's opacity from its projected distance to the middle
+   of the screen, so the light hands over from bay to bay instead of a fixed
+   rhythm of shafts sliding past (which read as a repeating pattern).
+   Depth is 34px, not the old 120: the hang sits at z 0-28, and perspective
+   pushes anything nearer the camera sideways relative to it (about 44px at 400px
+   from the vanishing point), which is what made the shaft miss its work.
+   The cone is an angular gradient from the lamp, so its edges are soft by
+   construction; no blur filter, no hard box. Width comes from gallery.js
+   (--beam-w) because the same number positions it. */
 .hall-beam {
   position: absolute;
   top: calc(-1 * var(--wall-h) * 0.55);
-  width: 210px;
+  width: var(--beam-w, 540px);
   height: calc(var(--wall-h) * 1.5);
-  transform: translateZ(120px);
+  transform: translateZ(34px);
   pointer-events: none;
-  background: linear-gradient(180deg,
-    rgba(255, 238, 214, .17) 0%,
-    rgba(240, 237, 232, .07) 46%,
-    rgba(240, 237, 232, 0) 88%);
-  filter: blur(11px);
+  opacity: 0;
+}
+.hall-beam::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(from 163deg at 50% 0%,
+    rgba(255, 238, 214, 0) 0deg,
+    rgba(255, 238, 214, .05) 8deg,
+    rgba(255, 240, 220, .17) 17deg,
+    rgba(255, 238, 214, .05) 26deg,
+    rgba(255, 238, 214, 0) 34deg,
+    transparent 360deg);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .7) 40%, transparent 92%);
+          mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .7) 40%, transparent 92%);
 }
 .hall-beam::after {
   content: '';
@@ -414,7 +431,10 @@
    purpose: the camera is already eased, a second ease would lag behind it. */
 .gallery-copy {
   position: absolute;
-  z-index: 4;
+  /* above the vignette (.gallery-pin::after, z 6) so the headline and the
+     button are not darkened by it; still under the scrim (z 8) so they go
+     down with the hall at the end of the walk */
+  z-index: 7;
   left: 6vw;
   top: 27%;
   width: min(40vw, 540px);
