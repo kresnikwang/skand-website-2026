@@ -311,7 +311,8 @@
     });
     paintSigns();
     paintChips();
-    focused = -1;   // relabel the rail's category name in the next frame
+    focused = -1;
+    shownCat = null;   // relabel the rail's category name in the next frame
   }
 
   /* ---------- load the 1000x563 webp only as the camera nears it ---------- */
@@ -345,10 +346,10 @@
   /* ============================================================
      CAMERA
      ============================================================ */
-  let maxCam = 0, travel = 1, sectionTop = 0;
+  let maxCam = 0, walkTravel = 1, sectionTop = 0;
   let cam = 0, targetCam = 0, dragOffset = 0;
   let frozenScrollY = null;   // set while the viewer holds the page still
-  let focused = -1, rafId = 0, pinned = true;
+  let focused = -1, shownCat = null, rafId = 0, pinned = true;
 
   /* The room is tilted (rotateY) under a perspective, so a hall coordinate
      does NOT land at cam + x on screen: the far end is both compressed and
@@ -402,11 +403,14 @@
       const walk = maxCam <= 1
         ? pinH * 0.25
         : Math.min(pinH * 3.6, Math.max(pinH * 0.9, (maxCam / L.COL_W) * pinH * 0.118));
-      gallery.style.height = Math.round(pinH + walk) + 'px';
+      // Let the end wall settle before normal scroll lifts the whole hall.
+      const endHold = Math.round(pinH * 0.2);
+      walkTravel = Math.round(walk);
+      gallery.style.height = (pinH + walkTravel + endHold) + 'px';
     } else {
       gallery.style.height = '';
+      walkTravel = Math.max(1, gallery.offsetHeight - pin.offsetHeight);
     }
-    travel = Math.max(1, gallery.offsetHeight - pin.offsetHeight);
     // When each work becomes "the current one": the camera position that puts
     // its bay under the middle of the screen, staggered by row so the counter
     // moves work by work instead of three at a time. Clamped, and kept
@@ -427,7 +431,7 @@
     // the document — window.scrollY reads 0 while it is held. Without this the
     // hall would snap back to work 01 behind the overlay and jump on close.
     const y = frozenScrollY !== null ? frozenScrollY : window.scrollY;
-    const p = Math.min(1, Math.max(0, (y - sectionTop) / travel));
+    const p = Math.min(1, Math.max(0, (y - sectionTop) / walkTravel));
     return p * maxCam;
   }
 
@@ -509,10 +513,14 @@
       focused = f;
       if (railCount) railCount.textContent = pad2(f + 1);
       if (railTrack) railTrack.setAttribute('aria-valuenow', String(f + 1));
-      // which chapter the camera is standing in front of. Filtered, the chips
-      // already say so; in `all` it is the only place the hall names itself.
-      const here = visArts.length ? PROJECTS[visArts[f].i].cat : '';
-      const showHere = activeCat === 'all' ? here : '';
+    }
+    // Show the next chapter's tag shortly before its first work reaches the
+    // centre. Keep the work count tied to the actual camera position.
+    const tagCam = Math.min(maxCam, cam + (isHall() ? L.COL_W * 0.4 : 0));
+    const tagIndex = focusIndexFor(tagCam);
+    const showHere = activeCat === 'all' && visArts.length ? PROJECTS[visArts[tagIndex].i].cat : '';
+    if (showHere !== shownCat) {
+      shownCat = showHere;
       if (railCat) railCat.textContent = showHere ? catName(showHere) : '';
       if (catsEl) {
         catsEl.querySelectorAll('.gallery-cat').forEach((b) => b.classList.toggle('is-here', !!showHere && b.dataset.cat === showHere));
@@ -523,7 +531,7 @@
     if (railKnob) railKnob.style.left = (frac * 100) + '%';
 
     // First-screen copy leaves over the first 15% of the walk. Keyed to the
-    // camera (not to raw scroll px against `travel`, which was 27px) and fed to
+    // camera (not to raw scroll px against the walk distance) and fed to
     // CSS as a continuous --walk, so it dissolves as you go instead of snapping.
     // Desktop only: below 1024 the copy is an ordinary block in the grid.
     const walk = isHall() ? Math.min(1, Math.max(0, frac / 0.15)) : 0;
@@ -572,7 +580,7 @@
      so 'auto' would still animate. */
   function scrollToCam(c, smooth = true) {
     const frac = maxCam > 0 ? Math.min(1, Math.max(0, c / maxCam)) : 0;
-    window.scrollTo({ top: sectionTop + frac * travel, behavior: smooth ? 'smooth' : 'instant' });
+    window.scrollTo({ top: sectionTop + frac * walkTravel, behavior: smooth ? 'smooth' : 'instant' });
   }
 
   let dragging = false, dragX = 0, startX = 0, startY = 0, didDrag = false;
@@ -687,6 +695,7 @@
     activeCat = cat;
     paintChips();
     focused = -1;
+    shownCat = null;
 
     const relayout = () => {
       applyLayout();

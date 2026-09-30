@@ -20,9 +20,7 @@
   --pad-x: 760px;     /* lead-in before the first bay, trail after the last */
 
   position: relative;
-  /* Scroll length is the walk length: height minus one pin = travel. At 200dvh
-     the whole 6000px+ hall was crossed in one viewport of scrolling (~63px per
-     column); 280dvh gives it 1.8x the road. Tune here if it feels long/short. */
+  /* Fallback before gallery.js sizes the walk and its brief end hold. */
   height: 280vh;
   height: 280dvh;
   /* About follows the full hall: after the camera reaches the end wall,
