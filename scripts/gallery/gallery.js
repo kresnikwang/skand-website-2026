@@ -22,6 +22,8 @@
   const railTotal = document.getElementById('galleryRailTotal');
   const railTicks = document.getElementById('galleryRailTicks');
   const hintEl    = document.getElementById('galleryHint');
+  const catsEl    = document.getElementById('galleryCats');
+  const railCat   = document.getElementById('galleryRailCat');
 
   const LQIP = m => (m && m.blur) || '';
   const basename = img => img.split('/').pop().replace(/\.[^.]+$/, '');
@@ -32,11 +34,26 @@
      room for a visible floor beneath it, or the hall reads as a flat
      billboard instead of a room. */
   const ROWS = 3;
-  const L = { COL_W: 320, ART_W: 264, ROW_GAP: 148, ROW_TOP: 30, PAD_X: 760, END_W: 460, wallH: 504, hallW: 6200 };
+  const L = { COL_W: 320, ART_W: 264, ROW_GAP: 148, ROW_TOP: 30, PAD_X: 760, END_W: 460, SIGN_W: 256, wallH: 504, hallW: 6200 };
 
   const total   = PROJECTS.length;
-  const cols    = Math.ceil(total / ROWS);
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  /* ---------- categories ----------
+     The hall shows either everything (`all`, hung as one chapter per category)
+     or one category. What is on the wall is a list, `visArts`, in hang order;
+     every loop below walks that list rather than the 45 works, and the works
+     that are off the wall are display:none. */
+  const CATS = [];
+  PROJECTS.forEach((p) => { if (!CATS.includes(p.cat)) CATS.push(p.cat); });
+  const catCount = {};
+  PROJECTS.forEach((p) => { catCount[p.cat] = (catCount[p.cat] || 0) + 1; });
+  let activeCat = 'all';
+  let visArts = [];
+  let chapters = [];
+  const catName  = (c) => ((FILTER_LABELS[c] || {})[lang]) || c;
+  const catShort = (c) => ((FILTER_SHORT[c] || {})[lang]) || catName(c);
+  const worksLabel = (n) => n + ' ' + T.gallery[n === 1 ? 'work1' : 'works'][lang];
 
   /* 3D hall is desktop-only; below 1024px the CSS turns the same DOM
      into a plain grid, and the camera machinery has to stand down. */
@@ -58,44 +75,119 @@
     L.PAD_X   = Math.round(Math.min(780, Math.max(400, pinW * 0.53)));
     // the back wall stops here so the end wall is not painted over
     L.END_W   = Math.round(Math.min(460, Math.max(280, pinW * 0.32)));
-    L.hallW   = L.PAD_X * 2 + cols * L.COL_W;
+    // a chapter sign takes a little less than a bay of wall
+    L.SIGN_W  = Math.round(L.COL_W * 0.8);
   }
 
+  /* Decide what hangs where. In `all` mode each category is a chapter that
+     starts on a fresh bay, and every chapter after the first is announced by a
+     sign on the wall in front of it. The first chapter has no sign: its wall is
+     where the headline stands, and the first screen should not change. Filtered,
+     the hall is one chapter. Position is stored on each work (col, row, x);
+     nothing else in the file derives it from the work's index any more. */
+  function planWall() {
+    const all = activeCat === 'all';
+    const groups = [];
+    if (all) {
+      CATS.forEach((c) => {
+        const m = arts.filter(r => PROJECTS[r.i].cat === c);
+        if (m.length) groups.push({ cat: c, arts: m });
+      });
+    } else {
+      groups.push({ cat: activeCat, arts: arts.filter(r => PROJECTS[r.i].cat === activeCat) });
+    }
+    chapters = groups;
+    visArts = [];
+    arts.forEach((r) => { r.on = false; });
+
+    let x = L.PAD_X, colNo = 0;
+    chapters.forEach((ch, ci) => {
+      ch.hasSign = all && ci > 0;
+      if (ch.hasSign) { ch.signX = x; x += L.SIGN_W; }
+      ch.bayX = x;
+      ch.cols = Math.ceil(ch.arts.length / ROWS);
+      ch.firstCol = colNo;
+      ch.arts.forEach((r, j) => {
+        r.on = true;
+        r.col = colNo + Math.floor(j / ROWS);
+        r.row = j % ROWS;
+        r.x = x + Math.floor(j / ROWS) * L.COL_W;
+        visArts.push(r);
+      });
+      colNo += ch.cols;
+      x += ch.cols * L.COL_W;
+    });
+    L.hallW = x + L.PAD_X;
+    arts.forEach((r) => r.el.classList.toggle('is-off', !r.on));
+  }
+
+  /* pilasters, lamps and signs depend on the plan, so they are rebuilt with it */
+  let dyn = [];
   function applyLayout() {
     computeLayout();
+    planWall();
     gallery.style.setProperty('--hall-w', L.hallW + 'px');
     gallery.style.setProperty('--art-w', L.ART_W + 'px');
     gallery.style.setProperty('--wall-h', L.wallH + 'px');
     gallery.style.setProperty('--end-w', L.END_W + 'px');
+    gallery.style.setProperty('--sign-w', L.SIGN_W + 'px');
 
-    room.querySelectorAll('.hall-pilaster').forEach((p) => {
-      p.style.left = (L.PAD_X + Number(p.dataset.col) * L.COL_W) + 'px';
-    });
+    const end = room.querySelector('.hall-endwall');
+    dyn.forEach((el) => el.remove());
+    dyn = [];
+    const add = (el) => { room.insertBefore(el, end); dyn.push(el); };
+    const div = (cls, left) => {
+      const el = document.createElement('div');
+      el.className = cls;
+      el.style.left = left + 'px';
+      return el;
+    };
+
     // The beam is a cone from a lamp, wider than a bay. It is centred on the
     // bay's centre (the same x the works use) and its width is shared with CSS
     // through --beam-w, so positioning and drawing cannot drift apart.
     const beamW = Math.round(L.wallH * 1.5 * 0.62);
     gallery.style.setProperty('--beam-w', beamW + 'px');
     beams.length = 0;
-    room.querySelectorAll('.hall-beam').forEach((b) => {
-      const centre = L.PAD_X + Number(b.dataset.col) * L.COL_W + L.COL_W / 2;
-      b.style.left = (centre - beamW / 2) + 'px';
-      beams.push({ el: b, centre, opacity: -1 });
+
+    chapters.forEach((ch) => {
+      for (let k = 0; k <= ch.cols; k++) add(div('hall-pilaster', ch.bayX + k * L.COL_W));
+      // one lamp per bay
+      for (let k = 0; k < ch.cols; k++) {
+        const centre = ch.bayX + k * L.COL_W + L.COL_W / 2;
+        const el = div('hall-beam', centre - beamW / 2);
+        add(el);
+        beams.push({ el, centre, opacity: -1 });
+      }
+      if (ch.hasSign) {
+        const sign = div('hall-sign', ch.signX);
+        sign.innerHTML = '<span class="hall-sign-no"></span><span class="hall-sign-name"></span><span class="hall-sign-count"></span>';
+        ch.signEl = sign;
+        add(sign);
+      }
     });
-    const end = room.querySelector('.hall-endwall');
+    paintSigns();
+
     if (end) end.style.height = (L.wallH + 40) + 'px';
 
-    arts.forEach((rec) => {
-      const col = Math.floor(rec.i / ROWS);
-      const row = rec.i % ROWS;
-      rec.el.style.left = (L.PAD_X + col * L.COL_W + (L.COL_W - L.ART_W) / 2) + 'px';
-      rec.el.style.top  = (L.ROW_TOP + row * L.ROW_GAP) + 'px';
+    visArts.forEach((rec) => {
+      rec.el.style.left = (rec.x + (L.COL_W - L.ART_W) / 2) + 'px';
+      rec.el.style.top  = (L.ROW_TOP + rec.row * L.ROW_GAP) + 'px';
       /* a little depth and a hair of rotation so the hang doesn't read as a
          spreadsheet — deterministic, so it survives re-layout */
       rec.el.style.transform =
-        'translateZ(' + (((col * 7 + row * 13) % 5) * 7) + 'px) rotateZ(' +
-        (((col + row) % 2 ? 0.55 : -0.55)) + 'deg)';
-      rec.centre = L.PAD_X + col * L.COL_W + L.COL_W / 2;
+        'translateZ(' + (((rec.col * 7 + rec.row * 13) % 5) * 7) + 'px) rotateZ(' +
+        (((rec.col + rec.row) % 2 ? 0.55 : -0.55)) + 'deg)';
+      rec.centre = rec.x + L.COL_W / 2;
+    });
+  }
+
+  function paintSigns() {
+    chapters.forEach((ch, ci) => {
+      if (!ch.signEl) return;
+      ch.signEl.querySelector('.hall-sign-no').textContent = pad2(ci + 1);
+      ch.signEl.querySelector('.hall-sign-name').textContent = catName(ch.cat);
+      ch.signEl.querySelector('.hall-sign-count').textContent = worksLabel(ch.arts.length);
     });
   }
 
@@ -111,13 +203,6 @@
     wall.className = 'hall-wall';
     room.appendChild(wall);
 
-    for (let c = 0; c <= cols; c++) {
-      const p = document.createElement('div');
-      p.className = 'hall-pilaster';
-      p.dataset.col = c;
-      room.appendChild(p);
-    }
-
     const floor = document.createElement('div');
     floor.className = 'hall-floor';
     room.appendChild(floor);
@@ -126,13 +211,8 @@
     seam.className = 'hall-seam';
     room.appendChild(seam);
 
-    // one lamp per bay (was every second bay, which made a fixed rhythm)
-    for (let c = 0; c < cols; c++) {
-      const beam = document.createElement('div');
-      beam.className = 'hall-beam';
-      beam.dataset.col = c;
-      room.appendChild(beam);
-    }
+    // pilasters, lamps and chapter signs are added by applyLayout(), which
+    // knows what is on the wall
 
     const end = document.createElement('div');
     end.className = 'hall-endwall';
@@ -142,16 +222,12 @@
     // is left is just the line that hands you off to About.
     end.innerHTML =
       '<div class="hall-endwall-glow"></div>' +
-      '<div class="hall-endwall-title">Our Story<br><em>Starts</em></div>' +
-      '<div class="hall-endwall-coords">31°13′49.4″N<br>121°28′25.7″E</div>';
+      '<div class="hall-endwall-title">Our Story<br><em>Starts</em></div>';
     room.appendChild(end);
 
     const frag = document.createDocumentFragment();
 
     PROJECTS.forEach((p, i) => {
-      const col = Math.floor(i / ROWS);
-      const row = i % ROWS;
-
       const art = document.createElement('div');
       art.className = 'hall-art';
 
@@ -174,7 +250,7 @@
           // image drag, which swallows every pointermove after it — the hall
           // would stop following the cursor 40px in and the drag would commit
           '<img alt="" decoding="async" draggable="false" width="1000" height="563">' +
-          '<span class="hall-art-tag">SK / ' + pad2(i + 1) + '</span>' +
+          '<span class="hall-art-tag">SK / ' + pad2(i + 1) + '<b></b></span>' +
           '<span class="hall-art-caption">' +
             '<span class="hall-art-brand"></span>' +
             '<span class="hall-art-name"></span>' +
@@ -184,32 +260,45 @@
       art.appendChild(btn);
       frag.appendChild(art);
 
-      const rec = { i, el: art, btn, img: btn.querySelector('img'), centre: 0, shown: false, opacity: -1 };
+      const rec = { i, el: art, btn, img: btn.querySelector('img'), centre: 0, x: 0, col: 0, row: 0, key: 0, on: true, shown: false, opacity: -1 };
       rec.brandEl = btn.querySelector('.hall-art-brand');
       rec.nameEl  = btn.querySelector('.hall-art-name');
+      rec.tagCat  = btn.querySelector('.hall-art-tag b');
       arts.push(rec);
     });
 
     room.appendChild(frag);
 
-    if (railTotal) railTotal.textContent = pad2(total);
-    if (railCount) railCount.textContent = pad2(1);
-    if (viewer.total) viewer.total.textContent = pad2(total);
-    if (railTrack) {
-      railTrack.setAttribute('aria-valuemax', String(total));
-      railTrack.setAttribute('aria-valuenow', '1');
-    }
-    if (railTicks) {
-      // one tick per five works — 45 hairline marks reads as noise
-      const stepN = Math.max(1, Math.round(total / 9));
-      let ticks = '';
-      for (let i = 0; i < total; i += stepN) ticks += '<i></i>';
-      railTicks.innerHTML = ticks;
-    }
-
+    buildChips();
     applyLayout();
     renderCaptions();
     observeArtwork();
+  }
+
+  /* ---------- category chips ---------- */
+  function buildChips() {
+    if (!catsEl) return;
+    const list = ['all'].concat(CATS);
+    catsEl.innerHTML = list.map((c) =>
+      '<button type="button" class="gallery-cat" data-cat="' + c + '" aria-pressed="false">' +
+        '<span class="gallery-cat-name"></span><span class="gallery-cat-n">' +
+        (c === 'all' ? total : catCount[c]) + '</span>' +
+      '</button>').join('');
+    catsEl.addEventListener('click', (e) => {
+      const b = e.target.closest('.gallery-cat');
+      if (b) setCategory(b.dataset.cat);
+    });
+  }
+
+  function paintChips() {
+    if (!catsEl) return;
+    catsEl.setAttribute('aria-label', T.gallery.filter[lang]);
+    catsEl.querySelectorAll('.gallery-cat').forEach((b) => {
+      const c = b.dataset.cat;
+      b.querySelector('.gallery-cat-name').textContent = c === 'all' ? FILTER_LABELS.all[lang] : catShort(c);
+      b.classList.toggle('is-active', c === activeCat);
+      b.setAttribute('aria-pressed', c === activeCat ? 'true' : 'false');
+    });
   }
 
   function renderCaptions() {
@@ -217,9 +306,12 @@
       const p = PROJECTS[i];
       rec.brandEl.textContent = p.brand;
       rec.nameEl.textContent = p.name;
-      const cat = FILTER_LABELS[p.cat];
-      rec.btn.setAttribute('aria-label', p.brand + ' — ' + p.name + (cat ? ' — ' + cat[lang] : ''));
+      rec.tagCat.textContent = catShort(p.cat);
+      rec.btn.setAttribute('aria-label', p.brand + ' — ' + p.name + ' — ' + catName(p.cat));
     });
+    paintSigns();
+    paintChips();
+    focused = -1;   // relabel the rail's category name in the next frame
   }
 
   /* ---------- load the 1000x563 webp only as the camera nears it ---------- */
@@ -236,7 +328,7 @@
     }, { rootMargin: '600px 0px' });
     arts.forEach(r => io.observe(r.el));
   }
-  function loadAllArtwork() { arts.forEach(loadArtwork); }
+  function loadAllArtwork() { arts.forEach((r) => { if (r.on) loadArtwork(r); }); }
   function loadArtwork(rec) {
     if (rec.shown) return;
     rec.shown = true;
@@ -263,7 +355,7 @@
      pushed away. maxCam therefore has to be solved against the projection,
      otherwise the walk stops short and the end wall never arrives. These
      three values are read back off the CSS so there is one source of truth. */
-  let persp = 1200, originX = 0, tiltRad = 0, lastFade = -1, lastWalk = -1;
+  let persp = 1200, originX = 0, tiltRad = 0, lastFade = -1, lastWalk = -1, lastEnd = -1;
 
   function readPerspective() {
     const cs = getComputedStyle(scene);
@@ -296,14 +388,42 @@
   function measure() {
     sectionTop = gallery.offsetTop;
     const pin = gallery.querySelector('.gallery-pin');
-    travel = Math.max(1, gallery.offsetHeight - pin.offsetHeight);
-    // .gallery pulls the next section up by this much; the hall fades out
-    // across exactly that range so the handover is a crossfade, not a stack.
-    overlap = Math.min(travel, -parseFloat(getComputedStyle(gallery).marginBottom) || 0);
     readPerspective();
     // the end wall sits 18px proud of the back wall, so it projects slightly
     // wider than a flush edge would — leave that much off the right edge
     maxCam = Math.max(0, -camFor(L.hallW, scene.clientWidth - 26));
+
+    // Scroll length follows the walk length, at a constant pace of about a
+    // tenth of a screen of scrolling per bay. A fixed 280dvh made the hall fly
+    // when 45 works + chapter signs were on the wall and crawl when one
+    // category of 3 was. Below 1024 the section is a grid and sizes itself.
+    if (isHall()) {
+      const pinH = pin.offsetHeight;
+      const walk = maxCam <= 1
+        ? pinH * 0.25
+        : Math.min(pinH * 3.6, Math.max(pinH * 0.9, (maxCam / L.COL_W) * pinH * 0.118));
+      gallery.style.height = Math.round(pinH + walk) + 'px';
+    } else {
+      gallery.style.height = '';
+    }
+    travel = Math.max(1, gallery.offsetHeight - pin.offsetHeight);
+    // .gallery pulls the next section up by this much; the hall fades out
+    // across exactly that range so the handover is a crossfade, not a stack.
+    overlap = Math.min(travel, -parseFloat(getComputedStyle(gallery).marginBottom) || 0);
+
+    // When each work becomes "the current one": the camera position that puts
+    // its bay under the middle of the screen, staggered by row so the counter
+    // moves work by work instead of three at a time. Clamped, and kept
+    // non-decreasing, so the last work is reachable at the end of the walk and
+    // the counter can only move forward as the camera does.
+    const mid = scene.clientWidth / 2;
+    let prev = 0;
+    visArts.forEach((r) => {
+      const k = -camFor(r.centre, mid) + r.row * L.COL_W / 3;
+      prev = Math.max(prev, Math.min(maxCam, Math.max(0, k)));
+      r.key = prev;
+    });
+    paintRail();
   }
 
   function scrollCam() {
@@ -315,9 +435,39 @@
     return p * maxCam;
   }
 
+  /* index into visArts of the work the camera has most recently reached */
   function focusIndexFor(c) {
-    if (maxCam <= 0) return 0;
-    return Math.min(total - 1, Math.round((c / maxCam) * (total - 1)));
+    let f = 0;
+    for (let k = 0; k < visArts.length; k++) {
+      if (visArts[k].key <= c + 0.5) f = k; else break;
+    }
+    return f;
+  }
+
+  /* the parts of the rail that depend on what is on the wall: totals, the
+     tick marks, and where each chapter begins along the track */
+  function paintRail() {
+    const n = visArts.length;
+    if (railTotal) railTotal.textContent = pad2(n);
+    if (viewer.total) viewer.total.textContent = pad2(n);
+    if (railTrack) railTrack.setAttribute('aria-valuemax', String(n));
+    if (!railTicks) return;
+    const at = (c) => (maxCam > 0 ? Math.min(100, Math.max(0, c / maxCam * 100)) : 0);
+    const mid = scene.clientWidth / 2;
+    let html = '';
+    if (activeCat === 'all') {
+      // chapter boundaries, so the rail reads as a table of contents
+      chapters.forEach((ch) => {
+        if (!ch.hasSign) return;
+        const c = -camFor(ch.signX + L.SIGN_W / 2, mid);
+        html += '<i class="is-chapter" style="left:' + at(c).toFixed(2) + '%"></i>';
+      });
+    } else {
+      // one tick per few works — 45 hairline marks reads as noise
+      const stepN = Math.max(1, Math.round(n / 9));
+      for (let k = 0; k < n; k += stepN) html += '<i style="left:' + at(visArts[k].key).toFixed(2) + '%"></i>';
+    }
+    railTicks.innerHTML = html;
   }
 
   function render() {
@@ -326,8 +476,8 @@
     if (isHall()) {
       const vw = window.innerWidth;
       const half = vw * 0.62;
-      for (let i = 0; i < arts.length; i++) {
-        const rec = arts[i];
+      for (let i = 0; i < visArts.length; i++) {
+        const rec = visArts[i];
         // project, don't subtract — under the tilt, distance down the hall is
         // not distance from the centre of the screen
         const sx = projectX(rec.centre, -cam);
@@ -363,6 +513,14 @@
       focused = f;
       if (railCount) railCount.textContent = pad2(f + 1);
       if (railTrack) railTrack.setAttribute('aria-valuenow', String(f + 1));
+      // which chapter the camera is standing in front of. Filtered, the chips
+      // already say so; in `all` it is the only place the hall names itself.
+      const here = visArts.length ? PROJECTS[visArts[f].i].cat : '';
+      const showHere = activeCat === 'all' ? here : '';
+      if (railCat) railCat.textContent = showHere ? catName(showHere) : '';
+      if (catsEl) {
+        catsEl.querySelectorAll('.gallery-cat').forEach((b) => b.classList.toggle('is-here', !!showHere && b.dataset.cat === showHere));
+      }
     }
     const frac = maxCam > 0 ? Math.min(1, Math.max(0, cam / maxCam)) : 0;
     if (railFill) railFill.style.width = (frac * 100) + '%';
@@ -381,6 +539,14 @@
       gallery.classList.toggle('is-away', walk >= 0.98);
     }
     gallery.classList.toggle('is-walking', isHall() && frac > 0.02);
+
+    // last 12% of the walk: the right-hand shade lifts so the end wall can read
+    const endT = isHall() ? Math.min(1, Math.max(0, (frac - 0.88) / 0.12)) : 0;
+    const end = endT * endT * (3 - 2 * endT);
+    if (Math.abs(end - lastEnd) > 0.004) {
+      lastEnd = end;
+      gallery.style.setProperty('--end', end.toFixed(3));
+    }
 
     // black the hall out across the overlap so the incoming section never
     // renders on top of live artwork
@@ -497,7 +663,8 @@
     if (tag === 'input' || tag === 'textarea' || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     e.preventDefault();
-    const step = maxCam / Math.max(1, total - 1) * 3;
+    // one bay of walk per press (about three works)
+    const step = L.COL_W;
     scrollToCam(scrollCam() + (e.key === 'ArrowRight' ? step : -step));
   });
 
@@ -522,6 +689,34 @@
     railTrack.addEventListener('pointermove', (e) => { if (railDrag) railTo(e.clientX, false); });
     railTrack.addEventListener('pointerup', railEnd);
     railTrack.addEventListener('pointercancel', railEnd);
+  }
+
+  /* ---------- category filter ----------
+     Fade the wall out, re-hang it, walk back to the entrance, fade in. The
+     fade is on the works (the room itself cannot take an opacity: anything
+     below 1 flattens preserve-3d and the hall would pop flat for a moment). */
+  let switchTimer = 0;
+  function setCategory(cat) {
+    if (cat === activeCat || (cat !== 'all' && !catCount[cat])) return;
+    activeCat = cat;
+    paintChips();
+    focused = -1;
+
+    const relayout = () => {
+      applyLayout();
+      measure();
+      dragOffset = 0;
+      if (isHall()) window.scrollTo({ top: sectionTop, behavior: 'instant' });
+      cam = targetCam = scrollCam();
+      lastWalk = lastEnd = -1;
+      render();
+      room.classList.remove('is-out');
+    };
+
+    clearTimeout(switchTimer);
+    if (!isHall() || reduced.matches) { relayout(); return; }
+    room.classList.add('is-out');
+    switchTimer = setTimeout(relayout, 220);
   }
 
   /* ============================================================
@@ -560,20 +755,27 @@
      when someone mashes the arrow keys. */
   let loadToken = 0;
 
+  /* viewer.idx is an index into PROJECTS (so the 'SK / NN' id is stable); the
+     counter and the arrows work on the works currently on the wall, so a
+     filtered visitor never gets walked out of the category they chose */
+  const viewerPos = () => Math.max(0, visArts.findIndex(r => r.i === viewer.idx));
+
   function paintPanel() {
     const p = PROJECTS[viewer.idx];
-    viewer.kicker.textContent = T.gallery.kicker[lang] + ' / ' + pad2(viewer.idx + 1);
+    const pos = viewerPos() + 1;
+    viewer.kicker.textContent = T.gallery.kicker[lang] + ' / ' + pad2(pos);
     viewer.brand.textContent = p.brand;
     viewer.client.textContent = p.brand;
     viewer.name.textContent = p.name;
-    viewer.cat.textContent = (FILTER_LABELS[p.cat] || {})[lang] || p.cat;
+    viewer.cat.textContent = catName(p.cat);
     viewer.index.textContent = 'SK / ' + pad2(viewer.idx + 1);
-    viewer.current.textContent = pad2(viewer.idx + 1);
+    viewer.current.textContent = pad2(pos);
+    viewer.total.textContent = pad2(visArts.length);
     viewer.img.alt = p.brand + ' — ' + p.name;
   }
 
   function fillViewer(i) {
-    viewer.idx = (i + total) % total;
+    viewer.idx = i;
     const p = PROJECTS[viewer.idx];
     const man = IMAGE_MANIFEST[basename(p.img)] || {};
     const token = ++loadToken;
@@ -675,7 +877,11 @@
     setTimeout(() => { if (!viewer.open) viewer.el.hidden = true; }, 320);
   }
 
-  function step(dir) { if (viewer.open) fillViewer(viewer.idx + dir); }
+  function step(dir) {
+    if (!viewer.open || !visArts.length) return;
+    const n = visArts.length;
+    fillViewer(visArts[(viewerPos() + dir + n) % n].i);
+  }
 
   if (viewer.el) {
     viewer.close.addEventListener('click', closeViewer);

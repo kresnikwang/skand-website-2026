@@ -717,10 +717,14 @@ footer a{color:var(--grey);text-decoration:none}
        lands on top of the last works (gallery.js drives --hall-fade) -->
   <div class="hall-scrim" aria-hidden="true"></div>
 
-  <div class="gallery-coords" aria-hidden="true">31°13′49.4″N<br>121°28′25.7″E</div>
   <p class="gallery-hint" id="galleryHint" data-tk="gallery-hint">Scroll to walk the hall · Drag · Click a work</p>
 
+  <!-- category chips + which category the camera is standing in front of.
+       The chips are built by gallery.js from PROJECTS, so counts never drift. -->
+  <div class="gallery-cats" id="galleryCats" role="group" aria-label="Filter by category"></div>
+
   <div class="gallery-rail">
+   <span class="gallery-rail-cat" id="galleryRailCat" aria-hidden="true"></span>
    <span class="gallery-rail-count"><b id="galleryRailCount">01</b> / <span id="galleryRailTotal">45</span></span>
    <div class="gallery-rail-track" id="galleryRailTrack" role="slider" tabindex="0"
         aria-label="Exhibition position" aria-valuemin="1" aria-valuemax="45" aria-valuenow="1">
@@ -875,7 +879,10 @@ const T = {
     next:{en:'Next work',zh:'下一个作品'},
     client:{en:'Client',zh:'客户'},
     category:{en:'Category',zh:'类别'},
-    index:{en:'Index',zh:'编号'}
+    index:{en:'Index',zh:'编号'},
+    filter:{en:'Filter by category',zh:'按类别筛选'},
+    works:{en:'works',zh:'件作品'},
+    work1:{en:'work',zh:'件作品'}
   },
   contact: { 
     label:{en:'Get In Touch',zh:'联系我们'}, 
@@ -905,9 +912,15 @@ const FILTER_LABELS = {
   digital:{en:'Digital Experience',zh:'数字体验'}, visual:{en:'Brand Visual Design',zh:'视觉设计'},
   connections:{en:'Consumer Connections',zh:'消费者连接'},
 };
+/* one-word forms for the hall's filter chips, where the full names would not fit on one row */
+const FILTER_SHORT = {
+  imc:{en:'IMC',zh:'整合营销'}, content:{en:'Content',zh:'品牌内容'}, social:{en:'Social',zh:'社交叙事'},
+  digital:{en:'Digital',zh:'数字体验'}, visual:{en:'Visual',zh:'视觉设计'}, connections:{en:'Connections',zh:'消费者连接'},
+};
 
 const CLIENTS = ['Nike','Jordan','Converse','Salomon','Marshall','Decathlon','Moose Knuckles','UGG','Samsonite','La Mer','Estée Lauder','YSL','Le Creuset','Jack Wolfskin','Apede Mod','Harbin Beer','Genesis'];
 
+/* 'social' works are filed under 'content': one Brand Content chapter in the hall */
 const PROJECTS = [
   {name:'The Fearless Ones — Double 11 Campaign',brand:'Jordan',cat:'imc',img:'pdf_images/page_07.jpg'},
   {name:'Our Turn — Brand Voice & Family China Tour',brand:'Jordan',cat:'imc',img:'pdf_images/page_09.jpg'},
@@ -931,9 +944,9 @@ const PROJECTS = [
   {name:'Urban Styles',brand:'Samsonite',cat:'content',img:'pdf_images/page_29.jpg'},
   {name:"Urban Girls' Escape",brand:'Apede Mod',cat:'content',img:'pdf_images/page_30.jpg'},
   {name:'Pets Collection',brand:'Le Creuset',cat:'content',img:'pdf_images/page_31.jpg'},
-  {name:'Portraits of Runners Series',brand:'Nike Running',cat:'social',img:'pdf_images/page_33.jpg'},
-  {name:'24 Solar Terms',brand:'Jack Wolfskin',cat:'social',img:'pdf_images/page_39.jpg'},
-  {name:'Basketball CHBL Social',brand:'Nike',cat:'social',img:'pdf_images/page_41.jpg'},
+  {name:'Portraits of Runners Series',brand:'Nike Running',cat:'content',img:'pdf_images/page_33.jpg'},
+  {name:'24 Solar Terms',brand:'Jack Wolfskin',cat:'content',img:'pdf_images/page_39.jpg'},
+  {name:'Basketball CHBL Social',brand:'Nike',cat:'content',img:'pdf_images/page_41.jpg'},
   {name:'Tmall Kids Engagement',brand:'Nike',cat:'digital',img:'pdf_images/page_45.jpg'},
   {name:'Tmall Store Digital Retainer',brand:'Jordan',cat:'digital',img:'pdf_images/page_46.jpg'},
   {name:'World of Flight — AR Experience',brand:'Jordan',cat:'digital',img:'pdf_images/page_47.jpg'},

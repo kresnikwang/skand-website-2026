@@ -57,6 +57,9 @@
     linear-gradient(180deg, #0a0a0a 0%, #101010 42%, #0a0a0a 100%);
 }
 /* Vignette keeps the eye in the middle of the hall */
+/* --end (0..1, from gallery.js) lifts the right-hand shade as the walk nears the
+   end wall. The wall sits at the far right of the screen, i.e. exactly where
+   this vignette is darkest, so without it "Our Story Starts" was always dim. */
 .gallery-pin::after {
   content: '';
   position: absolute;
@@ -64,7 +67,7 @@
   z-index: 6;
   pointer-events: none;
   background:
-    linear-gradient(90deg, #0a0a0a 0%, rgba(10, 10, 10, .55) 16%, transparent 38%, transparent 66%, rgba(10, 10, 10, .72) 100%),
+    linear-gradient(90deg, #0a0a0a 0%, rgba(10, 10, 10, .55) 16%, transparent 38%, transparent 66%, rgba(10, 10, 10, calc(.72 - var(--end, 0) * .68)) 100%),
     linear-gradient(0deg, #0a0a0a 0%, transparent 22%, transparent 74%, rgba(10, 10, 10, .5) 100%);
 }
 
@@ -237,15 +240,15 @@
   place-content: center;
   text-align: center;
   color: var(--white);
-  border-left: 1px solid rgba(240, 237, 232, .12);
-  background: linear-gradient(160deg, rgba(232, 86, 58, .16), rgba(20, 19, 18, .92) 64%);
-  box-shadow: inset 0 0 70px rgba(232, 86, 58, .1);
+  border-left: 1px solid rgba(232, 86, 58, .38);
+  background: linear-gradient(160deg, rgba(232, 86, 58, .34), rgba(30, 25, 22, .94) 66%);
+  box-shadow: inset 0 0 90px rgba(232, 86, 58, .2), -14px 0 60px rgba(232, 86, 58, .14);
 }
 .hall-endwall::before {
   content: '';
   position: absolute;
   inset: 18px;
-  border: 1px solid rgba(240, 237, 232, .1);
+  border: 1px solid rgba(240, 237, 232, .2);
 }
 .hall-endwall-title {
   position: relative;
@@ -255,14 +258,16 @@
   line-height: .86;
   letter-spacing: -.05em;
   text-transform: uppercase;
-  color: var(--white);
+  color: #fff;
+  text-shadow: 0 0 34px rgba(255, 190, 160, .35);
 }
 .hall-endwall-title em {
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 400;
   text-transform: none;
-  color: var(--coral);
+  color: #ff6b47;
+  text-shadow: 0 0 26px rgba(232, 86, 58, .6);
 }
 .hall-endwall-glow {
   /* a wash of light behind the type, not a bar across the panel */
@@ -273,13 +278,51 @@
   height: 46%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  background: radial-gradient(ellipse at center, rgba(232, 86, 58, .22), transparent 68%);
+  background: radial-gradient(ellipse at center, rgba(232, 86, 58, .46), transparent 68%);
 }
-.hall-endwall-coords {
-  margin-top: 34px;
-  color: #6f6b64;
-  font: 10px/1.9 var(--gallery-mono);
-  letter-spacing: .1em;
+
+/* ---------- chapter sign: hangs on the wall where a category begins ---------- */
+.hall-sign {
+  position: absolute;
+  top: 0;
+  width: var(--sign-w, 256px);
+  height: var(--wall-h);
+  box-sizing: border-box;
+  padding: 0 22px 0 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+.hall-sign::before {
+  /* a hairline that runs the height of the wall, like a section divider */
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12%;
+  bottom: 12%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(232, 86, 58, .55) 30%, rgba(232, 86, 58, .55) 70%, transparent);
+}
+.hall-sign-no {
+  color: var(--coral);
+  font: 10px var(--gallery-mono);
+  letter-spacing: .2em;
+}
+.hall-sign-name {
+  color: var(--white);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(24px, 2.3vw, 34px);
+  line-height: 1.06;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+.hall-sign-count {
+  color: rgba(240, 237, 232, .5);
+  font: 10px var(--gallery-mono);
+  letter-spacing: .16em;
+  text-transform: uppercase;
 }
 
 /* ============================================================
@@ -290,6 +333,7 @@
   width: var(--art-w);
   transform-style: preserve-3d;
 }
+.hall-art.is-off { display: none !important; }
 
 .hall-art-btn {
   display: block;
@@ -384,6 +428,14 @@
   letter-spacing: .14em;
   pointer-events: none;
 }
+.hall-art-tag b {
+  margin-left: 7px;
+  padding-left: 7px;
+  border-left: 1px solid rgba(240, 237, 232, .28);
+  color: rgba(240, 237, 232, .5);
+  font-weight: 400;
+  text-transform: uppercase;
+}
 .hall-art-caption {
   position: absolute;
   z-index: 2;
@@ -422,6 +474,11 @@
 .gallery-room .hall-art {
   transition: opacity .5s ease;
 }
+/* category switch: works go out quickly, then come back on the .5s above.
+   The room can't fade as a whole (opacity < 1 flattens preserve-3d). */
+.gallery-room.is-out .hall-art,
+.gallery-room.is-out .hall-sign { opacity: 0 !important; transition-duration: .2s !important; }
+.gallery-room .hall-sign { transition: opacity .5s ease; }
 
 /* ============================================================
    FIRST-SCREEN COPY
@@ -546,15 +603,56 @@
 }
 .gallery.is-walking .gallery-hint { opacity: 0; }
 
-.gallery-coords {
+/* ---------- category chips: sit directly above the progress rail ---------- */
+.gallery-cats {
   position: absolute;
-  z-index: 4;
+  z-index: 7;   /* above the vignette (6) so they stay legible; under the scrim (8) */
   right: 4vw;
-  top: 108px;
-  color: #56534e;
-  text-align: right;
-  font: 10px/1.85 var(--gallery-mono);
-  letter-spacing: .1em;
+  bottom: 80px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: min(760px, 66vw);
+}
+.gallery-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid rgba(240, 237, 232, .16);
+  border-radius: 100px;
+  background: rgba(10, 10, 10, .5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: rgba(240, 237, 232, .6);
+  font: 10px var(--gallery-mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color .25s ease, border-color .25s ease, background .25s ease;
+}
+.gallery-cat-n { color: rgba(240, 237, 232, .38); transition: color .25s ease; }
+.gallery-cat:hover { color: var(--white); border-color: rgba(240, 237, 232, .4); }
+.gallery-cat:focus-visible { outline: 1px solid var(--coral); outline-offset: 3px; }
+.gallery-cat.is-active {
+  color: var(--white);
+  border-color: rgba(232, 86, 58, .8);
+  background: rgba(232, 86, 58, .16);
+}
+.gallery-cat.is-active .gallery-cat-n { color: rgba(255, 190, 170, .8); }
+/* in the full hall: the chapter the camera is in front of */
+.gallery-cat.is-here:not(.is-active) { color: var(--white); }
+.gallery-cat.is-here:not(.is-active)::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  margin-right: -1px;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 8px var(--coral);
 }
 
 /* ---------- progress rail ---------- */
@@ -566,6 +664,13 @@
   display: flex;
   align-items: center;
   gap: 16px;
+}
+.gallery-rail-cat {
+  color: var(--coral);
+  font: 10px var(--gallery-mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 .gallery-rail-track {
   position: relative;
@@ -604,14 +709,21 @@
 .gallery-rail-ticks {
   position: absolute;
   inset: 0;
-  display: flex;
-  justify-content: space-between;
   pointer-events: none;
 }
 .gallery-rail-ticks i {
+  position: absolute;
+  top: 50%;
   width: 1px;
   height: 7px;
+  margin-top: -3.5px;
   background: rgba(240, 237, 232, .22);
+}
+/* where a category begins along the walk */
+.gallery-rail-ticks i.is-chapter {
+  height: 13px;
+  margin-top: -6.5px;
+  background: rgba(240, 237, 232, .5);
 }
 .gallery-rail-count {
   min-width: 84px;
@@ -865,7 +977,15 @@
     height: auto;
     min-height: 0;
     overflow: visible;
+    /* DOM order is scene, copy, chips, rail (the desktop hall needs the scene
+       first). As a plain column the heading and filter have to come first. */
+    display: flex;
+    flex-direction: column;
   }
+  .gallery-copy { order: 1; }
+  .gallery-cats { order: 2; }
+  .gallery-scene { order: 3; }
+  .gallery-rail { order: 4; }
   .gallery-pin::before,
   .gallery-pin::after { display: none; }
 
@@ -876,6 +996,15 @@
   }
   .gallery-title { font-size: clamp(52px, 15vw, 92px); }
   .gallery-sub { max-width: none; font-size: 14px; }
+
+  .gallery-cats {
+    position: static;
+    max-width: none;
+    justify-content: flex-start;
+    margin: 0 clamp(20px, 5vw, 40px) clamp(24px, 5vw, 36px);
+  }
+  .gallery-cat { padding: 8px 13px; }
+  .gallery-rail-cat { display: none; }
 
   .gallery-scene {
     position: static;
@@ -898,6 +1027,7 @@
   .hall-floor,
   .hall-seam,
   .hall-beam,
+  .hall-sign,
   .hall-pilaster,
   .hall-endwall { display: none; }
 
@@ -912,7 +1042,6 @@
     position: static;
     margin: clamp(34px, 6vw, 52px) clamp(20px, 5vw, 40px) 0;
   }
-  .gallery-coords { display: none; }
 
   /* viewer stacks: image on top, panel below */
   .viewer {
