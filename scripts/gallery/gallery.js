@@ -345,7 +345,7 @@
   /* ============================================================
      CAMERA
      ============================================================ */
-  let maxCam = 0, travel = 1, sectionTop = 0, overlap = 0;
+  let maxCam = 0, travel = 1, sectionTop = 0;
   let cam = 0, targetCam = 0, dragOffset = 0;
   let frozenScrollY = null;   // set while the viewer holds the page still
   let focused = -1, rafId = 0, pinned = true;
@@ -355,7 +355,7 @@
      pushed away. maxCam therefore has to be solved against the projection,
      otherwise the walk stops short and the end wall never arrives. These
      three values are read back off the CSS so there is one source of truth. */
-  let persp = 1200, originX = 0, tiltRad = 0, lastFade = -1, lastWalk = -1, lastEnd = -1;
+  let persp = 1200, originX = 0, tiltRad = 0, lastWalk = -1, lastEnd = -1;
 
   function readPerspective() {
     const cs = getComputedStyle(scene);
@@ -407,10 +407,6 @@
       gallery.style.height = '';
     }
     travel = Math.max(1, gallery.offsetHeight - pin.offsetHeight);
-    // .gallery pulls the next section up by this much; the hall fades out
-    // across exactly that range so the handover is a crossfade, not a stack.
-    overlap = Math.min(travel, -parseFloat(getComputedStyle(gallery).marginBottom) || 0);
-
     // When each work becomes "the current one": the camera position that puts
     // its bay under the middle of the screen, staggered by row so the counter
     // moves work by work instead of three at a time. Clamped, and kept
@@ -526,8 +522,6 @@
     if (railFill) railFill.style.width = (frac * 100) + '%';
     if (railKnob) railKnob.style.left = (frac * 100) + '%';
 
-    const y = frozenScrollY !== null ? frozenScrollY : window.scrollY;
-
     // First-screen copy leaves over the first 15% of the walk. Keyed to the
     // camera (not to raw scroll px against `travel`, which was 27px) and fed to
     // CSS as a continuous --walk, so it dissolves as you go instead of snapping.
@@ -546,14 +540,6 @@
     if (Math.abs(end - lastEnd) > 0.004) {
       lastEnd = end;
       gallery.style.setProperty('--end', end.toFixed(3));
-    }
-
-    // black the hall out across the overlap so the incoming section never
-    // renders on top of live artwork
-    const over = overlap > 0 ? Math.min(1, Math.max(0, (y - sectionTop - travel) / overlap)) : 0;
-    if (Math.abs(over - lastFade) > 0.004) {
-      lastFade = over;
-      gallery.style.setProperty('--hall-fade', isHall() ? over.toFixed(3) : '0');
     }
   }
 

@@ -25,9 +25,8 @@
      column); 280dvh gives it 1.8x the road. Tune here if it feels long/short. */
   height: 280vh;
   height: 280dvh;
-  margin-bottom: -40vh;   /* overlap About upward, same trick the old hero used
-                             (see the note at index.html:33-38) so the pin
-                             hands over instead of leaving a dead gap */
+  /* About follows the full hall: after the camera reaches the end wall,
+     normal page scroll moves the entire pinned scene up to reveal it. */
   padding: 0;
   background: var(--black);
 }
@@ -69,17 +68,6 @@
   background:
     linear-gradient(90deg, #0a0a0a 0%, rgba(10, 10, 10, .55) 16%, transparent 38%, transparent 66%, rgba(10, 10, 10, calc(.72 - var(--end, 0) * .68)) 100%),
     linear-gradient(0deg, #0a0a0a 0%, transparent 22%, transparent 74%, rgba(10, 10, 10, .5) 100%);
-}
-
-/* Fades the whole hall to black across the -40vh overlap, so the About
-   section that scrolls up over the pin never sits on top of live artwork. */
-.hall-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 8;
-  pointer-events: none;
-  background: var(--black);
-  opacity: var(--hall-fade, 0);
 }
 
 /* ============================================================
@@ -969,7 +957,6 @@
 @media (max-width: 1023px) {
   .gallery {
     height: auto;
-    margin-bottom: 0;
     padding: clamp(70px, 12vw, 110px) 0 clamp(50px, 8vw, 80px);
   }
   .gallery-pin {

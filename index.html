@@ -564,7 +564,7 @@ footer a{color:var(--grey);text-decoration:none}
 </style>
 <!-- Gallery hall. Loaded after the inline block so it wins on equal
      specificity; everything in it is scoped under .gallery / .viewer. -->
-<link rel="stylesheet" href="styles/gallery.css?v=1">
+<link rel="stylesheet" href="styles/gallery.css?v=2">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -712,10 +712,6 @@ footer a{color:var(--grey);text-decoration:none}
       </svg>
     </a>
   </div>
-
-  <!-- blacked out as the next section scrolls up over the pin, so About never
-       lands on top of the last works (gallery.js drives --hall-fade) -->
-  <div class="hall-scrim" aria-hidden="true"></div>
 
   <p class="gallery-hint" id="galleryHint" data-tk="gallery-hint">Scroll to walk the hall · Drag · Click a work</p>
 
@@ -1611,7 +1607,7 @@ bindPageFlip('a[href^="egg.html"]', () => 'egg.html?v=8&lang=' + lang);
 <!-- Gallery hall. Classic script, not a module: it reads PROJECTS,
      IMAGE_MANIFEST, T and `lang` from the lexical scope above. Must load
      after the inline script, hence no `defer` and no `type=module`. -->
-<script src="scripts/gallery/gallery.js?v=1"></script>
+<script src="scripts/gallery/gallery.js?v=2"></script>
 <script type="module" src="scripts/logo/dispatcher.js?v=17"></script>
 </body>
 </html>
