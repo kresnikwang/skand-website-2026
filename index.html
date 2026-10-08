@@ -19,7 +19,7 @@
 <link rel="alternate" hreflang="x-default" href="https://skandstudio.com/">
 <link rel="alternate" hreflang="en" href="https://skandstudio.com/?lang=en">
 <link rel="alternate" hreflang="zh" href="https://skandstudio.com/?lang=zh">
-<link rel="icon" type="image/png" href="logo.png">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
 <link rel="stylesheet" href="fonts/local-fonts.css">
 <style>
 /* === RESET & BASE === */
@@ -75,12 +75,18 @@ html:not(.custom-cursor-enabled) .gallery-scene{cursor:grab!important}
 html:not(.custom-cursor-enabled) .gallery-scene.is-dragging{cursor:grabbing!important}
 
 /* === NAVIGATION === */
-nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;display:flex;justify-content:space-between;align-items:center;mix-blend-mode:difference}
+/* Blend only the top-level controls so the Tool panel stays opaque. */
+nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;display:flex;justify-content:space-between;align-items:center;mix-blend-mode:normal}
+.nav-actions{display:flex;align-items:center;gap:32px}
+.nav-logo,.nav-links>li>a,.nav-dropdown-toggle,.lang-toggle{mix-blend-mode:difference}
 .nav-logo{font-family:var(--font-body);font-weight:700;font-size:18px;letter-spacing:4px;text-transform:uppercase;color:var(--white)}
 .nav-links{display:flex;gap:32px;list-style:none;align-items:center}
 .nav-links a{color:var(--white);text-decoration:none;font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:400;position:relative;padding-bottom:2px}
 .nav-links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1px;background:var(--coral);transition:width .3s ease}
 .nav-links a:hover::after{width:100%}
+.lang-toggle{position:relative;background:none;border:1px solid rgba(240,237,232,.3);color:var(--white);font-family:var(--font-body);font-size:12px;letter-spacing:2px;padding:6px 14px;cursor:pointer;border-radius:100px;transition:background .3s ease,border-color .3s ease;line-height:1;white-space:nowrap}
+.lang-toggle:hover{border-color:var(--white);background:rgba(240,237,232,.08)}
+.lang-toggle:focus-visible,.nav-hamburger:focus-visible,.nav-dropdown-toggle:focus-visible{outline:2px solid var(--coral);outline-offset:4px}
 
 /* === DROPDOWN === */
 .nav-dropdown{position:relative}
@@ -89,12 +95,10 @@ nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;displa
 .nav-dropdown:hover .nav-dropdown-toggle::after,
 .nav-dropdown.open .nav-dropdown-toggle::after{width:100%}
 .nav-dropdown-toggle .arrow{font-size:10px;display:inline-block;transition:transform .3s ease;vertical-align:middle;margin-left:2px;margin-top:-2px}
-.nav-dropdown:hover .nav-dropdown-toggle .arrow,
 .nav-dropdown.open .nav-dropdown-toggle .arrow{transform:rotate(180deg)}
-/* padding-top bridges the visual gap so hover doesn't drop between toggle and menu */
-.nav-dropdown-menu{position:absolute;top:100%;right:0;margin-top:0;padding-top:16px;min-width:180px;background:transparent;border:none;border-radius:4px;opacity:0;visibility:hidden;transform:translateY(-10px);transition:opacity .3s ease,visibility .3s ease,transform .3s ease;z-index:100;mix-blend-mode:normal;pointer-events:none}
-.nav-dropdown-menu::before{content:'';position:absolute;top:16px;left:0;right:0;bottom:0;background:var(--dark);border:1px solid rgba(240,237,232,.15);border-radius:4px;z-index:0;pointer-events:none}
-.nav-dropdown:hover .nav-dropdown-menu,
+/* The hover bridge sits above the solid panel, outside the text background. */
+.nav-dropdown-menu{position:absolute;top:calc(100% + 16px);right:0;margin-top:0;min-width:180px;background:var(--dark);border:1px solid rgba(240,237,232,.15);border-radius:4px;opacity:0;visibility:hidden;transform:translateY(-10px);transition:opacity .3s ease,visibility .3s ease,transform .3s ease;z-index:100;mix-blend-mode:normal;pointer-events:none}
+.nav-dropdown-menu::before{content:'';position:absolute;top:-17px;left:0;right:0;height:17px;background:transparent}
 .nav-dropdown.open .nav-dropdown-menu{opacity:1;visibility:visible;transform:translateY(0);pointer-events:auto}
 .nav-dropdown-menu a{display:block;position:relative;z-index:1;padding:12px 20px;color:var(--white);text-decoration:none;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:400;transition:all .3s ease;border-bottom:1px solid rgba(240,237,232,.05)}
 .nav-dropdown-menu a:first-child{border-radius:4px 4px 0 0}
@@ -486,17 +490,20 @@ footer a{color:var(--grey);text-decoration:none}
   .about-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
   .stat-item:not(:last-child)::after{display:none}
 }
-.nav-hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px;z-index:1001}
+.nav-hamburger{position:relative;display:none;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:44px;height:44px;background:none;border:none;cursor:pointer;padding:4px;z-index:1001}
 .nav-hamburger span{display:block;width:24px;height:2px;background:var(--white);transition:all .3s ease}
 .nav-hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
 .nav-hamburger.open span:nth-child(2){opacity:0}
 .nav-hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 @media(max-width:768px){
   nav{padding:16px 20px;mix-blend-mode:normal}
+  .nav-actions{gap:8px}
+  .nav-logo,.nav-links>li>a,.nav-dropdown-toggle,.lang-toggle{mix-blend-mode:normal}
+  .lang-toggle{min-width:60px;min-height:44px;padding:10px 14px;z-index:1001;background:var(--dark)}
   .nav-hamburger{display:flex}
-  .nav-links{display:none;position:fixed;top:0;left:0;width:100%;height:100%;height:100dvh;background:var(--dark);flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:80px 20px 40px;box-sizing:border-box}
+  .nav-links{display:none;position:fixed;top:0;left:0;width:100%;height:100%;height:100dvh;background:var(--dark);flex-direction:column;align-items:center;justify-content:center;justify-content:safe center;gap:24px;z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:80px 20px 40px;box-sizing:border-box}
   .nav-links.open{display:flex}
-  .nav-links li{opacity:0;transform:translateY(20px);transition:all .3s ease}
+  .nav-links li{flex-shrink:0;opacity:0;transform:translateY(20px);transition:all .3s ease}
   .nav-links.open li{opacity:1;transform:translateY(0)}
   .nav-links.open li:nth-child(1){transition-delay:.05s}
   .nav-links.open li:nth-child(2){transition-delay:.1s}
@@ -522,7 +529,7 @@ footer a{color:var(--grey);text-decoration:none}
     transform:none;
     pointer-events:none;
     border:none;
-    background:rgba(240,237,232,.04);
+    background:var(--card-bg);
     border-radius:8px;
     transition:max-height .35s ease,opacity .25s ease,margin .25s ease,visibility .25s ease;
   }
@@ -656,12 +663,9 @@ footer a{color:var(--grey);text-decoration:none}
 <div class="cursor-ring"></div>
 
 <!-- NAVIGATION -->
-<div class="page-wrapper" id="pageWrapper">
 <nav>
   <div class="nav-logo"><a href="#work" style="display:flex;align-items:center"><img src="logo.png" alt="SKAND Creative Studio — Independent Creative Agency in Shanghai, China" style="height:28px;filter:invert(1)"></a></div>
-  <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu" aria-expanded="false">
-    <span></span><span></span><span></span>
-  </button>
+  <div class="nav-actions">
   <ul class="nav-links" id="navLinks">
     <li><a href="#work" data-t="nav" data-tk="work">Work</a></li>
     <li><a href="#about" data-t="nav" data-tk="about">About</a></li>
@@ -677,10 +681,15 @@ footer a{color:var(--grey);text-decoration:none}
         <a href="https://skand.art" target="_blank" rel="noopener noreferrer" role="menuitem">SKAND CANVAS</a>
       </div>
     </li>
-    <li><button id="langToggle" aria-label="Toggle language" style="background:none;border:1px solid rgba(240,237,232,.3);color:var(--white);font-family:var(--font-body);font-size:12px;letter-spacing:2px;padding:6px 14px;cursor:none;border-radius:100px;transition:all .3s ease;line-height:1">EN</button></li>
   </ul>
+  <button type="button" class="lang-toggle" id="langToggle" aria-label="Switch to Chinese" lang="zh">中文</button>
+  <button type="button" class="nav-hamburger" id="navHamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks">
+    <span></span><span></span><span></span>
+  </button>
+  </div>
 </nav>
 
+<div class="page-wrapper" id="pageWrapper">
 <!-- GALLERY HALL — replaces the old Three.js hero + work ribbon carousel.
      #work is kept as the id so the nav "Work" link keeps working; the nav
      logo points here too now that there is no separate #hero. -->
@@ -1132,6 +1141,8 @@ function applyLang() {
   if (marqueeTrackAlt) marqueeTrackAlt.innerHTML = marqueeHTML + marqueeHTML;
   // Lang toggle button
   q('#langToggle').textContent = lang === 'en' ? '中文' : 'EN';
+  q('#langToggle').setAttribute('aria-label', lang === 'en' ? 'Switch to Chinese' : '切换到英文');
+  q('#langToggle').setAttribute('lang', lang === 'en' ? 'zh' : 'en');
 
   // Update document title and meta description dynamically
   if (lang === 'zh') {
@@ -1468,7 +1479,8 @@ if (dropdown && dropdownToggle) {
   dropdownToggle.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setDropdownOpen(!dropdown.classList.contains('open'));
+    // Desktop hover opens before click; keep that click from closing it again.
+    setDropdownOpen(!isMobileNav() || !dropdown.classList.contains('open'));
   });
   // Keyboard: Escape closes dropdown
   document.addEventListener('keydown', (e) => {
