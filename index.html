@@ -571,7 +571,7 @@ footer a{color:var(--grey);text-decoration:none}
 </style>
 <!-- Gallery hall. Loaded after the inline block so it wins on equal
      specificity; everything in it is scoped under .gallery / .viewer. -->
-<link rel="stylesheet" href="styles/gallery.css?v=3">
+<link rel="stylesheet" href="styles/gallery.css?v=6">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -621,6 +621,25 @@ footer a{color:var(--grey);text-decoration:none}
 
 </head>
 <body>
+
+<!-- MOBILE WORK INDEX — separate from the home page and below the viewer. -->
+<div class="work-index" id="workIndex" role="dialog" aria-modal="true" aria-labelledby="workIndexTitle" hidden>
+  <header class="work-index-header">
+    <h2 id="workIndexTitle"><span id="workIndexTitleLabel">All work</span> <span class="work-index-total" id="workIndexTotal"></span></h2>
+    <div class="work-index-actions">
+      <button type="button" class="work-index-language" id="workIndexLanguage">中文</button>
+      <button type="button" class="work-index-close" id="workIndexClose" aria-label="Close work index"><span aria-hidden="true">×</span></button>
+    </div>
+  </header>
+  <div class="work-index-filters" id="workIndexFilters" role="group" aria-label="Filter by category"></div>
+  <div class="work-index-scroll" id="workIndexScroll">
+    <div class="work-index-grid" id="workIndexGrid"></div>
+    <div class="work-index-footer">
+      <p id="workIndexStatus" role="status" aria-live="polite" aria-atomic="true"></p>
+      <button type="button" class="work-index-more" id="workIndexMore">Load more</button>
+    </div>
+  </div>
+</div>
 
 <!-- WORK VIEWER / PROJECT OVERLAY -->
 <!-- The image box is locked to the source 16:9 ratio and the img uses
@@ -696,13 +715,6 @@ footer a{color:var(--grey);text-decoration:none}
 <section class="gallery" id="work">
  <div class="gallery-pin">
 
-  <div class="gallery-scene" id="galleryScene">
-   <div class="gallery-room" id="galleryRoom">
-    <!-- wall, pilasters, floor, beams, end wall and all 45 works are
-         injected by scripts/gallery/gallery.js from PROJECTS -->
-   </div>
-  </div>
-
   <div class="gallery-copy">
     <p class="gallery-eyebrow" data-tk="gallery-eyebrow">Independent Creative Agency · Shanghai</p>
     <h1 class="gallery-title">Create<br><em>For More</em></h1>
@@ -720,7 +732,23 @@ footer a{color:var(--grey);text-decoration:none}
         <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </a>
+    <button type="button" class="mobile-work-entry mobile-work-entry-top" data-open-work-index aria-haspopup="dialog" aria-controls="workIndex">
+      <span class="mobile-work-entry-label">View all work</span><span class="mobile-work-entry-count"></span>
+    </button>
   </div>
+
+  <div class="mobile-work-heading">
+    <h2 id="mobileWorkTitle">Selected work</h2>
+    <span id="mobileWorkCount"></span>
+  </div>
+  <div class="gallery-scene" id="galleryScene">
+   <div class="gallery-room" id="galleryRoom">
+    <!-- Shared works: desktop hall or mobile selection, built by gallery.js. -->
+   </div>
+  </div>
+  <button type="button" class="mobile-work-entry mobile-work-entry-bottom" data-open-work-index aria-haspopup="dialog" aria-controls="workIndex">
+    <span class="mobile-work-entry-label">View all work</span><span class="mobile-work-entry-count"></span>
+  </button>
 
   <p class="gallery-hint" id="galleryHint" data-tk="gallery-hint">Scroll to walk the hall · Drag · Click a work</p>
 
@@ -887,7 +915,13 @@ const T = {
     index:{en:'Index',zh:'编号'},
     filter:{en:'Filter by category',zh:'按类别筛选'},
     works:{en:'works',zh:'件作品'},
-    work1:{en:'work',zh:'件作品'}
+    work1:{en:'work',zh:'件作品'},
+    selected:{en:'Selected work',zh:'精选作品'},
+    allWork:{en:'All work',zh:'全部作品'},
+    viewAll:{en:'View all work',zh:'查看全部作品'},
+    closeIndex:{en:'Close work index',zh:'关闭作品索引'},
+    loadMore:{en:'Load more',zh:'加载更多'},
+    showing:{en:'Showing {shown} of {total} works',zh:'已展示 {shown} / {total} 件作品'}
   },
   contact: { 
     label:{en:'Get In Touch',zh:'联系我们'}, 
@@ -926,15 +960,16 @@ const FILTER_SHORT = {
 const CLIENTS = ['Nike','Jordan','Converse','Salomon','Marshall','Decathlon','Moose Knuckles','UGG','Samsonite','La Mer','Estée Lauder','YSL','Le Creuset','Jack Wolfskin','Apede Mod','Harbin Beer','Genesis'];
 
 /* 'social' works are filed under 'content': one Brand Content chapter in the hall */
+/* featured:true selects the mobile book; dataset order is its reading order (max eight). */
 const PROJECTS = [
-  {name:'The Fearless Ones — Double 11 Campaign',brand:'Jordan',cat:'imc',img:'pdf_images/page_07.jpg'},
+  {name:'The Fearless Ones — Double 11 Campaign',brand:'Jordan',cat:'imc',img:'pdf_images/page_07.jpg',featured:true},
   {name:'Our Turn — Brand Voice & Family China Tour',brand:'Jordan',cat:'imc',img:'pdf_images/page_09.jpg'},
   {name:'CNY Brand Voice Film',brand:'Jordan',cat:'imc',img:'pdf_images/page_10.jpg'},
   {name:'CNY Brand Campaign',brand:'Converse',cat:'imc',img:'pdf_images/page_11.jpg'},
   {name:'Next Stop Dong Dan Film',brand:'Jordan',cat:'imc',img:'pdf_images/page_12.jpg'},
   {name:'Kobe Protro Brand Film',brand:'Nike',cat:'imc',img:'pdf_images/page_40.jpg'},
   {name:'Kids Running Campaign',brand:'Nike',cat:'imc',img:'pdf_images/page_36.jpg'},
-  {name:'Genesis 2025',brand:'Salomon',cat:'content',img:'pdf_images/page_16.jpg'},
+  {name:'Genesis 2025',brand:'Salomon',cat:'content',img:'pdf_images/page_16.jpg',featured:true},
   {name:'Winter Campaign',brand:'Decathlon',cat:'content',img:'pdf_images/page_17.jpg'},
   {name:'3-in-1 Product Campaign',brand:'Moose Knuckles',cat:'content',img:'pdf_images/page_18.jpg'},
   {name:'Air Max 95 Family Reunion — Hong Kong',brand:'Nike',cat:'content',img:'pdf_images/page_20.jpg'},
@@ -944,7 +979,7 @@ const PROJECTS = [
   {name:'Remix Series',brand:'Jordan',cat:'content',img:'pdf_images/page_24.jpg'},
   {name:'Air Peg 2K5 Retro Styling',brand:'Nike',cat:'content',img:'pdf_images/page_25.jpg'},
   {name:'Sneakers Art Creative',brand:'Nike / Jordan / Converse',cat:'content',img:'pdf_images/page_26.jpg'},
-  {name:'Styles of All Seasons',brand:'UGG',cat:'content',img:'pdf_images/page_27.jpg'},
+  {name:'Styles of All Seasons',brand:'UGG',cat:'content',img:'pdf_images/page_27.jpg',featured:true},
   {name:'Snowboard CNY Campaign',brand:'Salomon',cat:'content',img:'pdf_images/page_28.jpg'},
   {name:'Urban Styles',brand:'Samsonite',cat:'content',img:'pdf_images/page_29.jpg'},
   {name:"Urban Girls' Escape",brand:'Apede Mod',cat:'content',img:'pdf_images/page_30.jpg'},
@@ -957,7 +992,7 @@ const PROJECTS = [
   {name:'World of Flight — AR Experience',brand:'Jordan',cat:'digital',img:'pdf_images/page_47.jpg'},
   {name:'Member Days Engagement Hub',brand:'Nike',cat:'digital',img:'pdf_images/page_48.jpg'},
   {name:'Olympics "Road to Paris" Air Hub',brand:'Nike',cat:'digital',img:'pdf_images/page_49.jpg'},
-  {name:'Monitor II ANC Launch',brand:'Marshall',cat:'digital',img:'pdf_images/page_50.jpg'},
+  {name:'Monitor II ANC Launch',brand:'Marshall',cat:'digital',img:'pdf_images/page_50.jpg',featured:true},
   {name:'Family Tour Mini Program',brand:'Jordan',cat:'digital',img:'pdf_images/page_51.jpg'},
   {name:'Nike Training Club',brand:'Nike',cat:'digital',img:'pdf_images/page_55.jpg'},
   {name:'Luka 4 OOH',brand:'Jordan',cat:'visual',img:'pdf_images/page_57.jpg'},
@@ -965,9 +1000,9 @@ const PROJECTS = [
   {name:'Release Design',brand:'Nike',cat:'visual',img:'pdf_images/page_59.jpg'},
   {name:'Brand Design',brand:'La Mer',cat:'visual',img:'pdf_images/page_62.jpg'},
   {name:'Campaign Release',brand:'Estée Lauder',cat:'visual',img:'pdf_images/page_63.jpg'},
-  {name:'D11 KV Design',brand:'YSL',cat:'visual',img:'pdf_images/page_64.jpg'},
+  {name:'D11 KV Design',brand:'YSL',cat:'visual',img:'pdf_images/page_64.jpg',featured:true},
   {name:'Running Magazine "Fresh Off"',brand:'Nike',cat:'visual',img:'pdf_images/page_65.jpg'},
-  {name:'Ambassador Announcement — Harbin Beer x NBA',brand:'Harbin Beer',cat:'connections',img:'pdf_images/page_68.jpg'},
+  {name:'Ambassador Announcement — Harbin Beer x NBA',brand:'Harbin Beer',cat:'connections',img:'pdf_images/page_68.jpg',featured:true},
   {name:'Mini Music Talent Show',brand:'Converse',cat:'connections',img:'pdf_images/page_69.jpg'},
   {name:'Basketball Community Building',brand:'Converse',cat:'connections',img:'pdf_images/page_70.jpg'},
   {name:'Summer Street Fit Fest',brand:'Nike NTC',cat:'connections',img:'pdf_images/page_71.jpg'},
@@ -1043,7 +1078,12 @@ function setLang(l) {
   // Update URL search parameters without reloading page
   const url = new URL(window.location.href);
   url.searchParams.set('lang', lang);
-  window.history.pushState({}, '', url.toString());
+  // Relabel an open work overlay without adding a step to its Back history.
+  if (window.history.state?.skandWorkOverlay) {
+    window.history.replaceState(window.history.state, '', url.toString());
+  } else {
+    window.history.pushState({}, '', url.toString());
+  }
 
   applyLang();
   // Re-trigger reveal for already-visible elements after lang switch
@@ -1619,7 +1659,7 @@ bindPageFlip('a[href^="egg.html"]', () => 'egg.html?v=8&lang=' + lang);
 <!-- Gallery hall. Classic script, not a module: it reads PROJECTS,
      IMAGE_MANIFEST, T and `lang` from the lexical scope above. Must load
      after the inline script, hence no `defer` and no `type=module`. -->
-<script src="scripts/gallery/gallery.js?v=3"></script>
+<script src="scripts/gallery/gallery.js?v=6"></script>
 <script type="module" src="scripts/logo/dispatcher.js?v=17"></script>
 </body>
 </html>

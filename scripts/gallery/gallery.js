@@ -55,9 +55,24 @@
   const catShort = (c) => ((FILTER_SHORT[c] || {})[lang]) || catName(c);
   const worksLabel = (n) => n + ' ' + T.gallery[n === 1 ? 'work1' : 'works'][lang];
 
-  /* 3D hall is desktop-only; below 1024px the CSS turns the same DOM
-     into a plain grid, and the camera machinery has to stand down. */
+  /* The mobile home uses a bounded selection from the same project data. */
   const isHall = () => window.innerWidth >= 1024;
+  const featuredArts = () => {
+    const selected = arts.filter(r => PROJECTS[r.i].featured);
+    return (selected.length ? selected : arts).slice(0, 8);
+  };
+  const archive = {
+    el: document.getElementById('workIndex'),
+    close: document.getElementById('workIndexClose'),
+    language: document.getElementById('workIndexLanguage'),
+    filters: document.getElementById('workIndexFilters'),
+    grid: document.getElementById('workIndexGrid'),
+    scroll: document.getElementById('workIndexScroll'),
+    more: document.getElementById('workIndexMore'),
+    status: document.getElementById('workIndexStatus'),
+    cat: 'all', items: [], shown: 0, built: false, open: false, lastFocus: null
+  };
+  const ARCHIVE_BATCH = 12;
 
   function computeLayout() {
     const pinH = gallery.querySelector('.gallery-pin').offsetHeight || window.innerHeight;
@@ -86,6 +101,15 @@
      the hall is one chapter. Position is stored on each work (col, row, x);
      nothing else in the file derives it from the work's index any more. */
   function planWall() {
+    if (!isHall()) {
+      visArts = featuredArts();
+      chapters = [];
+      arts.forEach(r => {
+        r.on = visArts.includes(r);
+        r.el.classList.toggle('is-off', !r.on);
+      });
+      return;
+    }
     const all = activeCat === 'all';
     const groups = [];
     if (all) {
@@ -126,6 +150,17 @@
   function applyLayout() {
     computeLayout();
     planWall();
+    if (!isHall()) {
+      dyn.forEach(el => el.remove());
+      dyn = [];
+      beams.length = 0;
+      arts.forEach(r => {
+        r.el.style.opacity = ''; r.btn.style.pointerEvents = ''; r.opacity = -1;
+        if (r.captionEl.parentElement !== r.btn) r.btn.appendChild(r.captionEl);
+      });
+      return;
+    }
+    arts.forEach(r => { if (r.captionEl.parentElement !== r.frame) r.frame.appendChild(r.captionEl); });
     gallery.style.setProperty('--hall-w', L.hallW + 'px');
     gallery.style.setProperty('--art-w', L.ART_W + 'px');
     gallery.style.setProperty('--wall-h', L.wallH + 'px');
@@ -264,6 +299,8 @@
       rec.brandEl = btn.querySelector('.hall-art-brand');
       rec.nameEl  = btn.querySelector('.hall-art-name');
       rec.tagCat  = btn.querySelector('.hall-art-tag b');
+      rec.frame = btn.querySelector('.hall-art-frame');
+      rec.captionEl = btn.querySelector('.hall-art-caption');
       arts.push(rec);
     });
 
@@ -311,6 +348,7 @@
     });
     paintSigns();
     paintChips();
+    paintMobileLabels();
     focused = -1;
     shownCat = null;   // relabel the rail's category name in the next frame
   }
@@ -342,6 +380,161 @@
     rec.img.src = man.webp || p.img;
     rec.img.alt = p.brand + ' — ' + p.name;
   }
+
+  /* ============================================================
+     MOBILE WORK BOOK / COMPLETE INDEX
+     ============================================================ */
+  function paintMobileLabels() {
+    document.getElementById('mobileWorkTitle').textContent = T.gallery.selected[lang];
+    document.getElementById('mobileWorkCount').textContent = worksLabel(featuredArts().length);
+    document.querySelectorAll('.mobile-work-entry-label').forEach(el => { el.textContent = T.gallery.viewAll[lang]; });
+    document.querySelectorAll('.mobile-work-entry-count').forEach(el => { el.textContent = pad2(total); });
+    document.getElementById('workIndexTitleLabel').textContent = T.gallery.allWork[lang];
+    document.getElementById('workIndexTotal').textContent = pad2(total);
+    archive.close.setAttribute('aria-label', T.gallery.closeIndex[lang]);
+    archive.language.textContent = lang === 'en' ? '中文' : 'EN';
+    archive.language.setAttribute('aria-label', lang === 'en' ? 'Switch to Chinese' : '切换到英文');
+    archive.language.lang = lang === 'en' ? 'zh' : 'en';
+    archive.more.textContent = T.gallery.loadMore[lang];
+    archive.filters.setAttribute('aria-label', T.gallery.filter[lang]);
+    archive.filters.querySelectorAll('[data-cat]').forEach(b => {
+      const c = b.dataset.cat;
+      b.querySelector('.work-index-filter-label').textContent = c === 'all' ? FILTER_LABELS.all[lang] : catShort(c);
+      b.classList.toggle('is-active', c === archive.cat);
+      b.setAttribute('aria-pressed', String(c === archive.cat));
+    });
+    archive.grid.querySelectorAll('[data-idx]').forEach(b => {
+      const p = PROJECTS[Number(b.dataset.idx)];
+      b.setAttribute('aria-label', p.brand + ' — ' + p.name + ' — ' + catName(p.cat));
+      b.querySelector('.work-index-category').textContent = catShort(p.cat);
+    });
+    if (archive.built) {
+      archive.status.textContent = T.gallery.showing[lang].replace('{shown}', archive.shown).replace('{total}', archive.items.length);
+      archive.more.hidden = archive.shown >= archive.items.length;
+    }
+  }
+
+  function buildArchiveFilters() {
+    archive.filters.innerHTML = ['all'].concat(CATS).map(c =>
+      '<button type="button" class="work-index-filter" data-cat="' + c + '" aria-pressed="false">' +
+      '<span class="work-index-filter-label"></span><span class="work-index-filter-count">' +
+      (c === 'all' ? total : catCount[c]) + '</span></button>').join('');
+  }
+
+  function resetArchive() {
+    archive.items = arts.filter(r => archive.cat === 'all' || PROJECTS[r.i].cat === archive.cat);
+    archive.grid.replaceChildren();
+    archive.shown = 0;
+    archive.scroll.scrollTop = 0;
+    archive.built = true;
+    appendArchive();
+  }
+
+  function appendArchive() {
+    const next = archive.items.slice(archive.shown, archive.shown + ARCHIVE_BATCH);
+    const frag = document.createDocumentFragment();
+    next.forEach(rec => {
+      const p = PROJECTS[rec.i];
+      const man = IMAGE_MANIFEST[basename(p.img)] || {};
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'work-index-card';
+      b.dataset.idx = rec.i;
+      b.innerHTML = '<span class="work-index-frame"><img alt="" loading="lazy" decoding="async" draggable="false" width="1000" height="563"></span>' +
+        '<span class="work-index-brand"></span><span class="work-index-name"></span><span class="work-index-category"></span>';
+      b.querySelector('img').src = man.webp || p.img;
+      b.querySelector('.work-index-brand').textContent = p.brand;
+      b.querySelector('.work-index-name').textContent = p.name;
+      frag.appendChild(b);
+    });
+    archive.grid.appendChild(frag);
+    archive.shown += next.length;
+    paintMobileLabels();
+    return next;
+  }
+
+  // Both overlays share one iOS-safe scroll lock. Closing a work leaves the
+  // index locked and keeps its own scroll position until the index closes.
+  let lockDepth = 0, lockedY = 0, previousScrollBehavior = '';
+  function lockPage() {
+    if (lockDepth++ > 0) return;
+    lockedY = window.scrollY;
+    frozenScrollY = lockedY;
+    previousScrollBehavior = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = 'auto';
+    Object.assign(document.body.style, { position: 'fixed', top: '-' + lockedY + 'px', left: '0', right: '0', width: '100%', overflow: 'hidden' });
+  }
+  function unlockPage() {
+    if (!lockDepth || --lockDepth > 0) return;
+    ['position', 'top', 'left', 'right', 'width', 'overflow'].forEach(k => { document.body.style[k] = ''; });
+    window.scrollTo(0, lockedY);
+    document.documentElement.style.scrollBehavior = previousScrollBehavior;
+    frozenScrollY = null;
+  }
+  function syncOverlayInert() {
+    document.getElementById('pageWrapper').inert = archive.open || viewer.open;
+    document.querySelector('nav').inert = archive.open || viewer.open;
+    archive.el.inert = viewer.open;
+  }
+  function pushOverlay(kind, source, i) {
+    history.pushState({ ...history.state, skandWorkOverlay: kind, skandWorkSource: source, skandWorkId: i,
+      skandWorkCategory: source === 'hall' ? activeCat : archive.cat }, '', location.href);
+  }
+  function openArchive(push = true) {
+    if (archive.open) return;
+    if (typeof closeMobileNav === 'function') closeMobileNav();
+    archive.lastFocus = document.activeElement?.matches('button, a')
+      ? document.activeElement
+      : document.querySelector(isHall() ? '.nav-logo a' : '.mobile-work-entry-top');
+    if (!archive.built) resetArchive();
+    archive.open = true;
+    archive.el.hidden = false;
+    lockPage();
+    syncOverlayInert();
+    if (push) pushOverlay('index', 'index');
+    archive.close.focus({ preventScroll: true });
+  }
+  function closeArchive(fromHistory = false) {
+    if (!archive.open || viewer.open) return;
+    if (!fromHistory && history.state?.skandWorkOverlay === 'index') { history.back(); return; }
+    archive.open = false;
+    archive.el.hidden = true;
+    syncOverlayInert();
+    unlockPage();
+    const returnFocus = archive.lastFocus?.getClientRects().length ? archive.lastFocus
+      : document.querySelector(isHall() ? '.nav-logo a' : '.mobile-work-entry-top');
+    returnFocus?.focus({ preventScroll: true });
+  }
+
+  document.querySelectorAll('[data-open-work-index]').forEach(b => b.addEventListener('click', () => openArchive()));
+  archive.close.addEventListener('click', () => closeArchive());
+  archive.language.addEventListener('click', () => setLang(lang === 'en' ? 'zh' : 'en'));
+  archive.more.addEventListener('click', () => {
+    const added = appendArchive();
+    // Move keyboard focus into the new batch, rather than leave it on a
+    // button that moves down or disappears after the final batch.
+    if (added.length) archive.grid.querySelector('[data-idx="' + added[0].i + '"]').focus({ preventScroll: true });
+  });
+  archive.filters.addEventListener('click', e => {
+    const b = e.target.closest('[data-cat]');
+    if (!b || b.dataset.cat === archive.cat) return;
+    archive.cat = b.dataset.cat;
+    resetArchive();
+    history.replaceState({ ...history.state, skandWorkCategory: archive.cat }, '', location.href);
+  });
+  archive.grid.addEventListener('click', e => {
+    const b = e.target.closest('[data-idx]');
+    if (b) openViewer(Number(b.dataset.idx), 'index');
+  });
+  document.addEventListener('keydown', e => {
+    if (!archive.open || viewer.open) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeArchive(); return; }
+    if (e.key !== 'Tab') return;
+    const buttons = Array.from(archive.el.querySelectorAll('button')).filter(b => !b.hidden);
+    const first = buttons[0], last = buttons[buttons.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
 
   /* ============================================================
      CAMERA
@@ -449,7 +642,7 @@
   function paintRail() {
     const n = visArts.length;
     if (railTotal) railTotal.textContent = pad2(n);
-    if (viewer.total) viewer.total.textContent = pad2(n);
+    if (viewer.total && !viewer.open) viewer.total.textContent = pad2(n);
     if (railTrack) railTrack.setAttribute('aria-valuemax', String(n));
     if (!railTicks) return;
     const at = (c) => (maxCam > 0 ? Math.min(100, Math.max(0, c / maxCam * 100)) : 0);
@@ -561,6 +754,7 @@
   }
 
   function startLoop() {
+    if (!isHall()) return;
     if (rafId) return;
     rafId = requestAnimationFrame(tick);
   }
@@ -652,7 +846,7 @@
 
   document.addEventListener('keydown', (e) => {
     if (!pinned || !isHall() || gallery.hidden) return;
-    if (viewer.open) return;
+    if (viewer.open || archive.open) return;
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
@@ -736,8 +930,8 @@
     next: document.getElementById('viewerNext'),
     idx: 0,
     open: false,
-    scrollY: 0,
-    prevScrollBehavior: '',
+    items: [],
+    source: 'hall',
     lastFocus: null
   };
 
@@ -753,19 +947,19 @@
   /* viewer.idx is an index into PROJECTS (so the 'SK / NN' id is stable); the
      counter and the arrows work on the works currently on the wall, so a
      filtered visitor never gets walked out of the category they chose */
-  const viewerPos = () => Math.max(0, visArts.findIndex(r => r.i === viewer.idx));
+  const viewerPos = () => Math.max(0, viewer.items.findIndex(r => r.i === viewer.idx));
 
   function paintPanel() {
     const p = PROJECTS[viewer.idx];
     const pos = viewerPos() + 1;
-    viewer.kicker.textContent = T.gallery.kicker[lang] + ' / ' + pad2(pos);
+    viewer.kicker.textContent = (viewer.source === 'index' ? catName(PROJECTS[viewer.idx].cat) : T.gallery.kicker[lang]) + ' / ' + pad2(pos);
     viewer.brand.textContent = p.brand;
     viewer.client.textContent = p.brand;
     viewer.name.textContent = p.name;
     viewer.cat.textContent = catName(p.cat);
     viewer.index.textContent = 'SK / ' + pad2(viewer.idx + 1);
     viewer.current.textContent = pad2(pos);
-    viewer.total.textContent = pad2(visArts.length);
+    viewer.total.textContent = pad2(viewer.items.length);
     viewer.img.alt = p.brand + ' — ' + p.name;
   }
 
@@ -789,10 +983,11 @@
     };
 
     // stage 2 — the 1000px webp, so there is something sharp-ish fast
+    let fullLoaded = false;
     const warm = new Image();
     warm.decoding = 'async';
     warm.onload = () => {
-      if (token !== loadToken) return;
+      if (token !== loadToken || fullLoaded) return;
       viewer.img.src = warm.src;
       settle();
     };
@@ -809,6 +1004,7 @@
     full.decoding = 'async';
     full.onload = () => {
       if (token !== loadToken) return;
+      fullLoaded = true;
       viewer.img.src = full.src;
       viewer.loading.hidden = true;
       requestAnimationFrame(settle);
@@ -817,69 +1013,50 @@
     full.src = p.img;
   }
 
-  function openViewer(i) {
-    if (!viewer.el) return;
+  function openViewer(i, source = isHall() ? 'hall' : 'featured', push = true) {
+    if (!viewer.el || viewer.open) return;
+    viewer.source = source;
+    viewer.items = (source === 'index' ? archive.items : source === 'featured' ? featuredArts() : visArts).slice();
     fillViewer(i);
-    viewer.lastFocus = document.activeElement;
+    viewer.lastFocus = source === 'index'
+      ? archive.grid.querySelector('[data-idx="' + i + '"]') || archive.close
+      : arts[i].btn;
     viewer.el.hidden = false;
-    requestAnimationFrame(() => viewer.el.classList.add('is-open'));
-
-    // Lock the page without breaking the sticky pin: position:fixed on body
-    // plus a negative top. html carries overflow-x (not body), so html stays
-    // the scroller and this is the correct iOS workaround rather than a trap.
-    // scroll-behavior must go to auto for the restore, or html's smooth
-    // scrolling animates the page back up from the viewer.
-    viewer.scrollY = window.scrollY;
-    frozenScrollY = viewer.scrollY;
-    viewer.prevScrollBehavior = document.documentElement.style.scrollBehavior;
-    document.documentElement.style.scrollBehavior = 'auto';
-    document.body.style.position = 'fixed';
-    document.body.style.top = '-' + viewer.scrollY + 'px';
-    document.body.style.left = '0';
-    document.body.style.right = '0';
-    document.body.style.width = '100%';
-    document.body.style.overflow = 'hidden';
-
-    // The nav and every section go inert, so Tab and clicks cannot escape.
-    // The viewer sits outside #pageWrapper, so its own buttons still work.
-    const wrap = document.getElementById('pageWrapper');
-    if (wrap) wrap.inert = true;
+    requestAnimationFrame(() => { if (viewer.open) viewer.el.classList.add('is-open'); });
 
     viewer.open = true;
-    viewer.close.focus();
+    lockPage();
+    syncOverlayInert();
+    if (push) pushOverlay('viewer', source, i);
+    viewer.close.focus({ preventScroll: true });
   }
 
-  function closeViewer() {
+  function closeViewer(fromHistory = false) {
     if (!viewer.open) return;
+    if (!fromHistory && history.state?.skandWorkOverlay === 'viewer') { history.back(); return; }
     viewer.open = false;
     loadToken++;   // abandon any in-flight original
     viewer.el.classList.remove('is-open');
 
-    const wrap = document.getElementById('pageWrapper');
-    if (wrap) wrap.inert = false;
-
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.left = '';
-    document.body.style.right = '';
-    document.body.style.width = '';
-    document.body.style.overflow = '';
-    document.documentElement.style.scrollBehavior = viewer.prevScrollBehavior || '';
-    window.scrollTo(0, viewer.scrollY);
-    frozenScrollY = null;
-
-    if (viewer.lastFocus && viewer.lastFocus.focus) viewer.lastFocus.focus();
+    syncOverlayInert();
+    unlockPage();
+    const returnFocus = viewer.lastFocus?.getClientRects().length ? viewer.lastFocus
+      : archive.open ? archive.close : document.querySelector('.nav-logo a');
+    returnFocus?.focus({ preventScroll: true });
     setTimeout(() => { if (!viewer.open) viewer.el.hidden = true; }, 320);
   }
 
   function step(dir) {
-    if (!viewer.open || !visArts.length) return;
-    const n = visArts.length;
-    fillViewer(visArts[(viewerPos() + dir + n) % n].i);
+    if (!viewer.open || !viewer.items.length) return;
+    const n = viewer.items.length;
+    fillViewer(viewer.items[(viewerPos() + dir + n) % n].i);
+    if (history.state?.skandWorkOverlay === 'viewer') {
+      history.replaceState({ ...history.state, skandWorkId: viewer.idx }, '', location.href);
+    }
   }
 
   if (viewer.el) {
-    viewer.close.addEventListener('click', closeViewer);
+    viewer.close.addEventListener('click', () => closeViewer());
     viewer.prev.addEventListener('click', () => step(-1));
     viewer.next.addEventListener('click', () => step(1));
     // Close on any click that is not on the picture, the panel or a control.
@@ -907,9 +1084,11 @@
     // swipe between works
     let sx = 0, sy = 0, swiping = false;
     viewer.el.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('button')) return;
+      swiping = false;
+      if (e.target.closest('button') || !e.isPrimary || e.button !== 0) return;
       swiping = true; sx = e.clientX; sy = e.clientY;
     });
+    viewer.el.addEventListener('pointercancel', () => { swiping = false; });
     viewer.el.addEventListener('pointerup', (e) => {
       if (!swiping) return;
       swiping = false;
@@ -917,6 +1096,34 @@
       if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.25) step(dx < 0 ? 1 : -1);
     });
   }
+
+  // Browser Back dismisses one layer at a time; Forward can reopen it.
+  function restoreOverlayHistory() {
+    const state = history.state || {};
+    const target = state.skandWorkOverlay;
+    // Language changes inside an overlay remain selected when Back closes it.
+    if (archive.open || viewer.open || target) {
+      const url = new URL(location.href);
+      url.searchParams.set('lang', lang);
+      history.replaceState(state, '', url);
+    }
+    if (viewer.open && target !== 'viewer') closeViewer(true);
+    const needsIndex = target === 'index' || (target === 'viewer' && state.skandWorkSource === 'index');
+    if (needsIndex) {
+      const cat = catCount[state.skandWorkCategory] ? state.skandWorkCategory : 'all';
+      if (archive.cat !== cat) { archive.cat = cat; if (archive.built) resetArchive(); }
+    }
+    if (archive.open && !needsIndex) closeArchive(true);
+    if (!archive.open && needsIndex) openArchive(false);
+    if (target === 'viewer' && !viewer.open && PROJECTS[state.skandWorkId]) {
+      if (state.skandWorkSource === 'hall' && isHall()) {
+        activeCat = catCount[state.skandWorkCategory] ? state.skandWorkCategory : 'all';
+        applyLayout(); measure(); paintChips();
+      }
+      openViewer(state.skandWorkId, state.skandWorkSource, false);
+    }
+  }
+  window.addEventListener('popstate', restoreOverlayHistory);
 
   /* ============================================================
      i18n — captions and the viewer panel follow the language toggle
@@ -935,11 +1142,13 @@
   /* ============================================================
      BOOT
      ============================================================ */
+  buildArchiveFilters();
   buildRoom();
   measure();
   cam = targetCam = scrollCam();
   render();
   startLoop();
+  restoreOverlayHistory();
 
   // Stop the rAF loop whenever the hall is off-screen. scripts/logo/* runs a
   // Pixi app with its own ticker, and the two must not compete for the frame.
@@ -969,10 +1178,9 @@
       applyLayout();
       measure();
       if (!isHall()) {
-        // the CSS drops the 3D and lays the same DOM out as a grid
+        stopLoop();
         arts.forEach(r => { r.el.style.opacity = ''; r.btn.style.pointerEvents = ''; });
-        loadAllArtwork();
-      }
+      } else if (pinned) startLoop();
       cam = targetCam = scrollCam();
       syncHallActive();
       render();
@@ -980,4 +1188,7 @@
   }, { passive: true });
 
   window.addEventListener('pagehide', stopLoop);
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted && pinned && !document.hidden) { measure(); startLoop(); }
+  });
 })();
