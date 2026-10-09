@@ -1033,7 +1033,7 @@
 @media (max-width: 1023px) {
   .gallery {
     height: auto;
-    padding: clamp(70px, 12vw, 110px) 0 clamp(50px, 8vw, 80px);
+    padding: max(clamp(70px, 12vw, 110px), calc(var(--mobile-nav-height, 0px) + 16px)) 0 clamp(50px, 8vw, 80px);
   }
   .gallery-pin {
     position: static;
