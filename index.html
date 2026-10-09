@@ -960,16 +960,16 @@ const FILTER_SHORT = {
 const CLIENTS = ['Nike','Jordan','Converse','Salomon','Marshall','Decathlon','Moose Knuckles','UGG','Samsonite','La Mer','Estée Lauder','YSL','Le Creuset','Jack Wolfskin','Apede Mod','Harbin Beer','Genesis'];
 
 /* 'social' works are filed under 'content': one Brand Content chapter in the hall */
-/* featured:true selects the mobile book; dataset order is its reading order (max eight). */
+/* Shared catalog: the mobile book rotates six works daily from this dataset. */
 const PROJECTS = [
-  {name:'The Fearless Ones — Double 11 Campaign',brand:'Jordan',cat:'imc',img:'pdf_images/page_07.jpg',featured:true},
+  {name:'The Fearless Ones — Double 11 Campaign',brand:'Jordan',cat:'imc',img:'pdf_images/page_07.jpg'},
   {name:'Our Turn — Brand Voice & Family China Tour',brand:'Jordan',cat:'imc',img:'pdf_images/page_09.jpg'},
   {name:'CNY Brand Voice Film',brand:'Jordan',cat:'imc',img:'pdf_images/page_10.jpg'},
   {name:'CNY Brand Campaign',brand:'Converse',cat:'imc',img:'pdf_images/page_11.jpg'},
   {name:'Next Stop Dong Dan Film',brand:'Jordan',cat:'imc',img:'pdf_images/page_12.jpg'},
   {name:'Kobe Protro Brand Film',brand:'Nike',cat:'imc',img:'pdf_images/page_40.jpg'},
   {name:'Kids Running Campaign',brand:'Nike',cat:'imc',img:'pdf_images/page_36.jpg'},
-  {name:'Genesis 2025',brand:'Salomon',cat:'content',img:'pdf_images/page_16.jpg',featured:true},
+  {name:'Genesis 2025',brand:'Salomon',cat:'content',img:'pdf_images/page_16.jpg'},
   {name:'Winter Campaign',brand:'Decathlon',cat:'content',img:'pdf_images/page_17.jpg'},
   {name:'3-in-1 Product Campaign',brand:'Moose Knuckles',cat:'content',img:'pdf_images/page_18.jpg'},
   {name:'Air Max 95 Family Reunion — Hong Kong',brand:'Nike',cat:'content',img:'pdf_images/page_20.jpg'},
@@ -979,7 +979,7 @@ const PROJECTS = [
   {name:'Remix Series',brand:'Jordan',cat:'content',img:'pdf_images/page_24.jpg'},
   {name:'Air Peg 2K5 Retro Styling',brand:'Nike',cat:'content',img:'pdf_images/page_25.jpg'},
   {name:'Sneakers Art Creative',brand:'Nike / Jordan / Converse',cat:'content',img:'pdf_images/page_26.jpg'},
-  {name:'Styles of All Seasons',brand:'UGG',cat:'content',img:'pdf_images/page_27.jpg',featured:true},
+  {name:'Styles of All Seasons',brand:'UGG',cat:'content',img:'pdf_images/page_27.jpg'},
   {name:'Snowboard CNY Campaign',brand:'Salomon',cat:'content',img:'pdf_images/page_28.jpg'},
   {name:'Urban Styles',brand:'Samsonite',cat:'content',img:'pdf_images/page_29.jpg'},
   {name:"Urban Girls' Escape",brand:'Apede Mod',cat:'content',img:'pdf_images/page_30.jpg'},
@@ -992,7 +992,7 @@ const PROJECTS = [
   {name:'World of Flight — AR Experience',brand:'Jordan',cat:'digital',img:'pdf_images/page_47.jpg'},
   {name:'Member Days Engagement Hub',brand:'Nike',cat:'digital',img:'pdf_images/page_48.jpg'},
   {name:'Olympics "Road to Paris" Air Hub',brand:'Nike',cat:'digital',img:'pdf_images/page_49.jpg'},
-  {name:'Monitor II ANC Launch',brand:'Marshall',cat:'digital',img:'pdf_images/page_50.jpg',featured:true},
+  {name:'Monitor II ANC Launch',brand:'Marshall',cat:'digital',img:'pdf_images/page_50.jpg'},
   {name:'Family Tour Mini Program',brand:'Jordan',cat:'digital',img:'pdf_images/page_51.jpg'},
   {name:'Nike Training Club',brand:'Nike',cat:'digital',img:'pdf_images/page_55.jpg'},
   {name:'Luka 4 OOH',brand:'Jordan',cat:'visual',img:'pdf_images/page_57.jpg'},
@@ -1000,9 +1000,9 @@ const PROJECTS = [
   {name:'Release Design',brand:'Nike',cat:'visual',img:'pdf_images/page_59.jpg'},
   {name:'Brand Design',brand:'La Mer',cat:'visual',img:'pdf_images/page_62.jpg'},
   {name:'Campaign Release',brand:'Estée Lauder',cat:'visual',img:'pdf_images/page_63.jpg'},
-  {name:'D11 KV Design',brand:'YSL',cat:'visual',img:'pdf_images/page_64.jpg',featured:true},
+  {name:'D11 KV Design',brand:'YSL',cat:'visual',img:'pdf_images/page_64.jpg'},
   {name:'Running Magazine "Fresh Off"',brand:'Nike',cat:'visual',img:'pdf_images/page_65.jpg'},
-  {name:'Ambassador Announcement — Harbin Beer x NBA',brand:'Harbin Beer',cat:'connections',img:'pdf_images/page_68.jpg',featured:true},
+  {name:'Ambassador Announcement — Harbin Beer x NBA',brand:'Harbin Beer',cat:'connections',img:'pdf_images/page_68.jpg'},
   {name:'Mini Music Talent Show',brand:'Converse',cat:'connections',img:'pdf_images/page_69.jpg'},
   {name:'Basketball Community Building',brand:'Converse',cat:'connections',img:'pdf_images/page_70.jpg'},
   {name:'Summer Street Fit Fest',brand:'Nike NTC',cat:'connections',img:'pdf_images/page_71.jpg'},
@@ -1659,7 +1659,7 @@ bindPageFlip('a[href^="egg.html"]', () => 'egg.html?v=8&lang=' + lang);
 <!-- Gallery hall. Classic script, not a module: it reads PROJECTS,
      IMAGE_MANIFEST, T and `lang` from the lexical scope above. Must load
      after the inline script, hence no `defer` and no `type=module`. -->
-<script src="scripts/gallery/gallery.js?v=6"></script>
+<script src="scripts/gallery/gallery.js?v=8"></script>
 <script type="module" src="scripts/logo/dispatcher.js?v=17"></script>
 </body>
 </html>

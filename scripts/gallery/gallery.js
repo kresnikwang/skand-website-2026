@@ -55,12 +55,41 @@
   const catShort = (c) => ((FILTER_SHORT[c] || {})[lang]) || catName(c);
   const worksLabel = (n) => n + ' ' + T.gallery[n === 1 ? 'work1' : 'works'][lang];
 
-  /* The mobile home uses a bounded selection from the same project data. */
+  /* Rotate six works daily, covering categories and favouring distinct brands.
+     The local calendar date seeds the shuffle, so reload, language changes,
+     resizing and returning from a work keep today's selection stable. */
+  function selectDailyWorks(projects, day) {
+    let seed = 2166136261;
+    for (const char of 'SKAND-mobile-' + day) seed = Math.imul(seed ^ char.charCodeAt(0), 16777619);
+    const random = () => {
+      seed += 0x6D2B79F5;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const pool = projects.map((_, i) => i);
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const selected = [], brands = new Set();
+    const take = candidates => {
+      const i = candidates.find(i => !brands.has(projects[i].brand)) ?? candidates[0];
+      if (i === undefined) return;
+      selected.push(i);
+      brands.add(projects[i].brand);
+    };
+    const categories = [...new Set(pool.map(i => projects[i].cat))];
+    categories.slice(0, 6).forEach(cat => take(pool.filter(i => projects[i].cat === cat)));
+    while (selected.length < Math.min(6, projects.length)) take(pool.filter(i => !selected.includes(i)));
+    // Keep visual, keyboard and viewer navigation in the dataset's reading order.
+    return selected.sort((a, b) => a - b);
+  }
+  const selectionDate = new Date();
+  const selectionDay = selectionDate.getFullYear() + '-' + pad2(selectionDate.getMonth() + 1) + '-' + pad2(selectionDate.getDate());
+  const dailySelection = new Set(selectDailyWorks(PROJECTS, selectionDay));
   const isHall = () => window.innerWidth >= 1024;
-  const featuredArts = () => {
-    const selected = arts.filter(r => PROJECTS[r.i].featured);
-    return (selected.length ? selected : arts).slice(0, 8);
-  };
+  const featuredArts = () => arts.filter(r => dailySelection.has(r.i));
   const archive = {
     el: document.getElementById('workIndex'),
     close: document.getElementById('workIndexClose'),
@@ -478,6 +507,7 @@
   }
   function pushOverlay(kind, source, i) {
     history.pushState({ ...history.state, skandWorkOverlay: kind, skandWorkSource: source, skandWorkId: i,
+      skandWorkSelection: source === 'featured' ? viewer.items.map(r => r.i) : null,
       skandWorkCategory: source === 'hall' ? activeCat : archive.cat }, '', location.href);
   }
   function openArchive(push = true) {
@@ -1017,6 +1047,13 @@
     if (!viewer.el || viewer.open) return;
     viewer.source = source;
     viewer.items = (source === 'index' ? archive.items : source === 'featured' ? featuredArts() : visArts).slice();
+    // Reopening history on a later day keeps the original six-work context.
+    const saved = history.state?.skandWorkSelection;
+    if (!push && source === 'featured' && Array.isArray(saved) && saved.length <= 6 &&
+        saved.includes(i) && new Set(saved).size === saved.length &&
+        saved.every(id => Number.isInteger(id) && arts[id])) {
+      viewer.items = saved.map(id => arts[id]);
+    }
     fillViewer(i);
     viewer.lastFocus = source === 'index'
       ? archive.grid.querySelector('[data-idx="' + i + '"]') || archive.close

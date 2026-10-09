@@ -59,3 +59,9 @@ Check six featured works, complete category counts, load-more batches, filtered 
 - Clear cancelled swipe gestures, guard pending viewer entry, and resume the desktop camera after back-forward cache restoration.
 - Rechecked all 45 unique index cards, final batch visibility, Digital viewer navigation, nested Back, and language switching.
 - Syntax, HTML IDs, and whitespace checks passed. Gallery assets use v6 to refresh browser caches.
+
+### Daily mobile selection
+
+Replace the fixed featured flags with a seeded daily selection of six works from the full catalog. Use the visitor’s local calendar date, cover each category where possible, favour distinct brands, and preserve dataset order for keyboard/viewer consistency. Capture the day at page load so language switches, resizing and overlay navigation stay stable. The desktop hall and complete index retain all works.
+
+Validation: simulated 365 days with stable same-day results, six unique works, all five current categories, different consecutive-day combinations, and coverage of all 45 works; checked catalog sizes 0–70. Browser reload, language changes, viewer Back/Forward retain the selection. Older viewer history saves its originating six works across day changes.
