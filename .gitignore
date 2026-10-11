@@ -2,6 +2,9 @@ node_modules/
 .workbuddy/
 package-lock.json
 
+# Local portfolio import sources; publish the generated WebP assets instead.
+/portfolio assets/
+
 # Local-only: contains internal server details / a hardcoded credential
 DEPLOYMENT.md
 test_ssh.exp

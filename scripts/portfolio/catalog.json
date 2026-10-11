@@ -1,0 +1,532 @@
+[
+  {
+    "source": "Brand IMC/SKAND Portfolio 2026 SEP.001.jpeg",
+    "cat": "brand-imc",
+    "brand": "Jordan",
+    "name": "The One — China & Global Finals",
+    "metadataSource": "ocr-reviewed",
+    "id": "brand-imc-01"
+  },
+  {
+    "source": "Brand IMC/也是 The One.jpeg",
+    "cat": "brand-imc",
+    "brand": "Jordan",
+    "name": "The One — Design, Motion & Photography",
+    "metadataSource": "filename-and-visual-review",
+    "id": "brand-imc-02"
+  },
+  {
+    "source": "Brand IMC/SKAND Portfolio 2026 SEP.003.jpeg",
+    "cat": "brand-imc",
+    "brand": "Jordan",
+    "name": "Dong Dan Visual",
+    "metadataSource": "ocr-reviewed",
+    "id": "brand-imc-03"
+  },
+  {
+    "source": "Brand IMC/SKAND Portfolio 2026 SEP.004.jpeg",
+    "cat": "brand-imc",
+    "brand": "Jordan",
+    "name": "The Fearless Ones — Double 11 Campaign",
+    "metadataSource": "ocr-reviewed",
+    "id": "brand-imc-04"
+  },
+  {
+    "source": "Brand IMC/也是 Double 11.jpeg",
+    "cat": "brand-imc",
+    "brand": "Jordan",
+    "name": "The Fearless Ones — Double 11 Social Content",
+    "metadataSource": "filename-and-visual-review",
+    "id": "brand-imc-05"
+  },
+  {
+    "source": "Brand IMC/SKAND Portfolio 2026 SEP.006.jpeg",
+    "cat": "brand-imc",
+    "brand": "Jordan",
+    "name": "Our Turn — Brand Voice & Family China Tour",
+    "metadataSource": "ocr-reviewed",
+    "id": "brand-imc-06"
+  },
+  {
+    "source": "Brand IMC/也是 Our Turn.jpeg",
+    "cat": "brand-imc",
+    "brand": "Jordan",
+    "name": "Our Turn — Social Content & Activation",
+    "metadataSource": "filename-and-visual-review",
+    "id": "brand-imc-07"
+  },
+  {
+    "source": "Brand IMC/SKAND Portfolio 2026 SEP.008.jpeg",
+    "cat": "brand-imc",
+    "brand": "Wilson",
+    "name": "WSP Series Launch",
+    "metadataSource": "ocr-reviewed",
+    "id": "brand-imc-08"
+  },
+  {
+    "source": "Brand IMC/SKAND Portfolio 2026 SEP.009.jpeg",
+    "cat": "brand-imc",
+    "brand": "Jordan",
+    "name": "CNY Brand Voice Film",
+    "metadataSource": "ocr-reviewed",
+    "id": "brand-imc-09"
+  },
+  {
+    "source": "Brand IMC/SKAND Portfolio 2026 SEP.010.jpeg",
+    "cat": "brand-imc",
+    "brand": "Converse",
+    "name": "CNY Brand Campaign",
+    "metadataSource": "ocr-reviewed",
+    "id": "brand-imc-10"
+  },
+  {
+    "source": "Brand IMC/SKAND Portfolio 2026 SEP.011.jpeg",
+    "cat": "brand-imc",
+    "brand": "Jordan",
+    "name": "Next Stop Dong Dan Film",
+    "metadataSource": "ocr-reviewed",
+    "id": "brand-imc-11"
+  },
+  {
+    "source": "Brand IMC/SKAND Portfolio 2026 SEP.012.jpeg",
+    "cat": "brand-imc",
+    "brand": "PMI China",
+    "name": "Certified PMP Launch",
+    "metadataSource": "ocr-reviewed",
+    "id": "brand-imc-12"
+  },
+  {
+    "source": "Brand IMC/SKAND Portfolio 2026 SEP 2.001.jpeg",
+    "cat": "brand-imc",
+    "brand": "BLACKHEAD",
+    "name": "第207块骨头",
+    "metadataSource": "ocr-reviewed",
+    "id": "brand-imc-13"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.002.jpeg",
+    "cat": "product",
+    "brand": "Coach",
+    "name": "Coach Fragrance × Liu Yu",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-01"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.003.jpeg",
+    "cat": "product",
+    "brand": "OGR",
+    "name": "Women's Day ft. Li Jiage",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-02"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.004.jpeg",
+    "cat": "product",
+    "brand": "BLOSSOMIN",
+    "name": "Thai Talents Collaborations",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-03"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.005.jpeg",
+    "cat": "product",
+    "brand": "SOFEI",
+    "name": "Viral Beauty Campaign",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-04"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.006.jpeg",
+    "cat": "product",
+    "brand": "Nike",
+    "name": "Air Max 95 Family Reunion",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-05"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.007.jpeg",
+    "cat": "product",
+    "brand": "Burton",
+    "name": "CNY — Year of the Horse",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-06"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.008.jpeg",
+    "cat": "product",
+    "brand": "Decathlon",
+    "name": "Winter Campaign",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-07"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.009.jpeg",
+    "cat": "product",
+    "brand": "Moose Knuckles",
+    "name": "3-in-1 Product Campaign",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-08"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.010.jpeg",
+    "cat": "product",
+    "brand": "Moose Knuckles",
+    "name": "Lightweight Jacket",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-09"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.011.jpeg",
+    "cat": "product",
+    "brand": "Salomon",
+    "name": "Genesis",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-10"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.012.jpeg",
+    "cat": "product",
+    "brand": "Salomon",
+    "name": "Snowboard CNY Campaign",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-11"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.013.jpeg",
+    "cat": "product",
+    "brand": "Peak Performance",
+    "name": "Color Shell Collection",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-12"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.014.jpeg",
+    "cat": "product",
+    "brand": "Nike",
+    "name": "Yoga Zenvy Collection",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-13"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.015.jpeg",
+    "cat": "product",
+    "brand": "Jordan",
+    "name": "V-Day Campaign",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-14"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.016.jpeg",
+    "cat": "product",
+    "brand": "Jordan",
+    "name": "Kids Drips",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-15"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.017.jpeg",
+    "cat": "product",
+    "brand": "Jordan",
+    "name": "Remix Series",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-16"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.018.jpeg",
+    "cat": "product",
+    "brand": "Nike Running",
+    "name": "Air Peg 2K5 Retro Styling",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-17"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.019.jpeg",
+    "cat": "product",
+    "brand": "Nike / Jordan / Converse",
+    "name": "Sneakers Art Creative",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-18"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.020.jpeg",
+    "cat": "product",
+    "brand": "UGG",
+    "name": "Styles of All Seasons",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-19"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.021.jpeg",
+    "cat": "product",
+    "brand": "UGG",
+    "name": "Visual Upgrade",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-20"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.022.jpeg",
+    "cat": "product",
+    "brand": "Samsonite",
+    "name": "Urban Styles",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-21"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.023.jpeg",
+    "cat": "product",
+    "brand": "Apede Mod",
+    "name": "Urban Girls' Escape",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-22"
+  },
+  {
+    "source": "Product/SKAND Portfolio 2026 SEP 2.024.jpeg",
+    "cat": "product",
+    "brand": "Le Creuset",
+    "name": "Pets Collection",
+    "metadataSource": "ocr-reviewed",
+    "id": "product-23"
+  },
+  {
+    "source": "Digital/Digital.001.jpeg",
+    "cat": "digital",
+    "brand": "Jordan",
+    "name": "Barry's Game",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-01",
+    "published": false,
+    "publicationNote": "Temporarily offline at owner request on 2026-10-10; restore only on explicit request."
+  },
+  {
+    "source": "Digital/Digital.002.jpeg",
+    "cat": "digital",
+    "brand": "Nike",
+    "name": "Tmall Kids Engagement",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-02"
+  },
+  {
+    "source": "Digital/Digital.003.jpeg",
+    "cat": "digital",
+    "brand": "Jordan",
+    "name": "Tmall Store Digital Retainer",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-03"
+  },
+  {
+    "source": "Digital/Digital.004.jpeg",
+    "cat": "digital",
+    "brand": "Jordan",
+    "name": "World of Flight — Grand Opening O2O AR Experience",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-04"
+  },
+  {
+    "source": "Digital/Digital.005.jpeg",
+    "cat": "digital",
+    "brand": "Nike",
+    "name": "Member Days Engagement Hub",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-05"
+  },
+  {
+    "source": "Digital/Digital.006.jpeg",
+    "cat": "digital",
+    "brand": "Nike",
+    "name": "Olympics \"Road to Paris\" Air Hub",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-06"
+  },
+  {
+    "source": "Digital/Digital.007.jpeg",
+    "cat": "digital",
+    "brand": "Marshall",
+    "name": "Monitor II ANC Launch",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-07"
+  },
+  {
+    "source": "Digital/Digital.008.jpeg",
+    "cat": "digital",
+    "brand": "Jordan",
+    "name": "Festival H5",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-08"
+  },
+  {
+    "source": "Digital/Digital.009.jpeg",
+    "cat": "digital",
+    "brand": "Jordan",
+    "name": "Family Tour Mini Program",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-09"
+  },
+  {
+    "source": "Digital/Digital.010.jpeg",
+    "cat": "digital",
+    "brand": "Nike",
+    "name": "Engagement Center — WeChat Mini Program",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-10"
+  },
+  {
+    "source": "Digital/Digital.011.jpeg",
+    "cat": "digital",
+    "brand": "Jordan",
+    "name": "Family Day Mini Program",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-11"
+  },
+  {
+    "source": "Digital/Digital.012.jpeg",
+    "cat": "digital",
+    "brand": "Nike",
+    "name": "CHBL Journey",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-12"
+  },
+  {
+    "source": "Digital/Digital.013.jpeg",
+    "cat": "digital",
+    "brand": "Nike",
+    "name": "Nike Training Club",
+    "metadataSource": "ocr-reviewed",
+    "id": "digital-13"
+  },
+  {
+    "source": "Design/VISUAL.001.jpeg",
+    "cat": "design",
+    "brand": "Jordan",
+    "name": "Luka 4 OOH",
+    "metadataSource": "ocr-reviewed",
+    "id": "design-01"
+  },
+  {
+    "source": "Design/VISUAL.002.jpeg",
+    "cat": "design",
+    "brand": "Jordan",
+    "name": "Retail Design",
+    "metadataSource": "ocr-reviewed",
+    "id": "design-02"
+  },
+  {
+    "source": "Design/VISUAL.003.jpeg",
+    "cat": "design",
+    "brand": "Nike",
+    "name": "Release Design",
+    "metadataSource": "ocr-reviewed",
+    "id": "design-03"
+  },
+  {
+    "source": "Design/VISUAL.006.jpeg",
+    "cat": "design",
+    "brand": "La Mer",
+    "name": "Brand Design",
+    "metadataSource": "ocr-reviewed",
+    "id": "design-04"
+  },
+  {
+    "source": "Design/VISUAL.007.jpeg",
+    "cat": "design",
+    "brand": "Estée Lauder",
+    "name": "Campaign Release",
+    "metadataSource": "ocr-reviewed",
+    "id": "design-05"
+  },
+  {
+    "source": "Design/VISUAL.008.jpeg",
+    "cat": "design",
+    "brand": "YSL",
+    "name": "Double 11 KV Design",
+    "metadataSource": "ocr-reviewed",
+    "id": "design-06"
+  },
+  {
+    "source": "Design/VISUAL.009.jpeg",
+    "cat": "design",
+    "brand": "Nike",
+    "name": "Fresh Off — Running Magazine",
+    "metadataSource": "ocr-reviewed",
+    "id": "design-07"
+  },
+  {
+    "source": "Design/VISUAL.010.jpeg",
+    "cat": "design",
+    "brand": "Multi-brand",
+    "name": "3D & Illustration",
+    "metadataSource": "visual-review-neutral-description",
+    "id": "design-08"
+  },
+  {
+    "source": "Design/Logo & Lockup Design.jpeg",
+    "cat": "design",
+    "brand": "Nike / Jordan / Converse",
+    "name": "Logo & Lockup Design",
+    "metadataSource": "filename-and-visual-review",
+    "id": "design-09"
+  },
+  {
+    "source": "Design/Converse - Chuck 70 X ft KARINA.jpeg",
+    "cat": "design",
+    "brand": "Converse",
+    "name": "Chuck 70 X ft. KARINA",
+    "metadataSource": "attached-image-caption-reviewed",
+    "id": "design-10"
+  },
+  {
+    "source": "Consumer/Consumer.001.jpeg",
+    "cat": "consumer",
+    "brand": "Harbin Beer × NBA",
+    "name": "Ambassador Announcement",
+    "metadataSource": "ocr-reviewed",
+    "id": "consumer-01"
+  },
+  {
+    "source": "Consumer/Consumer.002.jpeg",
+    "cat": "consumer",
+    "brand": "Converse",
+    "name": "Mini Music Talent Show",
+    "metadataSource": "ocr-reviewed",
+    "id": "consumer-02"
+  },
+  {
+    "source": "Consumer/Consumer.003.jpeg",
+    "cat": "consumer",
+    "brand": "Converse",
+    "name": "Basketball Community Building & Offline Experience",
+    "metadataSource": "ocr-reviewed",
+    "id": "consumer-03"
+  },
+  {
+    "source": "Consumer/Consumer.004.jpeg",
+    "cat": "consumer",
+    "brand": "Nike NTC",
+    "name": "Summer Street Fit Fest",
+    "metadataSource": "ocr-reviewed",
+    "id": "consumer-04"
+  },
+  {
+    "source": "Consumer/Consumer.005.jpeg",
+    "cat": "consumer",
+    "brand": "Salomon",
+    "name": "Snowboard Day",
+    "metadataSource": "ocr-reviewed",
+    "id": "consumer-05"
+  },
+  {
+    "source": "Consumer/Consumer.007.jpeg",
+    "cat": "consumer",
+    "brand": "Multi-brand",
+    "name": "Editorial",
+    "metadataSource": "ocr-reviewed",
+    "id": "consumer-07"
+  },
+  {
+    "source": "Consumer/Consumer.008.jpeg",
+    "cat": "consumer",
+    "brand": "Nike / Jordan",
+    "name": "Editorial",
+    "metadataSource": "ocr-reviewed",
+    "id": "consumer-08"
+  }
+]

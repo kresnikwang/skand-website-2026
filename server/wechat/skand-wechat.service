@@ -1,0 +1,23 @@
+[Unit]
+Description=SKAND WeChat share signature service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=skand-wechat
+Group=skand-wechat
+WorkingDirectory=/opt/skand-wechat
+EnvironmentFile=/etc/skand/wechat.env
+ExecStart=/usr/bin/node /opt/skand-wechat/signer.cjs
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

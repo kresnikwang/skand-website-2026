@@ -3,7 +3,7 @@
    ------------------------------------------------------------
    A classic script (not a module) on purpose: PROJECTS,
    IMAGE_MANIFEST, T and `lang` live in the top-level lexical
-   scope of the inline script in index.html, and a classic
+   scope of the catalog and inline scripts loaded by index.html, and a classic
    script can read them directly. A module would force us to
    move the data out first.
    ============================================================ */
@@ -34,7 +34,7 @@
      room for a visible floor beneath it, or the hall reads as a flat
      billboard instead of a room. */
   const ROWS = 3;
-  const L = { COL_W: 320, ART_W: 264, ROW_GAP: 148, ROW_TOP: 30, PAD_X: 760, END_W: 460, SIGN_W: 256, wallH: 504, hallW: 6200 };
+  const L = { COL_W: 320, ART_W: 264, ROW_GAP: 148, ROW_TOP: 30, PAD_X: 760, END_W: 460, wallH: 504, hallW: 6200 };
 
   const total   = PROJECTS.length;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -42,7 +42,7 @@
   /* ---------- categories ----------
      The hall shows either everything (`all`, hung as one chapter per category)
      or one category. What is on the wall is a list, `visArts`, in hang order;
-     every loop below walks that list rather than the 45 works, and the works
+     every loop below walks that list rather than the complete catalog, and the works
      that are off the wall are display:none. */
   const CATS = [];
   PROJECTS.forEach((p) => { if (!CATS.includes(p.cat)) CATS.push(p.cat); });
@@ -119,16 +119,11 @@
     L.PAD_X   = Math.round(Math.min(780, Math.max(400, pinW * 0.53)));
     // the back wall stops here so the end wall is not painted over
     L.END_W   = Math.round(Math.min(460, Math.max(280, pinW * 0.32)));
-    // a chapter sign takes a little less than a bay of wall
-    L.SIGN_W  = Math.round(L.COL_W * 0.8);
   }
 
-  /* Decide what hangs where. In `all` mode each category is a chapter that
-     starts on a fresh bay, and every chapter after the first is announced by a
-     sign on the wall in front of it. The first chapter has no sign: its wall is
-     where the headline stands, and the first screen should not change. Filtered,
-     the hall is one chapter. Position is stored on each work (col, row, x);
-     nothing else in the file derives it from the work's index any more. */
+  /* Each category starts on a fresh bay. A compact heading sits above its
+     first frame, including the first category and filtered views, without
+     reserving an empty column in the hall. */
   function planWall() {
     if (!isHall()) {
       visArts = featuredArts();
@@ -154,10 +149,9 @@
     arts.forEach((r) => { r.on = false; });
 
     let x = L.PAD_X, colNo = 0;
-    chapters.forEach((ch, ci) => {
-      ch.hasSign = all && ci > 0;
-      if (ch.hasSign) { ch.signX = x; x += L.SIGN_W; }
+    chapters.forEach((ch) => {
       ch.bayX = x;
+      ch.signX = x + (L.COL_W - L.ART_W) / 2;
       ch.cols = Math.ceil(ch.arts.length / ROWS);
       ch.firstCol = colNo;
       ch.arts.forEach((r, j) => {
@@ -194,7 +188,6 @@
     gallery.style.setProperty('--art-w', L.ART_W + 'px');
     gallery.style.setProperty('--wall-h', L.wallH + 'px');
     gallery.style.setProperty('--end-w', L.END_W + 'px');
-    gallery.style.setProperty('--sign-w', L.SIGN_W + 'px');
 
     const end = room.querySelector('.hall-endwall');
     dyn.forEach((el) => el.remove());
@@ -223,12 +216,10 @@
         add(el);
         beams.push({ el, centre, opacity: -1 });
       }
-      if (ch.hasSign) {
-        const sign = div('hall-sign', ch.signX);
-        sign.innerHTML = '<span class="hall-sign-no"></span><span class="hall-sign-name"></span><span class="hall-sign-count"></span>';
-        ch.signEl = sign;
-        add(sign);
-      }
+      const sign = div('hall-sign', ch.signX);
+      sign.innerHTML = '<h2 class="hall-sign-name"></h2><span class="hall-sign-count"></span>';
+      ch.signEl = sign;
+      add(sign);
     });
     paintSigns();
 
@@ -247,9 +238,8 @@
   }
 
   function paintSigns() {
-    chapters.forEach((ch, ci) => {
+    chapters.forEach((ch) => {
       if (!ch.signEl) return;
-      ch.signEl.querySelector('.hall-sign-no').textContent = pad2(ci + 1);
       ch.signEl.querySelector('.hall-sign-name').textContent = catName(ch.cat);
       ch.signEl.querySelector('.hall-sign-count').textContent = worksLabel(ch.arts.length);
     });
@@ -681,8 +671,7 @@
     if (activeCat === 'all') {
       // chapter boundaries, so the rail reads as a table of contents
       chapters.forEach((ch) => {
-        if (!ch.hasSign) return;
-        const c = -camFor(ch.signX + L.SIGN_W / 2, mid);
+        const c = -camFor(ch.bayX + L.COL_W / 2, mid);
         html += '<i class="is-chapter" style="left:' + at(c).toFixed(2) + '%"></i>';
       });
     } else {
@@ -753,11 +742,11 @@
     if (railFill) railFill.style.width = (frac * 100) + '%';
     if (railKnob) railKnob.style.left = (frac * 100) + '%';
 
-    // First-screen copy leaves over the first 15% of the walk. Keyed to the
+    // First-screen copy leaves over the first 10% of the walk. Keyed to the
     // camera (not to raw scroll px against the walk distance) and fed to
     // CSS as a continuous --walk, so it dissolves as you go instead of snapping.
     // Desktop only: below 1024 the copy is an ordinary block in the grid.
-    const walk = isHall() ? Math.min(1, Math.max(0, frac / 0.15)) : 0;
+    const walk = isHall() ? Math.min(1, Math.max(0, frac / 0.10)) : 0;
     if (Math.abs(walk - lastWalk) > 0.004 || (walk === 0) !== (lastWalk === 0)) {
       lastWalk = walk;
       gallery.style.setProperty('--walk', walk.toFixed(3));
@@ -1024,7 +1013,7 @@
     warm.onerror = () => {};
     warm.src = man.webp || p.img;
 
-    // stage 3 — the original. Skipped for save-data / 2G, where the webp is
+    // stage 3 — the full-resolution lossless WebP. Skipped for save-data / 2G, where the preview is
     // the honest thing to show rather than a 2.4MB stall.
     const conn = navigator.connection || {};
     if (conn.saveData || /^(slow-2g|2g)$/.test(conn.effectiveType || '')) return;
@@ -1100,7 +1089,7 @@
     // Testing e.target === viewer.el was not enough: .viewer-stage sits
     // between them and swallowed every click on the backdrop.
     viewer.el.addEventListener('click', (e) => {
-      if (e.target.closest('.viewer-frame, .viewer-panel, .viewer-arrow, .viewer-close')) return;
+      if (e.target.closest('.viewer-frame, .viewer-panel, .viewer-close')) return;
       closeViewer();
     });
 

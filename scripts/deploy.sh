@@ -19,12 +19,21 @@ if [[ -n "${SKAND_DEPLOY_PASSWORD:-}" ]]; then
   RSYNC_RSH="sshpass -e ssh ${SSH_OPTS}"
 fi
 
-rsync -az --delete \
+# Transfer the complete asset catalog before publishing the HTML that uses it.
+rsync -az --delete --delay-updates \
+  --exclude='index.html' \
   --exclude='.git/' \
   --exclude='node_modules/' \
   --exclude='.DS_Store' \
   --exclude='.workbuddy/' \
   --exclude='pdf_images/' \
+  --exclude='portfolio assets/' \
+  --exclude='docs/' \
+  --exclude='server/' \
+  --exclude='tests/' \
+  --exclude='scripts/share/build-covers.cjs' \
+  --exclude='scripts/portfolio/catalog.json' \
+  --exclude='scripts/portfolio/build.js' \
   --exclude='README.md' \
   --exclude='download-fonts.py' \
   --exclude='package.json' \
@@ -33,5 +42,8 @@ rsync -az --delete \
   --exclude='DEPLOYMENT.md' \
   -e "${RSYNC_RSH}" \
   ./ "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_ROOT}/"
+
+rsync -az -e "${RSYNC_RSH}" \
+  index.html "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_ROOT}/"
 
 echo "Deployed to ${REMOTE_HOST}:${REMOTE_ROOT}"

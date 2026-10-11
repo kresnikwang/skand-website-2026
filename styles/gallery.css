@@ -267,47 +267,32 @@
   background: radial-gradient(ellipse at center, rgba(232, 86, 58, .46), transparent 68%);
 }
 
-/* ---------- chapter sign: hangs on the wall where a category begins ---------- */
+/* ---------- compact category heading above the first frame ---------- */
 .hall-sign {
   position: absolute;
-  top: 0;
-  width: var(--sign-w, 256px);
-  height: var(--wall-h);
-  box-sizing: border-box;
-  padding: 0 22px 0 26px;
+  top: -16px;
+  width: var(--art-w);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 14px;
-}
-.hall-sign::before {
-  /* a hairline that runs the height of the wall, like a section divider */
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 12%;
-  bottom: 12%;
-  width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(232, 86, 58, .55) 30%, rgba(232, 86, 58, .55) 70%, transparent);
-}
-.hall-sign-no {
-  color: var(--coral);
-  font: 10px var(--gallery-mono);
-  letter-spacing: .2em;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(240, 237, 232, .18);
+  pointer-events: none;
 }
 .hall-sign-name {
+  margin: 0;
   color: var(--white);
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: clamp(24px, 2.3vw, 34px);
-  line-height: 1.06;
-  letter-spacing: -.01em;
-  text-wrap: balance;
+  font: 500 13px var(--font-body);
+  line-height: 1.2;
+  letter-spacing: .06em;
+  text-transform: uppercase;
 }
 .hall-sign-count {
-  color: rgba(240, 237, 232, .5);
-  font: 10px var(--gallery-mono);
-  letter-spacing: .16em;
+  flex-shrink: 0;
+  color: var(--coral);
+  font: 9px var(--gallery-mono);
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -470,7 +455,7 @@
    FIRST-SCREEN COPY
    ============================================================ */
 /* --walk (0..1) is written by gallery.js from the camera position, so the copy
-   dissolves continuously over the first 15% of the walk. No CSS transition on
+   dissolves continuously over the first 10% of the walk. No CSS transition on
    purpose: the camera is already eased, a second ease would lag behind it. */
 .gallery-copy {
   position: absolute;
@@ -916,29 +901,6 @@
   line-height: 1;
 }
 
-.viewer-arrow {
-  position: absolute;
-  z-index: 3;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 50px;
-  height: 50px;
-  border: 1px solid rgba(240, 237, 232, .2);
-  border-radius: 50%;
-  background: rgba(10, 10, 10, .4);
-  color: var(--white);
-  font-size: 22px;
-  cursor: pointer;
-  transition: background .22s ease, border-color .22s ease, color .22s ease;
-}
-.viewer-arrow:hover {
-  background: var(--coral);
-  border-color: var(--coral);
-  color: var(--black);
-}
-.viewer-arrow.prev { left: clamp(12px, 2vw, 32px); }
-.viewer-arrow.next { right: calc(min(300px, 370px) + clamp(12px, 2vw, 32px)); }
-
 .viewer-footnote {
   position: absolute;
   left: clamp(20px, 4vw, 64px);
@@ -1134,7 +1096,6 @@
   .viewer-name { font-size: clamp(24px, 6.5vw, 34px); }
   .viewer-facts { margin-top: 20px; }
   .viewer-nav { margin-top: 20px; }
-  .viewer-arrow { display: none; }
   .viewer-footnote { display: none; }
 }
 

@@ -6,15 +6,23 @@
 <title>SKAND — Independent Creative Agency in China | Shanghai</title>
 <meta name="description" content="SKAND is an independent creative agency in Shanghai, China, specializing in IMC, brand voice, social storytelling, digital experience, and brand visual design for global and local brands.">
 <meta name="keywords" content="SKAND, creative agency China, independent agency China, advertising agency Shanghai, Chinese creative studio, IMC agency Shanghai, digital agency China, brand voice, social storytelling China, digital experience Shanghai">
-<meta property="og:title" content="SKAND — Independent Creative Agency in China | Shanghai">
+<meta property="og:title" content="SKAND｜Create For More">
 <meta property="og:description" content="An independent creative agency in Shanghai, China, specializing in IMC, brand voice, social storytelling, digital experiences, and brand design. We connect brands with Chinese and global audiences.">
-<meta property="og:image" content="https://skandstudio.com/logo.png">
+<meta property="og:image" content="https://skandstudio.com/images/share/wechat-cover-v1.jpg">
+<meta property="og:image:secure_url" content="https://skandstudio.com/images/share/wechat-cover-v1.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="600">
+<meta property="og:image:height" content="600">
+<meta property="og:image:alt" content="SKAND — Create For More">
+<meta property="og:site_name" content="SKAND Creative Studio">
+<meta name="wechat-share-endpoint" content="/api/wechat/signature">
 <meta property="og:url" content="https://skandstudio.com/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="SKAND — Independent Creative Agency in China | Shanghai">
+<meta name="twitter:title" content="SKAND｜Create For More">
 <meta name="twitter:description" content="Independent creative agency in Shanghai, China, specializing in IMC, brand voice, social storytelling, digital experiences, and brand design.">
-<meta name="twitter:image" content="https://skandstudio.com/logo.png">
+<meta name="twitter:image" content="https://skandstudio.com/images/share/social-cover-v1.jpg">
+<meta name="twitter:image:alt" content="SKAND — Create For More, and be seen by the world">
 <link rel="canonical" href="https://skandstudio.com/">
 <link rel="alternate" hreflang="x-default" href="https://skandstudio.com/">
 <link rel="alternate" hreflang="en" href="https://skandstudio.com/?lang=en">
@@ -52,8 +60,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font-body);fon
   body { cursor: auto; }
   .cursor-dot, .cursor-ring { display: none !important; }
 }
-.cursor-dot{position:fixed;width:8px;height:8px;background:var(--coral);border-radius:50%;pointer-events:none;z-index:10000;opacity:0;transition:opacity .12s ease,transform .15s ease;mix-blend-mode:difference}
-.cursor-ring{position:fixed;width:40px;height:40px;border:1.5px solid var(--white);border-radius:50%;pointer-events:none;z-index:10000;opacity:0;transition:opacity .12s ease,transform .3s ease,width .3s ease,height .3s ease,border-color .3s ease;mix-blend-mode:difference}
+/* Stay above both work overlays (index: 10000, viewer: 10001). */
+.cursor-dot{position:fixed;width:8px;height:8px;background:var(--coral);border-radius:50%;pointer-events:none;z-index:10002;opacity:0;transition:opacity .12s ease,transform .15s ease;mix-blend-mode:difference}
+.cursor-ring{position:fixed;width:40px;height:40px;border:1.5px solid var(--white);border-radius:50%;pointer-events:none;z-index:10002;opacity:0;transition:opacity .12s ease,transform .3s ease,width .3s ease,height .3s ease,border-color .3s ease;mix-blend-mode:difference}
 .cursor-ring.hovering{width:60px;height:60px;border-color:var(--coral)}
 html.custom-cursor-enabled body,
 html.custom-cursor-enabled a,
@@ -64,7 +73,6 @@ html.custom-cursor-enabled .hall-art-btn,
 html.custom-cursor-enabled .gallery-video-cta,
 html.custom-cursor-enabled .bside-float,
 html.custom-cursor-enabled .viewer-close,
-html.custom-cursor-enabled .viewer-arrow,
 html.custom-cursor-enabled .viewer-nav button{cursor:none!important}
 html:not(.custom-cursor-enabled) a,
 html:not(.custom-cursor-enabled) button,
@@ -574,7 +582,7 @@ footer a{color:var(--grey);text-decoration:none}
 </style>
 <!-- Gallery hall. Loaded after the inline block so it wins on equal
      specificity; everything in it is scoped under .gallery / .viewer. -->
-<link rel="stylesheet" href="styles/gallery.css?v=9">
+<link rel="stylesheet" href="styles/gallery.css?v=10">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -647,7 +655,7 @@ footer a{color:var(--grey);text-decoration:none}
 <!-- WORK VIEWER / PROJECT OVERLAY -->
 <!-- The image box is locked to the source 16:9 ratio and the img uses
      object-fit:contain, so a work is always shown whole — never cropped.
-     gallery.js feeds it the 3840x2160 original, not the 1000px webp. -->
+     gallery.js feeds it the full-resolution lossless WebP after the preview. -->
 <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewerName" hidden>
   <div class="viewer-stage">
     <div class="viewer-frame" id="viewerFrame">
@@ -669,11 +677,9 @@ footer a{color:var(--grey);text-decoration:none}
     <div class="viewer-nav">
       <button type="button" id="viewerPrev" data-tk="viewer-prev" aria-label="Previous work">&#8249;</button>
       <button type="button" id="viewerNext" data-tk="viewer-next" aria-label="Next work">&#8250;</button>
-      <span class="viewer-nav-count"><b id="viewerCurrent">01</b> / <span id="viewerTotal">45</span></span>
+      <span class="viewer-nav-count"><b id="viewerCurrent">01</b> / <span id="viewerTotal">65</span></span>
     </div>
   </aside>
-  <button type="button" class="viewer-arrow prev" id="viewerArrowPrev" data-tk="viewer-prev" aria-label="Previous work">&#8249;</button>
-  <button type="button" class="viewer-arrow next" id="viewerArrowNext" data-tk="viewer-next" aria-label="Next work">&#8250;</button>
   <button type="button" class="viewer-close" id="viewerClose"><span data-tk="viewer-close">Close</span><i aria-hidden="true">&times;</i></button>
 </div>
 
@@ -761,9 +767,9 @@ footer a{color:var(--grey);text-decoration:none}
 
   <div class="gallery-rail">
    <span class="gallery-rail-cat" id="galleryRailCat" aria-hidden="true"></span>
-   <span class="gallery-rail-count"><b id="galleryRailCount">01</b> / <span id="galleryRailTotal">45</span></span>
+   <span class="gallery-rail-count"><b id="galleryRailCount">01</b> / <span id="galleryRailTotal">65</span></span>
    <div class="gallery-rail-track" id="galleryRailTrack" role="slider" tabindex="0"
-        aria-label="Exhibition position" aria-valuemin="1" aria-valuemax="45" aria-valuenow="1">
+        aria-label="Exhibition position" aria-valuemin="1" aria-valuemax="65" aria-valuenow="1">
     <div class="gallery-rail-ticks" id="galleryRailTicks" aria-hidden="true"></div>
     <div class="gallery-rail-fill" id="galleryRailFill"></div>
     <div class="gallery-rail-knob" id="galleryRailKnob"></div>
@@ -875,6 +881,7 @@ footer a{color:var(--grey);text-decoration:none}
 </footer>
 </div> <!-- /pageWrapper -->
 
+<script src="scripts/portfolio/data.js?v=20261010-3"></script>
 <script>
 /* === i18n DATA === */
 const T = {
@@ -903,7 +910,7 @@ const T = {
     hint:{en:'Drag to explore · Click to open',zh:'拖动浏览 · 点击展开'}
   },
   /* The gallery hall. Strings the hall and the work viewer need; captions and
-     project names themselves stay in PROJECTS (English-only, as before). */
+     project names themselves stay in the reviewed PROJECTS catalog. */
   gallery: {
     kicker:{en:'Selected Work',zh:'精选作品'},
     eyebrow:{en:'Independent Creative Agency · Shanghai',zh:'独立创意机构 · 上海'},
@@ -948,126 +955,10 @@ const SERVICE_DATA = [
   {num:'VII',name:{en:'365 Social Management',   zh:'全年社交运营'},            desc:{en:'Social Editorial Content Development for Chinese Social Media Platforms',                                                                  zh:'中国社交媒体平台全年内容策划与执行'}, tags:{en:['Editorial','Always-on','CRM'], zh:['内容','全年运营','关系']} },
 ];
 
-const FILTER_LABELS = {
-  all:{en:'All',zh:'全部'}, imc:{en:'IMC & Brand Voice',zh:'整合营销'},
-  content:{en:'Brand Content',zh:'品牌内容'}, social:{en:'Social Storytelling',zh:'社交叙事'},
-  digital:{en:'Digital Experience',zh:'数字体验'}, visual:{en:'Brand Visual Design',zh:'视觉设计'},
-  connections:{en:'Consumer Connections',zh:'消费者连接'},
-};
-/* one-word forms for the hall's filter chips, where the full names would not fit on one row */
-const FILTER_SHORT = {
-  imc:{en:'IMC',zh:'整合营销'}, content:{en:'Content',zh:'品牌内容'}, social:{en:'Social',zh:'社交叙事'},
-  digital:{en:'Digital',zh:'数字体验'}, visual:{en:'Visual',zh:'视觉设计'}, connections:{en:'Connections',zh:'消费者连接'},
-};
-
 const CLIENTS = ['Nike','Jordan','Converse','Salomon','Marshall','Decathlon','Moose Knuckles','UGG','Samsonite','La Mer','Estée Lauder','YSL','Le Creuset','Jack Wolfskin','Apede Mod','Harbin Beer','Genesis'];
 
-/* 'social' works are filed under 'content': one Brand Content chapter in the hall */
-/* Shared catalog: the mobile book rotates six works daily from this dataset. */
-const PROJECTS = [
-  {name:'The Fearless Ones — Double 11 Campaign',brand:'Jordan',cat:'imc',img:'pdf_images/page_07.jpg'},
-  {name:'Our Turn — Brand Voice & Family China Tour',brand:'Jordan',cat:'imc',img:'pdf_images/page_09.jpg'},
-  {name:'CNY Brand Voice Film',brand:'Jordan',cat:'imc',img:'pdf_images/page_10.jpg'},
-  {name:'CNY Brand Campaign',brand:'Converse',cat:'imc',img:'pdf_images/page_11.jpg'},
-  {name:'Next Stop Dong Dan Film',brand:'Jordan',cat:'imc',img:'pdf_images/page_12.jpg'},
-  {name:'Kobe Protro Brand Film',brand:'Nike',cat:'imc',img:'pdf_images/page_40.jpg'},
-  {name:'Kids Running Campaign',brand:'Nike',cat:'imc',img:'pdf_images/page_36.jpg'},
-  {name:'Genesis 2025',brand:'Salomon',cat:'content',img:'pdf_images/page_16.jpg'},
-  {name:'Winter Campaign',brand:'Decathlon',cat:'content',img:'pdf_images/page_17.jpg'},
-  {name:'3-in-1 Product Campaign',brand:'Moose Knuckles',cat:'content',img:'pdf_images/page_18.jpg'},
-  {name:'Air Max 95 Family Reunion — Hong Kong',brand:'Nike',cat:'content',img:'pdf_images/page_20.jpg'},
-  {name:'Yoga Zenvy Collection',brand:'Nike',cat:'content',img:'pdf_images/page_21.jpg'},
-  {name:'V-Day Campaign',brand:'Jordan',cat:'content',img:'pdf_images/page_22.jpg'},
-  {name:'Kids Drips',brand:'Jordan',cat:'content',img:'pdf_images/page_23.jpg'},
-  {name:'Remix Series',brand:'Jordan',cat:'content',img:'pdf_images/page_24.jpg'},
-  {name:'Air Peg 2K5 Retro Styling',brand:'Nike',cat:'content',img:'pdf_images/page_25.jpg'},
-  {name:'Sneakers Art Creative',brand:'Nike / Jordan / Converse',cat:'content',img:'pdf_images/page_26.jpg'},
-  {name:'Styles of All Seasons',brand:'UGG',cat:'content',img:'pdf_images/page_27.jpg'},
-  {name:'Snowboard CNY Campaign',brand:'Salomon',cat:'content',img:'pdf_images/page_28.jpg'},
-  {name:'Urban Styles',brand:'Samsonite',cat:'content',img:'pdf_images/page_29.jpg'},
-  {name:"Urban Girls' Escape",brand:'Apede Mod',cat:'content',img:'pdf_images/page_30.jpg'},
-  {name:'Pets Collection',brand:'Le Creuset',cat:'content',img:'pdf_images/page_31.jpg'},
-  {name:'Portraits of Runners Series',brand:'Nike Running',cat:'content',img:'pdf_images/page_33.jpg'},
-  {name:'24 Solar Terms',brand:'Jack Wolfskin',cat:'content',img:'pdf_images/page_39.jpg'},
-  {name:'Basketball CHBL Social',brand:'Nike',cat:'content',img:'pdf_images/page_41.jpg'},
-  {name:'Tmall Kids Engagement',brand:'Nike',cat:'digital',img:'pdf_images/page_45.jpg'},
-  {name:'Tmall Store Digital Retainer',brand:'Jordan',cat:'digital',img:'pdf_images/page_46.jpg'},
-  {name:'World of Flight — AR Experience',brand:'Jordan',cat:'digital',img:'pdf_images/page_47.jpg'},
-  {name:'Member Days Engagement Hub',brand:'Nike',cat:'digital',img:'pdf_images/page_48.jpg'},
-  {name:'Olympics "Road to Paris" Air Hub',brand:'Nike',cat:'digital',img:'pdf_images/page_49.jpg'},
-  {name:'Monitor II ANC Launch',brand:'Marshall',cat:'digital',img:'pdf_images/page_50.jpg'},
-  {name:'Family Tour Mini Program',brand:'Jordan',cat:'digital',img:'pdf_images/page_51.jpg'},
-  {name:'Nike Training Club',brand:'Nike',cat:'digital',img:'pdf_images/page_55.jpg'},
-  {name:'Luka 4 OOH',brand:'Jordan',cat:'visual',img:'pdf_images/page_57.jpg'},
-  {name:'Retail Design',brand:'Jordan',cat:'visual',img:'pdf_images/page_58.jpg'},
-  {name:'Release Design',brand:'Nike',cat:'visual',img:'pdf_images/page_59.jpg'},
-  {name:'Brand Design',brand:'La Mer',cat:'visual',img:'pdf_images/page_62.jpg'},
-  {name:'Campaign Release',brand:'Estée Lauder',cat:'visual',img:'pdf_images/page_63.jpg'},
-  {name:'D11 KV Design',brand:'YSL',cat:'visual',img:'pdf_images/page_64.jpg'},
-  {name:'Running Magazine "Fresh Off"',brand:'Nike',cat:'visual',img:'pdf_images/page_65.jpg'},
-  {name:'Ambassador Announcement — Harbin Beer x NBA',brand:'Harbin Beer',cat:'connections',img:'pdf_images/page_68.jpg'},
-  {name:'Mini Music Talent Show',brand:'Converse',cat:'connections',img:'pdf_images/page_69.jpg'},
-  {name:'Basketball Community Building',brand:'Converse',cat:'connections',img:'pdf_images/page_70.jpg'},
-  {name:'Summer Street Fit Fest',brand:'Nike NTC',cat:'connections',img:'pdf_images/page_71.jpg'},
-  {name:'Snowboard Day',brand:'Salomon',cat:'connections',img:'pdf_images/page_72.jpg'},
-];
-
-const IMAGE_MANIFEST = {
-  'page_01':{webp:'images/page_01.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAECBAX/xAAjEAEAAgEDAgcAAAAAAAAAAAABAAIDERIhBFETMUFSkrHB/8QAFgEBAQEAAAAAAAAAAAAAAAAABAED/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAEDEQIiMv/aAAwDAQACEQMRAD8A4uRMuHxaG1ohavodklYattq11O+v5F0gWrlHkdo/Imqzrkvr7n7mkHTRZVqshQkVsrbnyYRlh6P/2Q=='},
-  'page_02':{webp:'images/page_02.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAUGBP/EACMQAAIBBAEDBQAAAAAAAAAAAAECAAMEBREhEiIxJEFRYZH/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABcRAAMBAAAAAAAAAAAAAAAAAAABETH/2gAMAwEAAhEDEQA/AENO3t3113apsA8oTo+4jvHPbtjrf15t3pBu3fnbE/upNTVQJFLj5lTawSlxTy2PKlql1SDNzot4+oSFckmEUH//2Q=='},
-  'page_06':{webp:'images/page_06.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAIFBP/EACMQAAEEAgEDBQAAAAAAAAAAAAEAAgMREiEFEzFBBCJhgaL/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAv/EABgRAQADAQAAAAAAAAAAAAAAAAABAhES/9oADAMBAAIRAxEAPwCKSCQS39pGenglLupJi9x1W9JngDGh4WKV7mTuxNdlFVSoRRZxtaRfT9lhl9vtCocS4u4+Imr34+UJ0Y//2Q=='},
-  'page_07':{webp:'images/page_07.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAIBAwQG/8QAIxAAAgEDAwQDAAAAAAAAAAAAAQIDAAQREiExBRMVQSIyYf/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAVEQEBAAAAAAAAAAAAAAAAAAAAIf/aAAwDAQACEQMRAD8A5yQrlC032zsufif2t3i7ksFheN1KghzxzVUEUb3USsgKmQAgjkZpZ5pNWgOQqFlULtgZz6oGaKKLSl00glA37YBBoqepsy3WFYqNC7A49UUpH//Z'},
-  'page_08':{webp:'images/page_08.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAAAAUEBv/EACIQAAICAQMEAwAAAAAAAAAAAAECAAMEERMhBSMxUmHB8P/EABUBAQEAAAAAAAAAAAAAAAAAAAID/8QAGhEBAAIDAQAAAAAAAAAAAAAAAQACAxEhIv/aAAwDAQACEQMRAD8A5LX9rL+EK36StW2WsaqxgR8EyBNtTMFxACQNz7hVCMqWew1T8dphx6mIy7rEy7UVyqq2gA8CICuzcpbJ6eT/2Q=='},
-  'page_09':{webp:'images/page_09.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQCAwX/xAAjEAACAQMDBAMAAAAAAAAAAAABAgMABBEFIUESMXGREyIz/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQL/xAAXEQEBAQEAAAAAAAAAAAAAAAARAAED/9oADAMBAAIRAxEAPwBbRYpJLSYmxhmUMcvI26fXjNZsETSH5IpFDIocDPccnyKZTVLxEdVmOG75UHjxV1oAdFu16VxvwM9hzRUuFOEqY1Mlq0jndmMWcn1RSialeBf2PoUUO15zcb//2Q=='},
-  'page_10':{webp:'images/page_10.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAMEAgX/xAAhEAEAAQMEAgMAAAAAAAAAAAABAgADEQQSITETYRRxgf/EABYBAQEBAAAAAAAAAAAAAAAAAAQDBf/EABoRAQEAAgMAAAAAAAAAAAAAAAEAAgMEEkH/2gAMAwEAAhEDEQA/AOeaG8RbTcs7WIqycL6rWlsx0pMvXItuZl8aKfdNA2/lInJhJ2uM8Ufu2njxDxq/lhxBzE6fVFSPOF7e6Kkko1AX/9k='},
-  'page_11':{webp:'images/page_11.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAgP/xAAjEAEBAAIBAgYDAAAAAAAAAAABAgADERIhBBMiMUFCUWHB/8QAFgEBAQEAAAAAAAAAAAAAAAAAAwQF/8QAGhEBAAMBAQEAAAAAAAAAAAAAAQACEQMxQf/aAAwDAQACEQMRAD8Aj7InbQarIAOeo/uajR5n2KV4H8uUDTrvxCVEoNfH6zg0yBPpKkUOwvGFbAl/E6Xtg/Irv1VpsjqKOBGfbhwx2dUMSs98MLZoFAMfZ//Z'},
-  'page_12':{webp:'images/page_12.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAMFBAb/xAAfEAACAwEAAQUAAAAAAAAAAAABAgADERJRBCIxMnL/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABYRAQEBAAAAAAAAAAAAAAAAAAAREv/aAAwDAQACEQMRAD8A5c859m38xtPpzYoYkAbmGb7KqwTiAb85GkDlfapwYNUGWJpHvrau90ccspwjxCUbD25LKpPnkQiGn//Z'},
-  'page_16':{webp:'images/page_16.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAECBAUG/8QAIxAAAgEDAwUBAQAAAAAAAAAAAQIDAAQRBSExEyJBYYEyM//EABQBAQAAAAAAAAAAAAAAAAAAAAL/xAAZEQACAwEAAAAAAAAAAAAAAAAAEQISIQH/2gAMAwEAAhEDEQA/AFZalMlp0VvoWl/KkuNh6qTm6iuYluHEidDuUPlpNt8fa5Yk4B845q5pcjy6hBHI7MgbABPAxQ2OjfJYjSfVdZjmkS1jYQhu1WiBKjwD8opNCpubjd/6Hh2Hge6Kd2Ch/9k='},
-  'page_17':{webp:'images/page_17.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAQGAf/EACMQAAIBAwMEAwAAAAAAAAAAAAECAwAEERITIQUiUWExQtH/xAAWAQEBAQAAAAAAAAAAAAAAAAABAwT/xAAZEQEAAwEBAAAAAAAAAAAAAAABAAIRIjH/2gAMAwEAAhEDEQA/AE4+nRTINO6r44DYwePPukbq3it7hY9t9QYgmTGlj6wKoJpXM9shPaUOQABn5/KzYiuLyKOaNZEV3ADDPihto7Gp0ZJi82kkVVRBhBnJ5J80VWR9LsXQFrWInn60VESaGrvs/9k='},
-  'page_18':{webp:'images/page_18.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQBAgX/xAAeEAACAgIDAQEAAAAAAAAAAAABAwACESEEEjFR8P/EABUBAQEAAAAAAAAAAAAAAAAAAAEC/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AwFrsV5NaYBFe2R6ZbilKeWu7qdl7PXPv4xUE49kEk3oCdS0muc5Tm0utQXmg7Vzne4RJ+r6+QgX/2Q=='},
-  'page_20':{webp:'images/page_20.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQCAwX/xAAhEAEAAgEEAQUAAAAAAAAAAAABAgMABBESIWEiIzGBkf/EABQBAQAAAAAAAAAAAAAAAAAAAAP/xAAZEQEBAQADAAAAAAAAAAAAAAABACECETH/2gAMAwEAAhEDEQA/AMeyuimcY1BJknKS7p18GQjGVkpHWwcg4fmK12TLq0exEcfsusubmybJ477+TDO/GdR0ldX7dpEhE9I9+frDKdV3e74YgZC8tv/Z'},
-  'page_21':{webp:'images/page_21.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQBAgP/xAAgEAABBAICAwEAAAAAAAAAAAABAAIDESExBBMSQVHR/8QAFgEBAQEAAAAAAAAAAAAAAAAAAwEC/8QAFREBAQAAAAAAAAAAAAAAAAAAAAH/2gAMAwEAAhEDEQA/AGY53QTuLXnrORe6OKWwojeh8SbJH8jg8Z0x8y6UNJPsUfxM9bDtoObyjPFiKrINoUa0hRp//9k='},
-  'page_22':{webp:'images/page_22.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAUGAwT/xAAiEAACAQQBBAMAAAAAAAAAAAABAgMABBESIQUGMUETIpH/xAAWAQEBAQAAAAAAAAAAAAAAAAABAgP/xAAZEQACAwEAAAAAAAAAAAAAAAAAAQIDETH/2gAMAwEAAhEDEQA/AGAurszrj5QpBGCp/a4eqi5mtdbopFE0i6vryTnwfdUWBvS/uRFbpXKg5lXPFOj0hZWEErxnnBOCDRWskSbt9B5PqitFbJLCXBH/2Q=='},
-  'page_23':{webp:'images/page_23.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAQFAv/EACEQAAIBBAEFAQAAAAAAAAAAAAECAwAEETEhEhRhcaGx/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAEC/8QAGxEAAgIDAQAAAAAAAAAAAAAAAAECAxESITH/2gAMAwEAAhEDEQA/ANNbRwvEzKijq4OjVMS2/blg+HAOCM7x9pSRVlgAkUMN8jXFMQ28TKoK5G8ZNJWNrojWl4TxcXcYwLl28uwB/KKfNhaxkhIEA9UVNkawz//Z'},
-  'page_24':{webp:'images/page_24.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAgP/xAAlEAABBAECBQUAAAAAAAAAAAABAAIDESEEEhMUMYHBQUJRcZL/xAAUAQEAAAAAAAAAAAAAAAAAAAAB/8QAFREBAQAAAAAAAAAAAAAAAAAAABH/2gAMAwEAAhEDEQA/AHJWzc7NU7xG8kCnHHQjyuj4JWmeRj2gF5LGNyQL8pzT6aIwRjbih6lbIp1CwL+UQ1GdFPdO0Es5AA4m8Ddj67dkKoBfud+ihIf/2Q=='},
-  'page_25':{webp:'images/page_25.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAQb/xAAiEAACAQQCAQUAAAAAAAAAAAABAgMABRESEyFxBDFhgbH/xAAVAQEBAAAAAAAAAAAAAAAAAAACAf/EABgRAQEAAwAAAAAAAAAAAAAAAAABERIx/9oADAMBAAIRAxEAPwB8zOLxBlQg5NWBcDo5x1Tk9yhgncMjHD6k69efFZLDG1xRive6n7qLcJH5pxscc7ftHhLaXqJwTxv7/HdFc+PUTIAqyEACiptSxH//2Q=='},
-  'page_26':{webp:'images/page_26.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAUCAwQG/8QAIxAAAQMEAQQDAAAAAAAAAAAAAQIDEQAEBSESFDFhkUFxsf/EABQBAQAAAAAAAAAAAAAAAAAAAAH/xAAXEQEBAQEAAAAAAAAAAAAAAAAAATER/9oADAMBAAIRAxEAPwDNbW7yXVOtBDKhoL4Ezrfx+1B5zIs3KOL60lajKzsDz9brqiIJO/dKs8tQ6UTolRM+IouGaR3GbyjTnBN3MDctjv6oqt51aVjiQJEnQoo6a//Z'},
-  'page_27':{webp:'images/page_27.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAYBAwQF/8QAIxAAAQMDBAIDAAAAAAAAAAAAAQIDEQAEIQUSE1EUMUFxkv/EABUBAQEAAAAAAAAAAAAAAAAAAAAB/8QAGBEAAwEBAAAAAAAAAAAAAAAAAAEREiH/2gAMAwEAAhEDEQA/ALrLVHLm84nONAKigCTO4H76zFY3LRFpbFbIbuDuCQIwMxHXdTaMNjUmiE55iffzNd1tpuUp40R1tFR9KlkV7q5cUtEKAATEEDGTiim3xmD7Yb/AopBT/9k='},
-  'page_28':{webp:'images/page_28.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABQAC/8QAHxAAAgIBBQEBAAAAAAAAAAAAAQIAEQMEEiExkUJx/8QAFAEBAAAAAAAAAAAAAAAAAAAAAv/EABkRAQEBAAMAAAAAAAAAAAAAAAEAEgITMf/aAAwDAQACEQMRAD8APZ2x4ku3LXur5qL6J8L6TEpsPR46sgwsOwAAPRavZiyXo8gEwnLPkEGdS2Wyqg9EbwZQE/g8lF2scF//2Q=='},
-  'page_29':{webp:'images/page_29.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAEEAwX/xAAhEAACAQQCAgMAAAAAAAAAAAABAhEAAwQSIUEFIiMxUf/EABUBAQEAAAAAAAAAAAAAAAAAAAEC/8QAFREBAQAAAAAAAAAAAAAAAAAAAEH/2gAMAwEAAhEDEQA/AOdhO6+IfBDhbjs3xsDzIFSZ1gLl3WyQq3Vj0RpWIHZ5rDGdt7bbHaSJnqKT3HulmuNs31JqaYehf2IHP5FFS3mJfk9UVQf/2Q=='},
-  'page_30':{webp:'images/page_30.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAQCAwUG/8QAJBAAAgICAAQHAAAAAAAAAAAAAQIDEQAEEiEiYRMUMTJxgaH/xAAWAQEBAQAAAAAAAAAAAAAAAAACAQP/xAAaEQACAgMAAAAAAAAAAAAAAAAAAQIREiFB/9oADAMBAAIRAxEAPwBLRO5IvC8kkRWvcrc/vJwbe3rvL5kzeGRRY30/GdNEi16fuLb8aSQvG6Ky2DRGKUK6V6M1TuMqmNw6V0l3pq798MrQc3FtStQHEeQww0Z5o//Z'},
-  'page_31':{webp:'images/page_31.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAMBBAX/xAAhEAACAgICAQUAAAAAAAAAAAABAgADEiERQQQFImFxkf/EABcBAAMBAAAAAAAAAAAAAAAAAAACAwT/xAAaEQEBAAIDAAAAAAAAAAAAAAABAAIDERMh/9oADAMBAAIRAxEAPwBl3pt6WqAiBAgy5fjfe+ppeNUPFoWtiAobLZ3+iX7KkJC46Y8n5irakK4FRiOpMx4bV3OzxoV6yPax4+zCFe1JPZhHhC//2Q=='},
-  'page_33':{webp:'images/page_33.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAUBBAb/xAAiEAABAwIGAwAAAAAAAAAAAAABAAIDBCEFERIiMUEjUWH/xAAVAQEBAAAAAAAAAAAAAAAAAAABAP/EABcRAQEBAQAAAAAAAAAAAAAAAAABEVH/2gAMAwEAAhEDEQA/AMkSTl5Lj7wmmElokaXQl50XOuyUu6Tii208RbYmM55d3REmeZ9VM58jXEt2i/Q4QrGhvoITs4X/2Q=='},
-  'page_36':{webp:'images/page_36.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAABQADBv/EACEQAAICAgIBBQAAAAAAAAAAAAECABEDIQQSQRMiMTJh/8QAFwEAAwEAAAAAAAAAAAAAAAAAAAIDBP/EABoRAQADAQEBAAAAAAAAAAAAAAEAAhEDElH/2gAMAwEAAhEDEQA/AOWwdTl99sKPmowWVsQTtt1oUboUBUEEeXEi4+JS/YG/3Ujdw2aOQrn2avk6OR6igfABNaAqUN5LE52vxoSgVum+ozfmOeZ//9k='},
-  'page_37':{webp:'images/page_37.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAQFA//EACUQAAEDAQYHAAAAAAAAAAAAAAEAAgMhBRESMUGRBBQiMlFhwf/EABYBAQEBAAAAAAAAAAAAAAAAAAMCBP/EABkRAQADAQEAAAAAAAAAAAAAAAEAAgMhEv/aAAwDAQACEQMRAD8A0mkdGzsdITSmqRtVnN8LDiaWkvyOlFZnY1pGEXXjRIWqAGREUOMKLcI+QWuCSMbG8ybOu+IVWU9WQ29oR+ma651ToT//2Q=='},
-  'page_38':{webp:'images/page_38.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAgP/xAAgEAACAgICAgMAAAAAAAAAAAABAgMRACEEBRITIjFB/8QAFgEBAQEAAAAAAAAAAAAAAAAABAID/8QAGhEAAwADAQAAAAAAAAAAAAAAAAERAgMhEv/aAAwDAQACEQMRAD8AmQ8VpEllV1AiHkd7rNzGAdSzoEEhjG6F3nNpG9Q2B5JuhV0dZGBJlr83mfjlFZbKhnuYxHzAoQJ8BoCsMTlkeVy0jFj9WcMtWdDN1n//2Q=='},
-  'page_39':{webp:'images/page_39.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQBAgX/xAAgEAEAAgIBBAMAAAAAAAAAAAABAgMAERIEITFxIlGh/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAED/8QAFREBAQAAAAAAAAAAAAAAAAAAAAH/2gAMAwEAAhEDEQA/AMwjZOPJtEPqDhUjGW5c9OhDQ5Fd9qA2S17yvULNhyV138+szSmb3p65kYkp9j5Fnn8wxOztN0GGB//Z'},
-  'page_40':{webp:'images/page_40.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAIDBf/EACEQAAIBBAEFAQAAAAAAAAAAAAECAwAEESExEyJBUVKR/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAEC/8QAFxEAAwEAAAAAAAAAAAAAAAAAAAECEf/aAAwDAQACEQMRAD8ARLWJ51tzIOtjITzioXlq8DOggdygHA95rJtppHnMzOxlUjDZ2K0FvLlj3TyHX1WndEUoibcMThG1rjFFO88pbcjftFFVDEf/2Q=='},
-  'page_41':{webp:'images/page_41.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAQF/8QAIRAAAgEEAQUBAAAAAAAAAAAAAQMCAAQRITESEyIyUWH/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABURAQEAAAAAAAAAAAAAAAAAAAAR/9oADAMBAAIRAxEAPwDEaGJtkvZpbfU5NFdy6bBcNdZIzLQGOc1nsuXTtVqlMlcD4x+UVdvTOElsMTEkg4GieaVVTiVsMZk5H7SpnvYxmZyyRrgUoj//2Q=='},
-  'page_44':{webp:'images/page_44.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAMBAgQG/8QAIRABAAICAQMFAAAAAAAAAAAAAQACAxEhEhMiMjNBgaH/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8A5atcSHVnTjk7a6/ZVAt42bV+HWt/UZkpUqIRVeGBux+ghJxe2Qgf/9k='},
-  'page_45':{webp:'images/page_45.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAEEAgP/xAAgEAEAAgIBBAMAAAAAAAAAAAABAAIDIREEEjFREzJx/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQX/xAAbEQADAAIDAAAAAAAAAAAAAAAAAQIDITFRcf/aAAwDAQACEQMRAD8AafFRyd52cu/yPpusxZFKZBSZyPOW9XZx4nMpWlLtKlXXiR5mKW+S01T8LXLddIHp3CR/TVdHohBz0E401s//2Q=='},
-  'page_46':{webp:'images/page_46.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAMBAgQF/8QAJBAAAgEDAwMFAAAAAAAAAAAAAQIDAAQREiExEyNhNEFxobH/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AOCbSWQJ006meFUb8b/VRDavFLG8sHbDDOSMEZ8UyP1K/B/K2ySFELIEU6huEA4I8UCLmSAyDRaqi6fY80Va8u5pJQWYHC4GFA2oor//2Q=='},
-  'page_47':{webp:'images/page_47.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAUGAv/EACAQAAIBBAIDAQAAAAAAAAAAAAECAwAEERIFIRMjUTH/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABURAQEAAAAAAAAAAAAAAAAAAAAB/9oADAMBAAIRAxEAPwChhRDIddcNkE75pe3sgmA3mUOB45VIBP0HNSgu7iFvVKybPg69dYqjikeRVidiyeNW1J6z9qwpzx0kcdqFLLHgnCj8FFa42NIrQJGoVcnoUUo//9k='},
-  'page_48':{webp:'images/page_48.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQBAwX/xAAhEAACAQQCAgMAAAAAAAAAAAABAwIABBExEyEFQWFxsf/EABUBAQEAAAAAAAAAAAAAAAAAAAIE/8QAGREAAgMBAAAAAAAAAAAAAAAAAAECEiEx/9oADAMBAAIRAxEAPwDcF7b8U3RbmA9gbqDdJcvEXYMj0fqkERBVrWAPgVYqEYiWIgd1K5cGtFrnxyrlxY+9TyaOV5/TRTawDHsD3RS0V5LD/9k='},
-  'page_49':{webp:'images/page_49.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAUBAgME/8QAJxAAAQMDAgQHAAAAAAAAAAAAAQIDEQAEIRIxBRNRgRQjQUJxkbH/xAAWAQEBAQAAAAAAAAAAAAAAAAAFAgP/xAAZEQEAAwEBAAAAAAAAAAAAAAABAAIDESH/2gAMAwEAAhEDEQA/ANkv205fSDtE9qXcTdtRcNr8Q4kLbjyzgiTn7roZs7c5LYmZ3PWf2lvGHDZXDTdulCUcrZSAr1PUGjca1dPOxLZvU6yWXGw2Alyy0jA1pM96KrbPLLCZ04A9g6fFFbrxlVybAz//2Q=='},
-  'page_50':{webp:'images/page_50.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAMCBAb/xAAmEAABAwAIBwAAAAAAAAAAAAABAAIDBAURISIxMlESEyMzYXLB/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQL/xAAWEQEBAQAAAAAAAAAAAAAAAAAAAQL/2gAMAwEAAhEDEQA/AGCtKE0luLVf03ZrPUrlmWRzS60vOY8p0k0gLwHu17qvL3JPb6ozmQ2lvHCbDchTE8keFhAG1gQrD//Z'},
-  'page_51':{webp:'images/page_51.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAMEAQX/xAAgEAACAgEEAwEAAAAAAAAAAAABAgMRAAQSITEFFFFS/8QAFQEBAQAAAAAAAAAAAAAAAAAAAwT/xAAcEQACAgIDAAAAAAAAAAAAAAAAAQIRA/ASEyH/2gAMAwEAAhEDEQA/AOXu3ijIbqsf68sOkecwMYzQVnela/mbptXNFp9iPSg8WAe8b5NyfFrNwJGK2wUAnvJ4JNluST8ICZdzXEl3+jhkW42eT39wxOG0F2bZ/9k='},
-  'page_55':{webp:'images/page_55.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAgP/xAAgEAACAgICAwEBAAAAAAAAAAABAgMRAAQFIRITMSLR/8QAFgEBAQEAAAAAAAAAAAAAAAAAAgAB/8QAGBEBAQADAAAAAAAAAAAAAAAAABEBQWH/2gAMAwEAAhEDEQA/AK0nJQx/oKz2xXxUi7xfktnUn14GldkBY0CRYPV3mZlWOSFUUKDJ3Q+9Zz5HT1/TAnqBUeZAPdfMO4XVHX0I2hVvOQXZoMP5hjeqK10AwymGP//Z'},
-  'page_57':{webp:'images/page_57.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAMBBAb/xAAiEAACAQQBBAMAAAAAAAAAAAABAgMABBEhEhMUIjFBUbH/xAAWAQEBAQAAAAAAAAAAAAAAAAABAAP/xAAYEQEBAAMAAAAAAAAAAAAAAAAAARESMf/aAAwDAQACEQMRAD8AziWspjVhG3DAIJGKbDbFXDuocY9ZpjXEyWMYWRgMD5qv3UzEBpCwI2DulSCS26rc0UqPoboqJ5pC48iND1r8ooaTXHH/2Q=='},
-  'page_58':{webp:'images/page_58.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAIDBAX/xAAgEAACAQUAAwEBAAAAAAAAAAABAgMABBESIRMiYQUx/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQD/xAAXEQEBAQEAAAAAAAAAAAAAAAAAAREh/9oADAMBAAIRAxEAPwDgNACoFrJ5cdI16o+0ptpFmRZwUX+5GOCqI7LH681TmBV7E+WznL91UkfKYsNL+zc27aQPGyYzkxg0VjmkbfHMAAD1FFHTkf/Z'},
-  'page_59':{webp:'images/page_59.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQCBQb/xAAhEAACAgEEAgMAAAAAAAAAAAABAgARAwQhIjESQVFhkf/EABYBAQEBAAAAAAAAAAAAAAAAAAIDBP/EABsRAQACAgMAAAAAAAAAAAAAAAEAAhEhAwQS/9oADAMBAAIRAxEAPwDOLj4hQpar2qBXTDDyR2y736C/HXcf06gMHA5eXf5IYkXIMjOoJ+hXqH1qazrtrASpy0zWFraEYdFVyAoAhEWMSNuJy7n/2Q=='},
-  'page_62':{webp:'images/page_62.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAAAwAEBf/EACMQAAICAgEDBQEAAAAAAAAAAAECAwQAESESMXEFIkFRYWL/xAAVAQEBAAAAAAAAAAAAAAAAAAABAv/EABYRAQEBAAAAAAAAAAAAAAAAAAABEf/aAAwDAQACEQMRAD8A7ly/FWiVZSwaQhU43o77+MD1Gc13CGUsjL7iF/fsYtyvFLariReoDeuf6zRfrRWICkq7UsDwSOR4xRdoq73EVupo3BYlTITsD4HAyx0UMvOzrjvlgcf/2Q=='},
-  'page_63':{webp:'images/page_63.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAQFA//EACIQAAIBAwQCAwAAAAAAAAAAAAECAwAEEQUSITETQRQjgf/EABYBAQEBAAAAAAAAAAAAAAAAAAECA//EABcRAAMBAAAAAAAAAAAAAAAAAAABEQL/2gAMAwEAAhEDEQA/AK2qu8dqDasFlaVFyAD2eaWtL2RtL3NKfMAwJCjghiM1SvI1eBQwyN6mpPx4lsZQEA4bn32fdRXYaZg1a3DTxli7syttJOO/yistGQC1k7P2Hs59CikdNU//2Q=='},
-  'page_64':{webp:'images/page_64.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAIBAwQF/8QAIhAAAQMEAgIDAAAAAAAAAAAAAQIREgADBCExURNBcZGh/8QAFQEBAQAAAAAAAAAAAAAAAAAAAgP/xAAXEQEBAQEAAAAAAAAAAAAAAAAAEQEh/9oADAMBAAIRAxEAPwDuXMhU1eMI5IDnT9H9qbeTkySlZQNOpjwPWujWhOLYtgwthMjIt7PdKcKxOcDJmeZ4+6HVri90q2C/xRTUUgr/2Q=='},
-  'page_65':{webp:'images/page_65.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAMEAv/EAB8QAAICAwEAAwEAAAAAAAAAAAECAxEABCESMnGh0f/EABYBAQEBAAAAAAAAAAAAAAAAAAEAAv/EABcRAQEBAQAAAAAAAAAAAAAAAAABEVH/2gAMAwEAAhEDEQA/AGa2ns7cLpvtPQKlb4Qe46TSbUSJdR5AAxI9C6r+5akKsUZvRJkCklz0V9/uVywpHE8iDyyKSpBPMFEMctrZ1nLHpNVZwzEuxMr0s0gFA/I4YbW8nH//2Q=='},
-  'page_68':{webp:'images/page_68.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAgP/xAAkEAACAQQBAgcAAAAAAAAAAAABAgMABBESMRMhFCJRYXGBsf/EABcBAAMBAAAAAAAAAAAAAAAAAAABAwT/xAAYEQEBAAMAAAAAAAAAAAAAAAAAAREhQf/aAAwDAQACEQMRAD8Am9UeHI6Z3wMPvx9YpmOKboxM1t5AocMCvA5/amZPrTIuJXADOSFj0AxwK03PENOd5G8Ny6yLq2c49j3FFYmmkuJDJM2zkAZ+O1FOB//Z'},
-  'page_69':{webp:'images/page_69.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAMEBf/EABwQAAIDAQEBAQAAAAAAAAAAAAECAAMSESEFIv/EABYBAQEBAAAAAAAAAAAAAAAAAAABAv/EABgRAQEAAwAAAAAAAAAAAAAAAAABAhEh/9oADAMBAAIRAxEAPwDAV6EU662mHMt6BEMNIG0DkHwSckkDpPkt+XWltli2KGXg8gx7SLrjoAYIUAdCchLLqKtn8CEjWq//2Q=='},
-  'page_70':{webp:'images/page_70.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAMEAQX/xAAhEAEAAgIBAwUAAAAAAAAAAAABAhEAAxIEEyEiMUFx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAIB/8QAFREBAQAAAAAAAAAAAAAAAAAAAAH/2gAMAwEAAhEDEQA/AOH25bQOPGQUKuSxiQ6hlsWhR4tPt+43YpGFKfTi47dkdnib5HHRidg36pF/NuGbOcpNqrWGFX//2Q=='},
-  'page_71':{webp:'images/page_71.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABQAE/8QAHhAAAgEFAQEBAAAAAAAAAAAAAQIAAwQREiEiMWH/xAAWAQEBAQAAAAAAAAAAAAAAAAAEAgP/xAAcEQEAAgEFAAAAAAAAAAAAAAABAAIRExQhIjH/2gAMAwEAAhEDEQA/AEXrttTcLSLr9z9A/JhrIKyNo4bY9wMAGYr1Q6Wzkewx9Dh4YpaMatqpfp4Mww2D2QdjEDe2qhiNScc5KNIiqCFGMkmUdvrnGJjpk//Z'},
-  'page_72':{webp:'images/page_72.webp',blur:'data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAUGBP/EACMQAAIBBAEDBQAAAAAAAAAAAAECAwAEERIhBRNRFCIxQWH/xAAVAQEBAAAAAAAAAAAAAAAAAAABAv/EABkRAAIDAQAAAAAAAAAAAAAAAAABAhETEv/aAAwDAQACEQMRAD8AoXmiTO8iqM8++pu7a7fqM6QbkdxtQq/PimsFtDcZaaNXYjJJH5W2cD1PawNHhGw881SdESXQkTpHUmXLFVJ+i4zRTy0UNG2wBwxHPNFOjDJH/9k='}
-};
-
 /* === LANGUAGE SYSTEM === */
+const WECHAT_ENTRY_URL = window.location.href.split('#')[0];
 const urlParams = new URLSearchParams(window.location.search);
 let lang = urlParams.get('lang') || localStorage.getItem('skand-lang') || 'en';
 if (lang !== 'zh' && lang !== 'en') lang = 'en';
@@ -1541,16 +1432,21 @@ if (dropdown && dropdownToggle) {
 }
 
 /* === CUSTOM CURSOR === */
-const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(max-width: 768px)').matches;
+const cursorMedia = window.matchMedia('(pointer: fine) and (min-width: 769px)');
 const dot = document.querySelector('.cursor-dot');
 const ring = document.querySelector('.cursor-ring');
 let mx=0,my=0,rx=0,ry=0,hasPointer=false;
 document.addEventListener('mousemove', e => {
-  mx=e.clientX; my=e.clientY; hasPointer=true;
-  if(!isTouchDevice) document.documentElement.classList.add('custom-cursor-enabled');
+  mx=e.clientX; my=e.clientY; hasPointer=cursorMedia.matches;
+  document.documentElement.classList.toggle('custom-cursor-enabled', hasPointer);
+});
+cursorMedia.addEventListener('change', () => {
+  hasPointer=false;
+  document.documentElement.classList.remove('custom-cursor-enabled');
+  ring?.classList.remove('hovering');
 });
 function animCursor(){
-  if(document.hidden || isTouchDevice){ requestAnimationFrame(animCursor); return; }
+  if(document.hidden || !cursorMedia.matches){ requestAnimationFrame(animCursor); return; }
   rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
   if(dot){
     dot.style.left=mx-4+'px'; dot.style.top=my-4+'px';
@@ -1563,10 +1459,10 @@ function animCursor(){
   requestAnimationFrame(animCursor);
 }
 animCursor();
-// Delegated: the gallery's 45 .hall-art-btn elements are built by
+// Delegated: the gallery's .hall-art-btn elements are built by
 // scripts/gallery/gallery.js, which runs after this inline script, so a
 // querySelectorAll pass here would find none of them.
-const HOVER_SEL = 'a,.service-card,.nav-links a,.hall-art-btn,.viewer-close,.viewer-arrow,.viewer-nav button';
+const HOVER_SEL = 'a,.service-card,.nav-links a,.hall-art-btn,.viewer-close,.viewer-nav button';
 document.addEventListener('mouseover', e => {
   if (ring && e.target.closest && e.target.closest(HOVER_SEL)) ring.classList.add('hovering');
 });
@@ -1662,7 +1558,8 @@ bindPageFlip('a[href^="egg.html"]', () => 'egg.html?v=8&lang=' + lang);
 <!-- Gallery hall. Classic script, not a module: it reads PROJECTS,
      IMAGE_MANIFEST, T and `lang` from the lexical scope above. Must load
      after the inline script, hence no `defer` and no `type=module`. -->
-<script src="scripts/gallery/gallery.js?v=8"></script>
+<script src="scripts/gallery/gallery.js?v=10"></script>
+<script src="scripts/share/wechat.js?v=2"></script>
 <script type="module" src="scripts/logo/dispatcher.js?v=17"></script>
 </body>
 </html>
