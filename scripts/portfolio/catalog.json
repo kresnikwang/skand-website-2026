@@ -293,9 +293,7 @@
     "brand": "Jordan",
     "name": "Barry's Game",
     "metadataSource": "ocr-reviewed",
-    "id": "digital-01",
-    "published": false,
-    "publicationNote": "Temporarily offline at owner request on 2026-10-10; restore only on explicit request."
+    "id": "digital-01"
   },
   {
     "source": "Digital/Digital.002.jpeg",

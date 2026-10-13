@@ -468,6 +468,19 @@
     "metadataSource": "ocr-reviewed"
   },
   {
+    "source": "Digital/Digital.001.jpeg",
+    "name": "Barry's Game",
+    "brand": "Jordan",
+    "category": "digital",
+    "width": 1920,
+    "height": 1080,
+    "sourceBytes": 2011596,
+    "fullBytes": 1724624,
+    "previewBytes": 150556,
+    "losslessPixelMatch": true,
+    "metadataSource": "ocr-reviewed"
+  },
+  {
     "source": "Digital/Digital.002.jpeg",
     "name": "Tmall Kids Engagement",
     "brand": "Nike",

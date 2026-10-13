@@ -271,6 +271,12 @@ const PROJECTS = [
     "img": "images/portfolio/product-23.webp"
   },
   {
+    "name": "Barry's Game",
+    "brand": "Jordan",
+    "cat": "digital",
+    "img": "images/portfolio/digital-01.webp"
+  },
+  {
     "name": "Tmall Kids Engagement",
     "brand": "Nike",
     "cat": "digital",
@@ -696,6 +702,13 @@ const IMAGE_MANIFEST = {
     "webp": "images/portfolio/product-23-preview.webp",
     "full": "images/portfolio/product-23.webp",
     "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAMFAv/EACEQAAICAgIBBQAAAAAAAAAAAAECAAMRIRJBBAUUYZGx/8QAFwEAAwEAAAAAAAAAAAAAAAAAAQIDBP/EABoRAAICAwAAAAAAAAAAAAAAAAABAhEDEyH/2gAMAwEAAhEDEQA/AGW+m3paqhECBByy+N976lHx6va0rWSAoPLBYfolCypCQvHTHJ+Yu2pCgQqOI6k1GmatzycZlHRl0T9mEK9qSezCOGkf/9k=",
+    "width": 1920,
+    "height": 1080
+  },
+  "digital-01": {
+    "webp": "images/portfolio/digital-01-preview.webp",
+    "full": "images/portfolio/digital-01.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAIDAQb/xAAjEAACAgIBAgcAAAAAAAAAAAABAgARAyFRBEETIjEycaHh/8QAFgEBAQEAAAAAAAAAAAAAAAAAAgED/8QAGhEAAgIDAAAAAAAAAAAAAAAAABEBIQNBUf/aAAwDAQACEQMRAD8A5s7VRsih2/JLwS2RmPmAI9dXGGfIgpWoVx8THzZCCS2+aHJhs2UbGbpnY3SoOwuEgeoy37/oQlsLx8P/2Q==",
     "width": 1920,
     "height": 1080
   },
