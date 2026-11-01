@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "build:play": "npm --prefix scripts/skand-brawler run build",
+    "dev:play": "npm --prefix scripts/skand-brawler run dev"
+  },
   "devDependencies": {
     "sharp": "^0.34.5"
   }

@@ -21,7 +21,7 @@ fi
 
 # Transfer the complete asset catalog before publishing the HTML that uses it.
 rsync -az --delete --delay-updates \
-  --exclude='index.html' \
+  --exclude='/index.html' \
   --exclude='.git/' \
   --exclude='node_modules/' \
   --exclude='.DS_Store' \
@@ -34,6 +34,7 @@ rsync -az --delete --delay-updates \
   --exclude='scripts/share/build-covers.cjs' \
   --exclude='scripts/portfolio/catalog.json' \
   --exclude='scripts/portfolio/build.js' \
+  --exclude='scripts/skand-brawler/' \
   --exclude='README.md' \
   --exclude='download-fonts.py' \
   --exclude='package.json' \

@@ -1,0 +1,789 @@
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap');
+
+:root {
+  --bg-dark: #0D0D11;
+  --bg-midnight: #141824;
+  --coral: #FF4D3D;
+  --steel-blue: #4A7CFF;
+  --white: #F4F6F8;
+  --crit-gold: #FFD166;
+  --dark-grey: #2A2C38;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  font-family: 'Silkscreen', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  color: var(--white);
+}
+
+/* CRT Scanline & Subtle Aesthetic */
+.game-viewport {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at center, #141824 0%, #0D0D11 100%);
+  overflow: hidden;
+}
+
+.pixel-canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+
+/* Scanline overlay */
+.scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.22) 50%
+  );
+  background-size: 100% 4px;
+  z-index: 20;
+  opacity: 0.5;
+}
+
+/* UI Overlay Layer */
+.ui-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+}
+
+.interactive {
+  pointer-events: auto;
+}
+
+/* Pixel Button Styling */
+.arcade-btn {
+  background: var(--bg-midnight);
+  color: var(--white);
+  border: 2px solid var(--white);
+  font-family: 'Silkscreen', -apple-system, BlinkMacSystemFont, monospace;
+  font-size: 13px;
+  padding: 10px 18px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  position: relative;
+  transition: all 0.1s ease;
+  box-shadow: 2px 2px 0 var(--dark-grey);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.arcade-btn:hover {
+  background: var(--white);
+  color: var(--bg-dark);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--coral);
+}
+
+.arcade-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--dark-grey);
+}
+
+.arcade-btn-primary {
+  background: var(--coral);
+  color: var(--white);
+  border-color: var(--coral);
+  box-shadow: 3px 3px 0 #8B1E14;
+}
+
+.arcade-btn-primary:hover {
+  background: var(--crit-gold);
+  color: var(--bg-dark);
+  border-color: var(--crit-gold);
+  box-shadow: 4px 4px 0 #B8860B;
+}
+
+.arcade-btn-secondary {
+  background: rgba(20, 24, 36, 0.8);
+  color: rgba(244, 246, 248, 0.9);
+  border-color: rgba(244, 246, 248, 0.3);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+.arcade-btn-secondary:hover {
+  background: rgba(244, 246, 248, 0.15);
+  color: var(--white);
+  border-color: var(--white);
+  box-shadow: 3px 3px 0 var(--steel-blue);
+}
+
+/* Small HUD icon button */
+.hud-icon-btn {
+  background: rgba(13, 13, 20, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  pointer-events: auto;
+}
+
+.hud-icon-btn:hover {
+  border-color: var(--coral);
+  background: rgba(255, 77, 61, 0.2);
+}
+
+.hud-icon-btn:active {
+  transform: scale(0.92);
+}
+
+/* Mobile Virtual Arcade Pad */
+.arcade-touch-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 35;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 18px 16px;
+}
+
+/* On desktops with precise mice, hide the large virtual touch buttons */
+@media (hover: hover) and (pointer: fine) {
+  .arcade-touch-overlay {
+    display: none;
+  }
+}
+
+.arcade-touch-group {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  pointer-events: auto;
+}
+
+.arcade-touch-group-actions {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  pointer-events: auto;
+}
+
+.arcade-touch-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(16, 20, 32, 0.75);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Silkscreen', monospace;
+  font-size: 16px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transition: transform 0.06s ease;
+}
+
+.arcade-touch-btn:active {
+  transform: scale(0.90);
+  background: rgba(255, 77, 61, 0.35);
+  border-color: var(--coral);
+}
+
+/* Jump button staggered higher for natural thumb reach */
+.arcade-touch-btn-jump {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 22px;
+  border-color: #00F0FF;
+  color: #00F0FF;
+  background: rgba(0, 240, 255, 0.12);
+}
+
+.arcade-touch-btn-jump:active {
+  background: rgba(0, 240, 255, 0.4);
+}
+
+/* Slash button larger as primary combat action */
+.arcade-touch-btn-slash {
+  width: 74px;
+  height: 74px;
+  border-color: var(--coral);
+  color: var(--coral);
+  background: rgba(255, 77, 61, 0.2);
+}
+
+.arcade-touch-btn-slash:active {
+  background: var(--coral);
+  color: #FFFFFF;
+}
+
+.arcade-btn-label {
+  font-size: 8px;
+  margin-top: 1px;
+  letter-spacing: 0.5px;
+}
+
+/* Modal and Drawer */
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 16, 0.88);
+  backdrop-filter: blur(4px);
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+}
+
+.modal-content {
+  background: #141824;
+  border: 2px solid var(--steel-blue);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.9), 0 0 15px rgba(74, 124, 255, 0.2);
+  max-width: 680px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Scrollbar */
+.modal-content::-webkit-scrollbar {
+  width: 5px;
+}
+.modal-content::-webkit-scrollbar-track {
+  background: #0D0D11;
+}
+.modal-content::-webkit-scrollbar-thumb {
+  background: var(--steel-blue);
+}
+
+/* ================= RETRO CYBERPUNK ARCADE TITLE SCREEN ================= */
+@keyframes arcadeCoinBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.2; }
+}
+
+@keyframes arcadeStartGlow {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(255, 77, 61, 0.65), 0 0 32px rgba(255, 209, 102, 0.35);
+    border-color: #FFD166;
+  }
+  50% {
+    box-shadow: 0 0 26px rgba(255, 77, 61, 0.9), 0 0 45px rgba(255, 77, 61, 0.6);
+    border-color: #FF4D3D;
+  }
+}
+
+@keyframes stageBadgePulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.arcade-title-overlay {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: clamp(12px, 3vh, 24px) clamp(14px, 4vw, 32px);
+  background: radial-gradient(circle at 50% 25%, rgba(13, 13, 24, 0.35) 0%, rgba(8, 8, 16, 0.82) 100%);
+  backdrop-filter: blur(2px);
+  box-sizing: border-box;
+}
+
+.arcade-header-bar {
+  width: 100%;
+  max-width: 840px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 6px 14px;
+  background: rgba(13, 13, 24, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+}
+
+.arcade-coin-tag {
+  color: var(--crit-gold);
+  font-weight: bold;
+  animation: arcadeCoinBlink 1.2s infinite steps(1);
+}
+
+.arcade-hero-card {
+  width: 100%;
+  max-width: 840px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: clamp(16px, 3vh, 26px);
+  margin: auto 0;
+}
+
+.arcade-brand-subtitle {
+  color: var(--coral);
+  font-size: clamp(10px, 1.8vw, 12px);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: rgba(255, 77, 61, 0.12);
+  border: 1px solid rgba(255, 77, 61, 0.3);
+  padding: 4px 14px;
+  border-radius: 2px;
+}
+
+.arcade-grand-title {
+  font-size: clamp(32px, 7vw, 56px);
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 3px;
+  margin: 0;
+  line-height: 1.1;
+  text-shadow:
+    0 0 10px rgba(255, 77, 61, 0.8),
+    0 0 25px rgba(255, 77, 61, 0.5),
+    3px 3px 0 #00F0FF;
+}
+
+.arcade-stage-tour-strip {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 780px;
+}
+
+.arcade-stage-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(18, 20, 36, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 4px 9px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.arcade-stage-badge:hover {
+  border-color: #00F0FF;
+  background: rgba(0, 240, 255, 0.15);
+  color: #FFFFFF;
+  transform: translateY(-2px);
+}
+
+.arcade-features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 800px;
+}
+
+@media (max-width: 720px) {
+  .arcade-features-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+.arcade-feature-card {
+  background: rgba(16, 18, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 12px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.arcade-feature-card-title {
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.arcade-feature-card-desc {
+  font-size: 9px;
+  color: #9EA4B8;
+  line-height: 1.45;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.arcade-cta-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 440px;
+}
+
+.arcade-start-btn {
+  background: linear-gradient(135deg, #FF4D3D 0%, #D83120 100%);
+  color: #FFFFFF;
+  font-size: clamp(14px, 2.4vw, 17px);
+  padding: clamp(12px, 2vh, 16px) 24px;
+  letter-spacing: 1.5px;
+  font-weight: bold;
+  border: 2px solid #FFD166;
+  animation: arcadeStartGlow 2.4s infinite ease-in-out;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 0 16px rgba(255, 77, 61, 0.6);
+  transition: transform 0.1s ease;
+}
+
+.arcade-start-btn:hover {
+  background: linear-gradient(135deg, #FFD166 0%, #F4A261 100%);
+  color: #080811;
+  transform: scale(1.02);
+}
+
+.arcade-start-btn:active {
+  transform: scale(0.98);
+}
+
+.arcade-sub-btns {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.arcade-controls-guide-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(10, 10, 18, 0.7);
+  padding: 5px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.arcade-keycap {
+  color: #00F0FF;
+  font-weight: bold;
+  background: rgba(0, 240, 255, 0.1);
+  padding: 1px 6px;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 2px;
+}
+
+.arcade-footer-meta {
+  width: 100%;
+  max-width: 840px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 1px;
+  padding-top: 8px;
+}
+
+/* High-DPI Crisp HUD Toast Notifications (Stage banners & Tutorial guide) */
+.hud-toast-banner {
+  align-self: center;
+  margin: 6px auto 0;
+  background: rgba(8, 10, 20, 0.92);
+  border: 1px solid #FFD166;
+  box-shadow: 0 0 16px rgba(255, 209, 102, 0.35);
+  padding: 6px 16px;
+  text-align: center;
+  pointer-events: none;
+  animation: hudToastFade 0.25s ease-out;
+  border-radius: 2px;
+}
+
+.hud-toast-title {
+  font-family: Silkscreen, monospace;
+  font-size: 13px;
+  color: #FFFFFF;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+}
+
+.hud-toast-sub {
+  font-size: 10px;
+  color: #FFD166;
+  letter-spacing: 1px;
+  margin-top: 2px;
+  opacity: 0.9;
+}
+
+.hud-toast-tutorial {
+  align-self: center;
+  margin: 6px auto 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(10, 14, 28, 0.92);
+  border: 1px solid #00F0FF;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.3);
+  padding: 5px 14px;
+  pointer-events: none;
+  border-radius: 2px;
+  animation: hudToastFade 0.25s ease-out;
+  max-width: 95%;
+}
+
+.hud-toast-badge {
+  font-family: Silkscreen, monospace;
+  font-size: 9px;
+  font-weight: bold;
+  background: rgba(0, 240, 255, 0.2);
+  color: #00F0FF;
+  padding: 2px 6px;
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  border-radius: 2px;
+  letter-spacing: 1px;
+}
+
+.hud-toast-text {
+  font-family: Silkscreen, monospace;
+  font-size: 11px;
+  color: #F4F6F8;
+  letter-spacing: 0.8px;
+  line-height: 1.3;
+}
+
+@keyframes hudToastFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================= SETTLEMENT / ENDGAME RESULT SCREEN ================= */
+.settlement-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(6, 6, 12, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: clamp(10px, 3vh, 20px) 12px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.settlement-card {
+  background: #110D20;
+  border: 2px solid var(--coral);
+  max-width: 480px;
+  width: 100%;
+  max-height: 94vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: clamp(12px, 2vh, 18px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.4vh, 12px);
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.95);
+  border-radius: 2px;
+}
+
+.settlement-card::-webkit-scrollbar {
+  width: 4px;
+}
+.settlement-card::-webkit-scrollbar-track {
+  background: #090712;
+}
+.settlement-card::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.settlement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+.settlement-kicker {
+  font-family: Silkscreen, monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-weight: bold;
+}
+
+.settlement-title {
+  font-family: Silkscreen, monospace;
+  font-size: clamp(14px, 3.2vw, 17px);
+  color: var(--gold);
+  margin: 3px 0 0;
+  line-height: 1.2;
+}
+
+.settlement-seed-pill {
+  font-family: Silkscreen, monospace;
+  font-size: 9px;
+  color: var(--gold);
+  background: rgba(255, 209, 102, 0.1);
+  padding: 3px 6px;
+  border: 1px solid rgba(255, 209, 102, 0.3);
+  white-space: nowrap;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.settlement-summary-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  font-family: Silkscreen, monospace;
+  font-size: 10px;
+  font-weight: bold;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 2px;
+}
+
+.settlement-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 8px 12px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settlement-stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settlement-stat-label {
+  font-size: 9px;
+  color: #8C92A4;
+  letter-spacing: 0.8px;
+  font-family: Silkscreen, monospace;
+}
+
+.settlement-stat-val {
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  font-family: Silkscreen, monospace;
+}
+
+.settlement-relic-box {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px 10px;
+  border-radius: 2px;
+}
+
+.settlement-relic-canvas-wrap {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.settlement-sub-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .settlement-sub-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+  .settlement-sub-actions button:last-child {
+    grid-column: span 2;
+  }
+}
+
+
+

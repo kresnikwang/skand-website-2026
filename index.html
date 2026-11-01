@@ -456,6 +456,9 @@ footer a{color:var(--grey);text-decoration:none}
   z-index:2;
   display:flex;
   justify-content:center;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
   padding:0 20px;
 }
 .bside-float{
@@ -864,6 +867,12 @@ footer a{color:var(--grey);text-decoration:none}
         <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </a>
+    <a href="/play/" class="bside-float reveal" id="playGameBtn" data-t="hero-play-game" data-tk="playGame">
+      <span>Enter The Game</span>
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+        <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
   </div>
 </section>
 
@@ -886,7 +895,7 @@ footer a{color:var(--grey);text-decoration:none}
 /* === i18n DATA === */
 const T = {
   nav: { about:{en:'About',zh:'关于'}, services:{en:'Services',zh:'服务'}, work:{en:'Work',zh:'作品'}, clients:{en:'Clients',zh:'客户'}, contact:{en:'Contact',zh:'联系'}, bside:{en:'B-Side',zh:'B-Side'}, tool:{en:'Tool',zh:'工具'}, develop:{en:'DEVELOP',zh:'自研工具'} },
-  hero: { tagline:{en:'Create For More',zh:'Create For More'}, subtitle:{en:'and be seen by the world',zh:'让世界看见你的光芒'}, scroll:{en:'Scroll',zh:'向下'}, findBSide:{en:'Find B-Side',zh:'探索 B-Side'} },
+  hero: { tagline:{en:'Create For More',zh:'Create For More'}, subtitle:{en:'and be seen by the world',zh:'让世界看见你的光芒'}, scroll:{en:'Scroll',zh:'向下'}, findBSide:{en:'Find B-Side',zh:'探索 B-Side'}, playGame:{en:'Enter The Game',zh:'Enter The Game'} },
   about: { 
     label:{en:'About Us',zh:'关于我们'}, 
     heading:{en:'Shanghai independent studio for brands that need China-native creative with global craft.',zh:'上海独立创意工作室——为需要中国本地化创意与全球级执行的品牌而生。'},
@@ -1019,6 +1028,9 @@ function applyLang() {
   gSet('viewer-index', T.gallery.index[lang]);
   if (q('[data-t="hero-find-b-side"]')) {
     q('[data-t="hero-find-b-side"]').querySelector('span').textContent = T.hero.findBSide[lang];
+  }
+  if (q('[data-t="hero-play-game"]')) {
+    q('[data-t="hero-play-game"]').querySelector('span').textContent = T.hero.playGame[lang];
   }
   // About
   q('[data-t="about-label"]').textContent = T.about.label[lang];
