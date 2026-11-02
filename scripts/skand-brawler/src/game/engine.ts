@@ -297,6 +297,19 @@ export class GameEngine {
   private toTheme: SceneTheme = BASE_THEMES.tokyo;
   private ambientFxTimer = 0;
 
+  // === 优化方案 1: Victory Gate (关卡清除仪式) ===
+  public clearFlagTimer = 0; // 旗帜升起动画时间
+  public clearFlyScoreTimer = 0; // 得分飞入计时
+  public clearScanTimer = 0; // 扫光计时
+  public clearScoreFlyX = 0; // 得分飞入起点
+  public clearScoreFlyY = 0; // 得分飞入起点
+  public clearScoreValue = 0; // 飞入得分值
+
+  // === 优化方案 2 & 3: Transit (穿越通道) + Entrance (入场仪式) ===
+  public transitTimer = 0; // 穿越通道计时
+  public entranceTimer = 0; // 新关卡入场计时
+  public entranceDelayDone = false; // 入场安全观察完成标志
+
   public currentStageId: StageId = 'tokyo';
   public stageBannerText: string | null = null;
   public stageBannerTimer = 0;
@@ -1116,6 +1129,17 @@ export class GameEngine {
     this.fx.spawn('holy/sunburst', { x: this.config.width / 2, y: this.config.height / 2 - 10 }, 'front', 0.65);
     this.fx.spawn('ui/confetti', { x: this.config.width / 2, y: this.config.height / 2 - 25 }, 'front', 0.90);
     this.fx.spawn('scifi/teleporter-pad', { x: this.heroX, y: this.config.heroY + 4 }, 'back', 0.45);
+
+    // === 方案1: Victory Gate (关卡清除仪式) ===
+    // 旗帜升起动画 (1.2秒)
+    this.clearFlagTimer = 1.2;
+    // 扫光效果 (从左到右扫过屏幕，持续0.6秒)
+    this.clearScanTimer = 0.6;
+    // 得分飞入：从英雄位置飞向计分板
+    this.clearFlyScoreTimer = 1.0;
+    this.clearScoreFlyX = this.heroX;
+    this.clearScoreFlyY = this.config.heroY + this.heroYOffset - 32;
+    this.clearScoreValue = bonus;
   }
 
   public advanceToNextStage() {
@@ -1131,7 +1155,16 @@ export class GameEngine {
     this.stageProgress = 0;
     this.stageWaveIndex = 0;
     this.stageWaveActionIndex = 0;
-    this.transitionTimer = 0.8;
+    this.transitionTimer = 0.8; // 过渡时间增加到0.8秒（戏剧化切换）
+
+    // === 方案2: Transit (穿越通道) ===
+    // 穿越期间英雄自动向前奔跑
+    this.transitTimer = 0.8;
+
+    // === 方案3: Entrance (入场仪式) ===
+    // 新关卡入场：安全观察时间（1.0秒内无敌人出现）
+    this.entranceTimer = 1.0;
+    this.entranceDelayDone = false;
 
     this.showStageBanner(nextStage.bannerName);
     audio.playStageTransition();
@@ -1397,6 +1430,17 @@ export class GameEngine {
 
     if (this.state !== 'PLAYING') return;
 
+    // === 方案1: Victory Gate 计时处理 ===
+    if (this.clearFlagTimer > 0) {
+      this.clearFlagTimer -= dt;
+    }
+    if (this.clearScanTimer > 0) {
+      this.clearScanTimer -= dt;
+    }
+    if (this.clearFlyScoreTimer > 0) {
+      this.clearFlyScoreTimer -= dt;
+    }
+
     // Update Timers
     if (this.invulnerableTimer > 0) {
       this.invulnerableTimer -= dt;
@@ -1550,17 +1594,51 @@ export class GameEngine {
       const stage = this.currentStage;
       const isCore = stage.id === 'core';
 
-      // Smooth theme color transition
-      if (this.transitionTimer > 0) {
-        this.transitionTimer -= dt;
-        const progress = 1 - Math.max(0, this.transitionTimer / 0.8);
-        this.city.setTheme(this.fromTheme, this.toTheme, progress);
-      } else {
-        this.city.setTheme(stage.theme);
+      // === 方案2: Transit (穿越通道) - 过渡期间英雄自动向前奔跑 ===
+      if (this.transitTimer > 0) {
+        this.transitTimer -= dt;
+        // 英雄自动向右奔跑（穿越通道感）
+        this.heroX += COMBAT_PARAMS.heroSpeed * 2.5 * dt;
+        this.heroX = Math.min(this.config.width * 0.78, this.heroX);
+        this.heroFacing = 'RIGHT';
+        // 背景加速滚动（模拟高速穿越）
+        this.city.update(dt, stage.scrollScreensPerSecond * this.config.width * 2.5, 0, isCore);
+        // 在穿越期间保持过渡混合（戏剧化主题切换）
+        if (this.transitionTimer > 0) {
+          this.transitionTimer -= dt;
+          const progress = 1 - Math.max(0, this.transitionTimer / 0.8);
+          this.city.setTheme(this.fromTheme, this.toTheme, progress);
+        } else {
+          this.city.setTheme(this.toTheme);
+        }
       }
 
-      // Parallax city propulsion (handles procedural rain, steam, and wind seamlessly)
-      this.city.update(dt, stage.scrollScreensPerSecond * this.config.width, heroVx, isCore);
+      // === 方案3: Entrance (入场仪式) - 新关卡安全观察时间 ===
+      if (this.entranceTimer > 0) {
+        this.entranceTimer -= dt;
+        if (this.entranceTimer <= 0) {
+          this.entranceDelayDone = true;
+        }
+        // 在入场期间不生成敌人（安全观察）
+      } else {
+        this.entranceDelayDone = true;
+      }
+
+      // Smooth theme color transition (非穿越状态下)
+      if (this.transitTimer <= 0) {
+        if (this.transitionTimer > 0) {
+          this.transitionTimer -= dt;
+          const progress = 1 - Math.max(0, this.transitionTimer / 0.8);
+          this.city.setTheme(this.fromTheme, this.toTheme, progress);
+        } else {
+          this.city.setTheme(stage.theme);
+        }
+      }
+
+      // Parallax city propulsion (正常状态)
+      if (this.transitTimer <= 0) {
+        this.city.update(dt, stage.scrollScreensPerSecond * this.config.width, heroVx, isCore);
+      }
 
       // Handle Stage Clear Breather Window (Combo decay paused)
       if (this.stageClearing) {
@@ -1575,9 +1653,15 @@ export class GameEngine {
           this.bossY = Math.min(this.bossTargetY, this.bossY + dt * 140);
         }
       } else {
-        this.spawnTimer -= dt;
-        if (this.spawnTimer <= 0) {
-          this.spawnStageWavePattern(stage);
+        // 方案3: 入场期间不生成敌人（安全观察时间）
+        if (this.entranceDelayDone && this.transitTimer <= 0) {
+          this.spawnTimer -= dt;
+          if (this.spawnTimer <= 0) {
+            this.spawnStageWavePattern(stage);
+          }
+        } else if (!this.entranceDelayDone && this.transitTimer <= 0) {
+          // 入场计时中，不生成敌人但计时器继续走
+          this.spawnTimer -= dt;
         }
       }
 
@@ -2257,8 +2341,11 @@ export class GameEngine {
     // 8. pixelfx Front Layer
     this.fx.drawFront(ctx);
 
-    // 9. Floating Combat Popups (Stage banners and tutorial guides are rendered in high-DPI HTML layer)
+    // 9. Floating Combat Popups
     this.drawFloatingTexts(ctx);
+
+    // 9.5 Victory Gate 效果渲染 (方案1)
+    this.drawVictoryGateEffects(ctx);
 
     ctx.restore();
 
@@ -2582,6 +2669,64 @@ export class GameEngine {
     ctx.textAlign = 'center';
     ctx.fillText(this.activeTutorialText, cx, cy + 3);
     ctx.restore();
+  }
+
+  // === 方案1: Victory Gate 视觉效果渲染 ===
+  private drawVictoryGateEffects(ctx: CanvasRenderingContext2D) {
+    const sc = this.config.scale;
+    const w = this.config.width;
+    const h = this.config.height;
+
+    // 1. 旗帜升起动画
+    if (this.clearFlagTimer > 0) {
+      const progress = 1 - (this.clearFlagTimer / 1.2); // 0 -> 1
+      const flagH = Math.min(36, progress * 48) * sc;
+      const flagY = 60 - progress * 30; // 从上方降下
+      const flagX = w / 2 - 6 * sc;
+
+      ctx.save();
+      // 旗杆
+      ctx.fillStyle = '#FFD166';
+      ctx.fillRect(flagX, flagY, 2 * sc, flagH);
+      // 旗帜
+      ctx.fillStyle = '#FF2A6D';
+      ctx.fillRect(flagX + 2 * sc, flagY + 4 * sc, 12 * sc, 10 * sc);
+      // 旗帜装饰
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `bold ${Math.min(6, 3 + progress * 3)}px Silkscreen`;
+      ctx.textAlign = 'center';
+      ctx.fillText('★', flagX + 8 * sc, flagY + 10 * sc);
+      ctx.restore();
+    }
+
+    // 2. 扫光效果 (从左到右扫过)
+    if (this.clearScanTimer > 0) {
+      const progress = 1 - (this.clearScanTimer / 0.6);
+      const scanX = w * progress;
+      ctx.save();
+      const grad = ctx.createLinearGradient(scanX - 40 * sc, 0, scanX + 40 * sc, 0);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(scanX - 60 * sc, 0, 120 * sc, h);
+      ctx.restore();
+    }
+
+    // 3. 得分飞入动画 (从英雄位置飞向计分板方向)
+    if (this.clearFlyScoreTimer > 0) {
+      const progress = 1 - (this.clearFlyScoreTimer / 1.0);
+      const flyX = this.clearScoreFlyX + (w - this.clearScoreFlyX - 30) * progress;
+      const flyY = this.clearScoreFlyY - 60 * progress;
+
+      ctx.save();
+      ctx.font = `bold ${12 + 4 * (1 - progress)}px Silkscreen`;
+      ctx.fillStyle = PALETTE.critGold;
+      ctx.textAlign = 'center';
+      ctx.globalAlpha = Math.max(0, 1 - progress);
+      ctx.fillText(`+${this.clearScoreValue}PT`, flyX, flyY);
+      ctx.restore();
+    }
   }
 
   private drawPauseOverlay(ctx: CanvasRenderingContext2D) {
