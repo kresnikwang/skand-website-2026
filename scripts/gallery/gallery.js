@@ -158,6 +158,10 @@
         r.on = true;
         r.col = colNo + Math.floor(j / ROWS);
         r.row = j % ROWS;
+        // A chapter's last column is often short. Hang what it has around the
+        // wall's middle instead of leaving empty hooks underneath it.
+        const inCol = Math.min(ROWS, ch.arts.length - Math.floor(j / ROWS) * ROWS);
+        r.rowPos = r.row + (ROWS - inCol) / 2;
         r.x = x + Math.floor(j / ROWS) * L.COL_W;
         visArts.push(r);
       });
@@ -227,7 +231,7 @@
 
     visArts.forEach((rec) => {
       rec.el.style.left = (rec.x + (L.COL_W - L.ART_W) / 2) + 'px';
-      rec.el.style.top  = (L.ROW_TOP + rec.row * L.ROW_GAP) + 'px';
+      rec.el.style.top  = (L.ROW_TOP + rec.rowPos * L.ROW_GAP) + 'px';
       /* a little depth and a hair of rotation so the hang doesn't read as a
          spreadsheet — deterministic, so it survives re-layout */
       rec.el.style.transform =
@@ -385,6 +389,14 @@
       });
     }, { rootMargin: '600px 0px' });
     arts.forEach(r => io.observe(r.el));
+    // The opening bays are on screen before the observer's first callback, so
+    // do not make them wait for it: fetch them now, ahead of everything else.
+    visArts.slice(0, isHall() ? ROWS * 2 : 2).forEach((r) => {
+      r.img.fetchPriority = 'high';
+      r.img.decoding = 'sync';
+      loadArtwork(r);
+      io.unobserve(r.el);
+    });
   }
   function loadAllArtwork() { arts.forEach((r) => { if (r.on) loadArtwork(r); }); }
   function loadArtwork(rec) {
@@ -939,9 +951,12 @@
     kicker: document.getElementById('viewerKicker'),
     brand: document.getElementById('viewerBrand'),
     name: document.getElementById('viewerName'),
-    client: document.getElementById('viewerClient'),
     cat: document.getElementById('viewerCategory'),
-    index: document.getElementById('viewerIndex'),
+    summary: document.getElementById('viewerSummary'),
+    yearRow: document.getElementById('viewerYearRow'),
+    year: document.getElementById('viewerYear'),
+    scopeRow: document.getElementById('viewerScopeRow'),
+    scope: document.getElementById('viewerScope'),
     current: document.getElementById('viewerCurrent'),
     total: document.getElementById('viewerTotal'),
     close: document.getElementById('viewerClose'),
@@ -971,12 +986,19 @@
   function paintPanel() {
     const p = PROJECTS[viewer.idx];
     const pos = viewerPos() + 1;
-    viewer.kicker.textContent = (viewer.source === 'index' ? catName(PROJECTS[viewer.idx].cat) : T.gallery.kicker[lang]) + ' / ' + pad2(pos);
+    // The kicker is the work's stable catalogue id; the position in the current
+    // set lives only in the counter by the arrows.
+    viewer.kicker.textContent = 'SK / ' + pad2(viewer.idx + 1);
     viewer.brand.textContent = p.brand;
-    viewer.client.textContent = p.brand;
     viewer.name.textContent = p.name;
     viewer.cat.textContent = catName(p.cat);
-    viewer.index.textContent = 'SK / ' + pad2(viewer.idx + 1);
+    // Optional catalogue fields (see scripts/portfolio/build.js). A plain string
+    // or an {en, zh} pair both work; a missing field hides its row.
+    const loc = v => (v && typeof v === 'object' ? (v[lang] || v.en || '') : (v || ''));
+    const opt = (row, el, v) => { const t = String(loc(v)); row.hidden = !t; el.textContent = t; };
+    opt(viewer.summary, viewer.summary, p.summary);
+    opt(viewer.yearRow, viewer.year, p.year);
+    opt(viewer.scopeRow, viewer.scope, p.scope);
     viewer.current.textContent = pad2(pos);
     viewer.total.textContent = pad2(viewer.items.length);
     viewer.img.alt = p.brand + ' — ' + p.name;

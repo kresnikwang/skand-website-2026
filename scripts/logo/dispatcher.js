@@ -28,9 +28,10 @@ import('./shared.js')
     // arrival. Generous, because the alternative is a blank full-screen section
     // for a beat.
     const io = new IntersectionObserver(
-      (entries) => {
+      async (entries) => {
         if (!entries.some((e) => e.isIntersecting)) return;
         io.disconnect();
+        await shared.wordmarkReady();
 
         const mod = map[day];
         // Monday has no Pixi module — a static gradient wordmark is the point.
@@ -40,7 +41,7 @@ import('./shared.js')
         }
         // Cache-bust only the day module (never shared.js — it must stay a
         // single instance, and the day modules import it without a query).
-        import(`./${mod}.js?v=17`)
+        import(`./${mod}.js?v=19`)
           .then((m) => {
             if (!m.init) {
               shared.mountStaticWordmark(stage);

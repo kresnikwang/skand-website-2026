@@ -60,7 +60,10 @@ async function build() {
     assert(before.data.equals(after.data), p.source + ': full-resolution pixels changed');
     const blur = await sharp(input).resize(20).jpeg({ quality: 40 }).toBuffer();
     const full = 'images/portfolio/' + p.id + '.webp';
-    projects[index] = { name: p.name, brand: p.brand, cat: p.cat, img: full };
+    // year / scope / summary are optional catalog fields shown in the work
+    // viewer's side panel. scope and summary may be a string or { en, zh }.
+    const extra = Object.fromEntries(['year', 'scope', 'summary'].filter(k => p[k]).map(k => [k, p[k]]));
+    projects[index] = { name: p.name, brand: p.brand, cat: p.cat, img: full, ...extra };
     manifest[p.id] = {
       webp: 'images/portfolio/' + p.id + '-preview.webp',
       full, blur: 'data:image/jpeg;base64,' + blur.toString('base64'),

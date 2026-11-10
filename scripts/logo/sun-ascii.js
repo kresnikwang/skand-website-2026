@@ -13,7 +13,7 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import {
   isMobile, prepareStage, makeApp,
-  fitAndCenter, trackPointer, onResize,
+  fitAndCenter, trackPointer, onResize, wordmarkFont,
 } from './shared.js';
 
 const RAMP = ' .:-=+*#%@';
@@ -45,7 +45,7 @@ export async function init(stageEl) {
   sx.textAlign = 'center';
   sx.textBaseline = 'middle';
   const fpx = Math.floor(sampleH * 0.62);
-  sx.font = `500 ${fpx}px 'Cormorant Garamond', Georgia, serif`;
+  sx.font = wordmarkFont(fpx);
   try { sx.letterSpacing = (7 * SS) + 'px'; } catch (_) {}
   sx.fillText('SKAND', sampleW / 2, sampleH / 2);
   const data = sx.getImageData(0, 0, sampleW, sampleH).data;
