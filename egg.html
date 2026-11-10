@@ -37,7 +37,7 @@ a,button{font:inherit;cursor:none}
 .cursor-ring.hovering{width:58px;height:58px;border-color:var(--coral)}
 .shell{position:fixed;inset:0;opacity:0;transform:scale(.985);transition:opacity .9s ease,transform .9s cubic-bezier(.22,1,.36,1)}
 .shell.ready{opacity:1;transform:scale(1)}
-#eggCanvas{position:fixed;inset:0;width:100vw;height:100vh;display:block;z-index:1}
+#eggCanvas{position:fixed;inset:0;width:100vw;height:100vh;display:block;z-index:1;transition:opacity .45s ease}
 nav{
   position:fixed;top:0;left:0;right:0;z-index:20;
   display:flex;align-items:center;justify-content:space-between;
@@ -95,6 +95,15 @@ nav{
 }
 .hud-btn:hover,.hud-btn.active{border-color:var(--coral);background:rgba(232,86,58,.12);color:var(--coral)}
 .hud-bg{min-height:28px;padding:0 11px;font-size:9px;letter-spacing:1.2px}
+.world-caption{
+  position:fixed;left:50%;top:92px;z-index:20;transform:translate(-50%,-6px);
+  display:grid;justify-items:center;gap:8px;text-align:center;pointer-events:none;
+  opacity:0;transition:opacity .9s ease,transform .9s cubic-bezier(.22,1,.36,1);
+  text-shadow:0 1px 18px rgba(0,0,0,.45);
+}
+.world-caption.visible{opacity:1;transform:translate(-50%,0)}
+.world-name{font-size:10px;letter-spacing:5px;text-transform:uppercase;color:rgba(240,237,232,.72)}
+.world-line{font-family:var(--font-display);font-style:italic;font-size:clamp(20px,2.6vw,30px);letter-spacing:.02em;color:var(--white)}
 .loading{
   position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--black);
   transition:opacity .5s ease;
@@ -136,6 +145,8 @@ nav{
     <a class="back-btn" href="index.html" data-back data-tk="back">Back</a>
   </nav>
 
+  <div class="world-caption" id="worldCaption" aria-live="polite"></div>
+
   <div class="intro" id="intro">
     <div class="intro-inner">
       <div class="intro-kicker" data-tk="thanks">Wow. Almost nobody finds this page.</div>
@@ -151,15 +162,15 @@ nav{
       <button type="button" class="hud-btn" id="assembleBtn" data-tk="assemble">Assemble</button>
       <button type="button" class="hud-btn" id="scatterBtn" data-tk="scatter">Scatter</button>
     </div>
-    <div class="hud-row" id="bgRow" role="group" aria-label="Background">
-      <span class="hud-label" data-tk="bgLabel">Background</span>
+    <div class="hud-row" id="bgRow" role="group" aria-label="World">
+      <span class="hud-label" data-tk="bgLabel">World</span>
       <!-- bg buttons injected by scene.js -->
     </div>
   </div>
 </div>
 
 <script type="module">
-  import('./scripts/egg/scene.js?v=8').catch((err) => {
+  import('./scripts/egg/scene.js?v=9').catch((err) => {
     console.error('[egg] module load failed', err);
     const el = document.getElementById('loading');
     if (el) {
