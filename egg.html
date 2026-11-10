@@ -161,6 +161,7 @@ nav{
       <span class="hud-hint" data-tk="hint">Drag to orbit · Move to disturb · Scroll to zoom</span>
       <button type="button" class="hud-btn" id="assembleBtn" data-tk="assemble">Assemble</button>
       <button type="button" class="hud-btn" id="scatterBtn" data-tk="scatter">Scatter</button>
+      <button type="button" class="hud-btn active" id="soundBtn" data-tk="soundOn" aria-pressed="true">♪ Sound</button>
     </div>
     <div class="hud-row" id="bgRow" role="group" aria-label="World">
       <span class="hud-label" data-tk="bgLabel">World</span>
@@ -170,7 +171,7 @@ nav{
 </div>
 
 <script type="module">
-  import('./scripts/egg/scene.js?v=10').catch((err) => {
+  import('./scripts/egg/scene.js?v=11').catch((err) => {
     console.error('[egg] module load failed', err);
     const el = document.getElementById('loading');
     if (el) {

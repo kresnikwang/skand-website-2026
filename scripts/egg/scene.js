@@ -46,6 +46,8 @@ const I18N = {
   },
   assemble: { en: 'Assemble', zh: '聚合' },
   scatter: { en: 'Scatter', zh: '打散' },
+  soundOn: { en: '♪ Sound', zh: '♪ 配乐' },
+  soundOff: { en: '♪ Muted', zh: '♪ 静音' },
   bgLabel: { en: 'World', zh: '世界' },
   fail: {
     en: 'Failed to load the egg. Please refresh.',
@@ -99,6 +101,7 @@ const startBtn = document.getElementById('startBtn');
 const hud = document.getElementById('hud');
 const assembleBtn = document.getElementById('assembleBtn');
 const scatterBtn = document.getElementById('scatterBtn');
+const soundBtn = document.getElementById('soundBtn');
 const cursorDot = document.getElementById('cursorDot');
 const cursorRing = document.getElementById('cursorRing');
 
@@ -167,6 +170,7 @@ const WORLDS = [
     id: 'mirror',
     label: { en: 'Mirror', zh: '天空之镜' },
     caption: { en: 'Dusk on the flooded salt flats', zh: '黄昏 · 盐沼如镜' },
+    bgm: 'audio/egg/mirror.mp3',
     sun: [-0.34, 0.05, -1],
     groundMode: 1,
     groundColor: [1, 1, 1],
@@ -190,6 +194,7 @@ const WORLDS = [
     id: 'aurora',
     label: { en: 'Aurora', zh: '极光' },
     caption: { en: 'A frozen fjord, a sky that moves', zh: '冰封峡湾 · 流动的天' },
+    bgm: 'audio/egg/aurora.mp3',
     sun: [0.3, 0.6, 0.5],
     groundMode: 1,
     groundColor: [0.75, 0.9, 0.95],
@@ -223,6 +228,7 @@ const WORLDS = [
     id: 'lanterns',
     label: { en: 'Lanterns', zh: '灯海' },
     caption: { en: 'A thousand wishes over still water', zh: '千灯入夜 · 一湖心愿' },
+    bgm: 'audio/egg/lanterns.mp3',
     sun: [0.45, 0.42, -0.8],
     groundMode: 1,
     groundColor: [0.9, 0.9, 1],
@@ -249,6 +255,7 @@ const WORLDS = [
       en: 'Arrakis — spice in the wind, monoliths in the haze',
       zh: '厄拉科斯 · 香料随风，巨构隐现',
     },
+    bgm: 'audio/egg/dunes.mp3',
     sun: [-0.82, 0.18, 0.18],
     groundMode: 2,
     groundColor: [0.78, 0.45, 0.22],
@@ -286,6 +293,7 @@ const WORLDS = [
     id: 'nebula',
     label: { en: 'Nebula', zh: '星云' },
     caption: { en: 'Adrift beside a ringed giant', zh: '星环之侧 · 漂流' },
+    bgm: 'audio/egg/nebula.mp3',
     sun: [0.6, 0.3, 0.7],
     groundMode: 0,
     groundColor: [0, 0, 0],
@@ -1687,9 +1695,59 @@ function applyWorld(id) {
   });
 }
 
+// —— Per-world Soundtrack (Hans Zimmer style, smooth crossfade) ——
+const bgmPlayers = {};
+let soundEnabled = true;
+const BGM_MAX_VOL = 0.65;
+
+function getBgmPlayer(w) {
+  if (!w?.bgm) return null;
+  if (!bgmPlayers[w.id]) {
+    const audio = new Audio(w.bgm);
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = 0;
+    bgmPlayers[w.id] = audio;
+  }
+  return bgmPlayers[w.id];
+}
+
+function playActiveBgm(targetWorld = world) {
+  if (!soundEnabled || !introDone || document.hidden) return;
+  const player = getBgmPlayer(targetWorld);
+  if (player && player.paused) {
+    player.play().catch(() => {});
+  }
+}
+
+function updateBgmCrossfade(dt) {
+  const step = Math.min(1, dt * 1.35);
+  WORLDS.forEach((w) => {
+    const player = bgmPlayers[w.id];
+    if (!player) return;
+    const isActive = soundEnabled && introDone && !document.hidden && world.id === w.id;
+    const target = isActive ? BGM_MAX_VOL : 0;
+    const nextVol = player.volume + (target - player.volume) * step;
+    player.volume = Math.max(0, Math.min(1, Math.abs(nextVol - target) < 0.004 ? target : nextVol));
+    if (target === 0 && player.volume <= 0.005 && !player.paused) {
+      player.pause();
+    }
+  });
+}
+
+function updateSoundBtnUI() {
+  if (!soundBtn) return;
+  soundBtn.classList.toggle('active', soundEnabled);
+  soundBtn.setAttribute('aria-pressed', soundEnabled ? 'true' : 'false');
+  soundBtn.dataset.tk = soundEnabled ? 'soundOn' : 'soundOff';
+  soundBtn.textContent = t(soundEnabled ? 'soundOn' : 'soundOff');
+}
+
 let switchToken = 0;
 function setWorld(id, instant) {
   if (!instant && id === world.id) return;
+  const nextW = WORLD_BY_ID[id] || WORLDS[0];
+  playActiveBgm(nextW);
   const token = ++switchToken;
   if (instant || prefersReduced) {
     applyWorld(id);
@@ -1700,6 +1758,7 @@ function setWorld(id, instant) {
   setTimeout(() => {
     if (token !== switchToken) return;
     applyWorld(id);
+    playActiveBgm(world);
     canvas.style.opacity = '1';
     if (introDone) showCaption(world);
   }, 460);
@@ -1906,6 +1965,7 @@ function animate() {
 
   updateParticles(t, dt);
   props[world.id]?.update(t, dt);
+  updateBgmCrossfade(dt);
   rim.intensity = rimBaseIntensity * (1 + Math.sin(now * 0.002) * 0.15);
 
   controls.update();
@@ -1925,7 +1985,10 @@ window.addEventListener('resize', onResize);
 
 document.addEventListener('visibilitychange', () => {
   running = !document.hidden;
-  if (running) {
+  if (document.hidden) {
+    Object.values(bgmPlayers).forEach((p) => p.pause());
+  } else if (running) {
+    playActiveBgm(world);
     last = performance.now();
     animate();
   }
@@ -1934,6 +1997,8 @@ document.addEventListener('visibilitychange', () => {
 async function boot() {
   try {
     initBgButtons();
+    updateSoundBtnUI();
+    getBgmPlayer(WORLDS[0]);
     const font = await new FontLoader().loadAsync(FONT_URL);
     buildLetters(font);
     setWorld(WORLDS[0].id, true);
@@ -1950,6 +2015,7 @@ startBtn?.addEventListener('click', () => {
   intro?.classList.add('is-hidden');
   hud?.classList.add('visible');
   introDone = true;
+  playActiveBgm(world);
   setMode('assemble');
   for (let i = 0; i < letterMeshes.length; i++) {
     letterMeshes[i].position.copy(scatterPositions[i]);
@@ -1957,6 +2023,12 @@ startBtn?.addEventListener('click', () => {
   }
   controls.autoRotate = true;
   showCaption(world);
+});
+
+soundBtn?.addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  updateSoundBtnUI();
+  if (soundEnabled) playActiveBgm(world);
 });
 
 assembleBtn?.addEventListener('click', () => setMode('assemble'));
