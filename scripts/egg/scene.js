@@ -245,26 +245,42 @@ const WORLDS = [
   {
     id: 'dunes',
     label: { en: 'Dunes', zh: '沙丘' },
-    caption: { en: 'Golden hour, long shadows', zh: '金色时刻 · 长影落沙' },
-    sun: [-0.8, 0.22, 0.3],
+    caption: {
+      en: 'Arrakis — spice in the wind, monoliths in the haze',
+      zh: '厄拉科斯 · 香料随风，巨构隐现',
+    },
+    sun: [-0.82, 0.18, 0.18],
     groundMode: 2,
-    groundColor: [0.93, 0.6, 0.36],
+    groundColor: [0.78, 0.45, 0.22],
     water: null,
-    fog: [[0.93, 0.6, 0.36], 0.005],
-    ambient: 0.1,
-    key: [0xffc890, 4.2],
-    fill: [0x88a8ff, 0.35],
-    rim: [0xffa060, 0],
-    exposure: 0.95,
-    bloom: [0.25, 0.6, 1.1],
-    env: 1.0,
+    fog: [[0.78, 0.45, 0.22], 0.0052],
+    ambient: 0.12,
+    key: [0xffba78, 4.4],
+    fill: [0xd89860, 0.62],
+    rim: [0xff7a28, 1.35],
+    exposure: 0.98,
+    bloom: [0.36, 0.68, 0.92],
+    env: 1.15,
     shadows: true,
-    particles: { mode: 'dust', color: 0xffd8a0, size: 0.05, opacity: 0.55 },
+    particles: { mode: 'dust', color: 0xffcf8c, size: 0.06, opacity: 0.62 },
     grounded: true,
     bob: 0,
     maxPolar: 1.5,
-    front: { color: 0xf2d2a8, metalness: 0, roughness: 0.72 },
-    edge: { color: 0xffc070, metalness: 1, roughness: 0.3 },
+    front: {
+      color: 0xe8c396,
+      metalness: 0.36,
+      roughness: 0.46,
+      clearcoat: 0.26,
+      emissive: 0x3a1605,
+      emissiveIntensity: 0.12,
+    },
+    edge: {
+      color: 0xffa850,
+      metalness: 0.92,
+      roughness: 0.22,
+      emissive: 0xff5e14,
+      emissiveIntensity: 0.34,
+    },
   },
   {
     id: 'nebula',
@@ -455,20 +471,87 @@ vec3 skyColor(vec3 d){
   return col;
 }`,
   dunes: /* glsl */ `
+vec4 arrakisMoon(vec3 d, vec3 mDir, float rad, float seed){
+  if (dot(d, mDir) <= 0.) return vec4(0.);
+  vec3 mx = normalize(cross(vec3(0., 1., 0.), mDir));
+  vec3 my = cross(mDir, mx);
+  vec2 uv = vec2(dot(d, mx), dot(d, my)) / rad;
+  float r2 = dot(uv, uv);
+  if (r2 >= 1.) return vec4(0.);
+  float z = sqrt(max(1e-4, 1. - r2));
+  vec3 n = normalize(uv.x * mx + uv.y * my + z * mDir);
+  // Warm crescent lighting from the low Arrakis sun
+  vec3 moonSun = normalize(vec3(-.85, .28, .42));
+  float lit = smoothstep(-.12, .78, dot(n, moonSun));
+  float maria = fbm(uv * 3.0 + seed) * .62 + fbm(uv * 8.0 + seed * 2.1) * .38;
+  float crater = smoothstep(.05, 0., abs(length(uv - vec2(.16, -.1)) - .25));
+  vec3 darkSide = vec3(.16, .09, .06);
+  vec3 brightSide = mix(vec3(.78, .50, .28), vec3(1.35, 1.05, .74), maria - crater * .22);
+  float rim = pow(max(1e-4, 1. - z), 2.2);
+  vec3 col = mix(darkSide, brightSide, lit) + vec3(1.4, .92, .52) * rim * pow(max(1e-4, lit), .6) * .75;
+  float aa = smoothstep(1., .94, sqrt(r2));
+  return vec4(col, aa * (.42 + .52 * lit));
+}
+vec4 guildHeighliner(vec3 d){
+  vec3 cDir = normalize(vec3(-.25, .185, -.950));
+  if (dot(d, cDir) <= 0.) return vec4(0.);
+  vec3 ux = normalize(cross(vec3(.16, 1., 0.), cDir));
+  vec3 uy = cross(cDir, ux);
+  vec2 p = vec2(dot(d, ux), dot(d, uy));
+  vec2 q = vec2(p.x / .034, p.y / .0105);
+  float hull = length(vec2(max(abs(q.x) - .45, 0.), q.y));
+  if (hull >= 1.) return vec4(0.);
+  float edge = smoothstep(1., .88, hull);
+  // Deep hollow portal bay on the right end (Villeneuve Heighliner cylinder)
+  float bay = smoothstep(.30, .18, length((q - vec2(.38, 0.)) * vec2(1.15, .82)));
+  float bayRim = smoothstep(.33, .27, length((q - vec2(.38, 0.)) * vec2(1.15, .82))) * (1. - bay);
+  // Smooth matte-obsidian cylinder with a razor-thin golden solar crescent rim
+  float sunRim = smoothstep(-.15, .78, -q.x * .55 + q.y * .83) * pow(clamp(hull, 1e-4, 1.), 1.6);
+  vec3 bodyCol = vec3(.06, .036, .026) + vec3(1.35, .88, .48) * (sunRim * .95 + bayRim * .45);
+  bodyCol = mix(bodyCol, vec3(.015, .009, .01), bay);
+  return vec4(bodyCol, edge * .58);
+}
 vec3 skyColor(vec3 d){
   float h = clamp(d.y, 0., 1.);
+  // Arrakis ochre-amber dust horizon into roasted bronze mid-sky and deep obsidian-sepia zenith
   vec3 haze = uGroundColor;
-  vec3 mid = vec3(.6, .4, .4);
-  vec3 zen = vec3(.08, .17, .38);
-  vec3 col = mix(haze, mid, smoothstep(0., .16, h));
-  col = mix(col, zen, smoothstep(.08, .7, h));
-  float sd = max(dot(d, uSunDir), 0.);
-  col += vec3(1., .55, .25) * pow(sd, 6.) * .5 + vec3(1., .8, .5) * pow(sd, 60.) * 1.5;
-  col += vec3(1., .92, .78) * smoothstep(.9988, .9995, sd) * 9.;
-  vec2 cp = d.xz / (h + .25);
-  float c = smoothstep(.52, .82, fbm(cp * vec2(.5, 1.3) + vec2(uTime * .003, 8.)));
-  c *= smoothstep(.1, .3, h);
-  col = mix(col, mix(vec3(1., .78, .6), vec3(1., .9, .75), pow(sd, 3.)), c * .45);
+  vec3 low = vec3(.58, .31, .14);
+  vec3 mid = vec3(.20, .11, .08);
+  vec3 zen = vec3(.036, .028, .042);
+  vec3 col = mix(haze, low, smoothstep(0., .09, h));
+  col = mix(col, mid, smoothstep(.06, .24, h));
+  col = mix(col, zen, smoothstep(.18, .58, h));
+
+  // Faint desert stars & high-orbit spice glints in the upper sky
+  col += stars(d, 115., .09) * vec3(1., .86, .68) * smoothstep(.16, .48, h);
+
+  // Scorching veiled Arrakis sun & parhelic dust halo
+  float sd = max(dot(d, uSunDir), 1e-4);
+  col += vec3(1., .50, .18) * pow(sd, 4.5) * .62 + vec3(1., .76, .42) * pow(sd, 48.) * 1.45;
+  col += vec3(1., .94, .82) * smoothstep(.9986, .9995, sd) * 8.5;
+  float halo = exp(-pow((sd - .955) * 28., 2.)) * .16;
+  col += vec3(1., .68, .36) * halo;
+
+  // Twin Moons of Arrakis (Krelln & Muad'Dib) framed in the open sky valley + Orbital Guild Heighliner
+  vec4 m1 = arrakisMoon(d, normalize(vec3(-.03, .165, -.986)), .034, 4.1);
+  col = mix(col, m1.rgb, m1.a * smoothstep(.03, .11, h));
+  vec4 m2 = arrakisMoon(d, normalize(vec3(.09, .202, -.975)), .014, 11.7);
+  col = mix(col, m2.rgb, m2.a * smoothstep(.03, .11, h));
+  vec4 ship = guildHeighliner(d);
+  col = mix(col, ship.rgb, ship.a * smoothstep(.04, .13, h));
+
+  // Wind-sheared spice & dust stratus bands
+  vec2 cp = d.xz / (h + .22);
+  float c = smoothstep(.48, .84, fbm(cp * vec2(.36, 1.65) + vec2(uTime * .011, 8.)));
+  c *= smoothstep(.03, .14, h) * (1. - smoothstep(.24, .55, h));
+  vec3 cloudCol = mix(vec3(.72, .40, .19), vec3(1., .80, .52), pow(sd, 2.5));
+  col = mix(col, cloudCol, c * .34);
+
+  // Rolling Coriolis sandstorm haze along the horizon
+  vec2 a = normalize(d.xz + 1e-5);
+  float ang = atan(a.y, a.x);
+  float storm = fbm(vec2(ang * 2.4 + uTime * .018, h * 14.));
+  col = mix(col, uGroundColor * 1.05, smoothstep(.07, 0., h) * storm * .42);
   return col;
 }`,
   nebula: /* glsl */ `
@@ -707,9 +790,9 @@ function reshapeParticles(mode) {
       pBase[ix + 1] = Math.random() * 70;
       pBase[ix + 2] = Math.sin(a) * r;
     } else if (mode === 'dust') {
-      pBase[ix] = Math.random() * 60;
-      pBase[ix + 1] = -0.5 + Math.pow(Math.random(), 2.2) * 6;
-      pBase[ix + 2] = (Math.random() - 0.5) * 60;
+      pBase[ix] = Math.random() * 68;
+      pBase[ix + 1] = -0.52 + Math.pow(Math.random(), 2.1) * 7.5;
+      pBase[ix + 2] = (Math.random() - 0.5) * 68;
     } else {
       const r = 22 + Math.random() * 90;
       const theta = Math.random() * Math.PI * 2;
@@ -744,8 +827,10 @@ function updateParticles(t, dt) {
   } else if (particleMode === 'dust') {
     for (let i = 0; i < particleCount; i++) {
       const ix = i * 3;
-      arr[ix] = -30 + ((pBase[ix] + t * (1.2 + (i % 5) * 0.5)) % 60);
-      arr[ix + 1] = pBase[ix + 1] + Math.sin(t * 0.8 + i) * 0.15;
+      const gust = 2.2 + (i % 7) * 0.65;
+      arr[ix] = -34 + ((pBase[ix] + t * gust) % 68);
+      arr[ix + 1] = pBase[ix + 1] + Math.sin(t * 1.3 + i * 0.7) * 0.22;
+      arr[ix + 2] = pBase[ix + 2] + Math.cos(t * 0.9 + i * 1.1) * 0.35;
     }
   } else {
     particles.rotation.y += dt * 0.006;
@@ -845,23 +930,75 @@ function buildLanterns() {
 
 function buildDunes() {
   const group = new THREE.Group();
+  const baseGroundY = -0.62;
+
+  // Asymmetrical wind-carved barchan dune profile: gentle windward ramp, sharp leeward slip-face
+  const duneProfile = (u) => {
+    const f = u - Math.floor(u);
+    const k = 0.72;
+    const tri = f < k ? f / k : (1 - f) / (1 - k);
+    return Math.pow(Math.max(0, tri), 1.55);
+  };
+
+  const sampleDuneInfo = (x, z) => {
+    const r = Math.hypot(x, z);
+    const warp1 = jsFbm(x * 0.011 + 19.3, z * 0.011 + 7.1, 3);
+    const warp2 = jsFbm(x * 0.024 - 11.4, z * 0.024 + 31.8, 2);
+    const phase1 = x * 0.021 + z * 0.014 + warp1 * 1.85;
+    const phase2 = -x * 0.013 + z * 0.025 + warp2 * 1.35;
+    const d1 = duneProfile(phase1);
+    const d2 = duneProfile(phase2);
+    const macro = Math.pow(1 - Math.abs(2 * jsFbm(x * 0.0085 + 40, z * 0.0085 + 12, 4) - 1), 2.0);
+
+    // Keep camera orbit zone (r <= 25) low so the camera never clips, while sculpting sharp crests
+    const nearMask = smooth(5.2, 22, r) * (1 - smooth(22, 34, r) * 0.35);
+    const midMask = smooth(25, 68, r);
+    const farMask = smooth(58, 155, r);
+
+    const micro = (jsNoise(x * 0.14, z * 0.14) - 0.5) * 0.09 * smooth(3.5, 10, r);
+    const centerSaddle = Math.exp(-z * z * 0.14) * 0.04 * (1 - smooth(3.5, 8.5, r));
+
+    const y =
+      centerSaddle +
+      micro +
+      (d1 * 0.48 + d2 * 0.20 - 0.10) * nearMask +
+      (d1 * 3.8 + d2 * 1.8) * midMask +
+      macro * 14.5 * farMask;
+
+    const crest = Math.min(1, Math.max(d1 * smooth(6, 20, r), macro * farMask));
+    return { y, crest };
+  };
+
   const size = 640;
-  const seg = lowPower ? 120 : 200;
+  const seg = lowPower ? 128 : 220;
   const geo = new THREE.PlaneGeometry(size, size, seg, seg);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
+  const crests = new Float32Array(pos.count);
+
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
     const z = pos.getZ(i);
-    const r = Math.hypot(x, z);
-    const n = jsFbm(x * 0.011 + 40, z * 0.011 + 12, 4);
-    const ridge = Math.pow(1 - Math.abs(2 * n - 1), 2.2);
-    const y = ridge * 22 * smooth(34, 110, r) + (jsNoise(x * 0.12, z * 0.12) - 0.5) * 0.14 * smooth(4, 12, r);
+    const { y, crest } = sampleDuneInfo(x, z);
     pos.setY(i, y);
+    crests[i] = crest;
+
+    // Vertex color grades from deep roasted umber troughs to sunlit golden-ochre & cinnamon Spice crests
+    const spicePatch = smooth(0.58, 0.85, jsFbm(x * 0.035 + 5.2, z * 0.035 - 8.4, 2));
+    const cMix = Math.min(1, crest * 0.85 + 0.15);
+    let cr = 0.72 + cMix * 0.34 + spicePatch * 0.18;
+    let cg = 0.48 + cMix * 0.28 - spicePatch * 0.04;
+    let cb = 0.30 + cMix * 0.18 - spicePatch * 0.10;
+    colors[i * 3] = cr;
+    colors[i * 3 + 1] = cg;
+    colors[i * 3 + 2] = cb;
   }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.setAttribute('aCrest', new THREE.BufferAttribute(crests, 1));
   geo.computeVertexNormals();
 
-  // wind ripples, tileable
+  // Tileable wind ripples bump map
   const c = document.createElement('canvas');
   c.width = c.height = 256;
   const ctx = c.getContext('2d');
@@ -870,8 +1007,11 @@ function buildDunes() {
     for (let x = 0; x < 256; x++) {
       const u = x / 256;
       const v = y / 256;
-      const w = Math.sin(Math.PI * 2 * (14 * v + 0.35 * Math.sin(Math.PI * 2 * 2 * u) + 0.12 * Math.sin(Math.PI * 2 * 5 * u + 1.3)));
-      const g = 128 + w * 80 + (Math.random() - 0.5) * 44;
+      const w = Math.sin(
+        Math.PI * 2 * (16 * v + 0.32 * Math.sin(Math.PI * 2 * 2 * u) + 0.12 * Math.sin(Math.PI * 2 * 5 * u + 1.3))
+      );
+      const sharp = Math.pow(0.5 + 0.5 * w, 1.45) * 2 - 1;
+      const g = 128 + sharp * 86 + (Math.random() - 0.5) * 36;
       const k = (y * 256 + x) * 4;
       img.data[k] = img.data[k + 1] = img.data[k + 2] = g;
       img.data[k + 3] = 255;
@@ -880,24 +1020,461 @@ function buildDunes() {
   ctx.putImageData(img, 0, 0);
   const bump = new THREE.CanvasTexture(c);
   bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
-  bump.repeat.set(170, 170);
+  bump.repeat.set(185, 185);
   bump.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
-  const sand = new THREE.Mesh(
-    geo,
-    new THREE.MeshStandardMaterial({
-      color: 0xcf9257,
-      roughness: 0.95,
-      metalness: 0,
-      bumpMap: bump,
-      bumpScale: 0.6,
-      envMapIntensity: 0.55,
-    })
-  );
-  sand.position.y = -0.6;
+  const sandMat = new THREE.MeshStandardMaterial({
+    color: 0xd49456,
+    vertexColors: true,
+    roughness: 0.92,
+    metalness: 0.04,
+    bumpMap: bump,
+    bumpScale: 0.68,
+    envMapIntensity: 0.62,
+  });
+
+  // Inject wind-driven sand streamers over dune crests & circular pinpoint Spice Melange glints
+  sandMat.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = uTime;
+    shader.vertexShader =
+      `attribute float aCrest;\nvarying vec3 vDuneWorld;\nvarying float vDuneCrest;\n` +
+      shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>\nvDuneWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvDuneCrest = aCrest;`
+      );
+    shader.fragmentShader =
+      `uniform float uTime;\nvarying vec3 vDuneWorld;\nvarying float vDuneCrest;\n` +
+      `float duneH21(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }\n` +
+      `float duneN2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f); return mix(mix(duneH21(i), duneH21(i + vec2(1., 0.)), f.x), mix(duneH21(i + vec2(0., 1.)), duneH21(i + vec2(1., 1.)), f.x), f.y); }\n` +
+      shader.fragmentShader.replace(
+        '#include <emissivemap_fragment>',
+        `#include <emissivemap_fragment>
+        float dFade = 1.0 - smoothstep(18.0, 130.0, length(vDuneWorld.xz));
+        vec2 wp = vDuneWorld.xz * vec2(0.16, 0.52) + vec2(-uTime * 0.95, uTime * 0.14);
+        float wisp = duneN2(wp) * duneN2(wp * 2.2 + vec2(-uTime * 0.65, 4.7));
+        float crestMist = smoothstep(0.32, 0.88, vDuneCrest) * smoothstep(0.24, 0.72, wisp) * dFade;
+        totalEmissiveRadiance += vec3(0.58, 0.30, 0.11) * crestMist * 0.45;
+        vec2 sg = vDuneWorld.xz * 24.0;
+        vec2 si = floor(sg);
+        vec2 sf = fract(sg) - 0.5;
+        float sSeed = duneH21(si);
+        if (sSeed > 0.86) {
+          vec2 off = (vec2(fract(sSeed * 31.7), fract(sSeed * 73.1)) - 0.5) * 0.52;
+          float pt = smoothstep(0.14, 0.0, length(sf - off));
+          float tw = pow(0.5 + 0.5 * sin(uTime * (2.2 + sSeed * 4.5) + sSeed * 67.0), 5.0);
+          totalEmissiveRadiance += vec3(2.2, 0.58, 0.12) * pt * tw * dFade * (0.4 + 0.6 * vDuneCrest);
+        }`
+      );
+  };
+
+  const sand = new THREE.Mesh(geo, sandMat);
+  sand.position.y = baseGroundY;
   sand.receiveShadow = true;
   group.add(sand);
-  return { group, update() {} };
+
+  const groundYAt = (x, z) => baseGroundY + sampleDuneInfo(x, z).y;
+
+  // —— Shared materials for futuristic Arrakis architecture & vehicles ——
+  const brutalistMat = new THREE.MeshStandardMaterial({
+    color: 0x4a3525,
+    roughness: 0.86,
+    metalness: 0.22,
+    envMapIntensity: 0.7,
+  });
+  const darkHullMat = new THREE.MeshStandardMaterial({
+    color: 0x241b16,
+    roughness: 0.52,
+    metalness: 0.78,
+    envMapIntensity: 0.95,
+  });
+  const amberGlowMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(2.6, 1.15, 0.32),
+  });
+  const spiceBeaconMat = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(3.2, 0.95, 0.22),
+  });
+
+  // Helper: battered trapezoidal prism (Villeneuve brutalist monolith geometry)
+  const makeTrapezoidGeo = (wBot, dBot, wTop, dTop, h) => {
+    const g = new THREE.BoxGeometry(1, 1, 1, 1, 1, 1);
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const py = p.getY(i) + 0.5; // 0 at base, 1 at top
+      const wx = wBot + (wTop - wBot) * py;
+      const dz = dBot + (dTop - dBot) * py;
+      p.setX(i, p.getX(i) * wx);
+      p.setY(i, py * h);
+      p.setZ(i, p.getZ(i) * dz);
+    }
+    g.computeVertexNormals();
+    return g;
+  };
+
+  // Helper: soft feathered volumetric light beam (canvas-textured crossed planes — zero hard edges or NaNs)
+  const beamCanvas = document.createElement('canvas');
+  beamCanvas.width = 64;
+  beamCanvas.height = 128;
+  const bctx = beamCanvas.getContext('2d');
+  const bimg = bctx.createImageData(64, 128);
+  for (let y = 0; y < 128; y++) {
+    const v = 1 - y / 127; // 1 at apex (top), 0 at base (bottom)
+    const vFade = Math.pow(v, 1.35) * smooth(0, 0.38, v) * smooth(1, 0.9, v);
+    for (let x = 0; x < 64; x++) {
+      const u = (x / 63) * 2 - 1; // -1..1 across width
+      const hFade = Math.pow(Math.max(0, 1 - u * u), 2.2);
+      const val = Math.round(255 * vFade * hFade);
+      const k = (y * 64 + x) * 4;
+      bimg.data[k] = bimg.data[k + 1] = bimg.data[k + 2] = val;
+      bimg.data[k + 3] = val;
+    }
+  }
+  bctx.putImageData(bimg, 0, 0);
+  const beamTex = new THREE.CanvasTexture(beamCanvas);
+
+  const makeBeamMesh = (rTop, rBot, h, colHex, maxAlpha) => {
+    const beamGroup = new THREE.Group();
+    const w = (rTop + rBot) * 1.35;
+    const pg = new THREE.PlaneGeometry(w, h, 1, 8);
+    pg.translate(0, -h * 0.5, 0);
+    const pp = pg.attributes.position;
+    for (let i = 0; i < pp.count; i++) {
+      const k = 1 + pp.getY(i) / h; // 1 at top, 0 at bottom
+      const halfW = rTop + (rBot - rTop) * (1 - k);
+      pp.setX(i, Math.sign(pp.getX(i)) * halfW);
+    }
+    pg.computeVertexNormals();
+    const mat = new THREE.MeshBasicMaterial({
+      map: beamTex,
+      color: colHex,
+      transparent: true,
+      opacity: maxAlpha,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const p1 = new THREE.Mesh(pg, mat);
+    const p2 = new THREE.Mesh(pg, mat);
+    p2.rotation.y = Math.PI / 2;
+    beamGroup.add(p1, p2);
+    return beamGroup;
+  };
+
+  // —— 1. Arrakeen Brutalist Citadel / Imperial Spaceport Bastion (distant right horizon) ——
+  const citadel = new THREE.Group();
+  const cx = 56;
+  const cz = -142;
+  citadel.position.set(cx, groundYAt(cx, cz) - 7.5, cz);
+  citadel.rotation.y = -0.36;
+
+  // Lower stepped ziggurat base deeply embedded in the dune ridge
+  const tier1 = new THREE.Mesh(makeTrapezoidGeo(42, 28, 30, 19.5, 12.5), brutalistMat);
+  citadel.add(tier1);
+  // Brutalist exterior buttress ribs along the front facade
+  for (let b = -3; b <= 3; b++) {
+    const rib = new THREE.Mesh(makeTrapezoidGeo(1.3, 2.2, 0.8, 1.2, 12.2), darkHullMat);
+    rib.position.set(b * 4.6, 0, 11.2);
+    citadel.add(rib);
+  }
+  // Shadow recess band
+  const recess = new THREE.Mesh(makeTrapezoidGeo(28.5, 18.2, 28.5, 18.2, 1.4), darkHullMat);
+  recess.position.y = 12.5;
+  citadel.add(recess);
+  // Upper monumental keep
+  const tier2 = new THREE.Mesh(makeTrapezoidGeo(29.5, 19.0, 19.5, 12.5, 9.8), brutalistMat);
+  tier2.position.y = 13.6;
+  citadel.add(tier2);
+  // Cantilevered flight-deck visor
+  const visor = new THREE.Mesh(makeTrapezoidGeo(22, 14.5, 24.5, 16.2, 1.9), darkHullMat);
+  visor.position.set(-2.2, 20.2, 2.0);
+  citadel.add(visor);
+  // Flanking sloped bastion wings
+  for (const side of [-1, 1]) {
+    const wing = new THREE.Mesh(makeTrapezoidGeo(13, 17, 8, 11, 15.5), brutalistMat);
+    wing.position.set(side * 22.5, 0, 2.5);
+    wing.rotation.z = -side * 0.06;
+    citadel.add(wing);
+  }
+  // Glowing horizontal observation & hangar slits
+  const slit1 = new THREE.Mesh(new THREE.BoxGeometry(19.5, 0.34, 0.45), amberGlowMat);
+  slit1.position.set(0, 13.1, 9.4);
+  citadel.add(slit1);
+  const slit2 = new THREE.Mesh(new THREE.BoxGeometry(13, 0.26, 0.45), amberGlowMat);
+  slit2.position.set(-1.5, 19.8, 9.8);
+  citadel.add(slit2);
+  const citadelBeacon = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.55, 0.9), spiceBeaconMat);
+  citadelBeacon.position.set(3.5, 23.6, 0);
+  citadel.add(citadelBeacon);
+  group.add(citadel);
+
+  // —— 2. Arrakis Windtrap & Holtzman Sensor Monoliths ——
+  const monolithSpecs = [
+    { x: -56, z: -122, h: 20, w: 4.6, tilt: 0.12, rotY: 0.42 },
+    { x: -86, z: -98, h: 15.5, w: 3.6, tilt: 0.16, rotY: 0.55 },
+    { x: 96, z: -102, h: 17.5, w: 4.2, tilt: -0.12, rotY: -0.48 },
+    { x: -12, z: -148, h: 22.5, w: 5.2, tilt: 0.08, rotY: 0.15 },
+  ];
+  const monolithBeacons = [];
+  monolithSpecs.forEach((m) => {
+    const mg = new THREE.Group();
+    mg.position.set(m.x, groundYAt(m.x, m.z) - 5.0, m.z);
+    mg.rotation.y = m.rotY;
+    mg.rotation.z = m.tilt;
+    const body = new THREE.Mesh(makeTrapezoidGeo(m.w, m.w * 0.62, m.w * 0.52, m.w * 0.36, m.h), brutalistMat);
+    mg.add(body);
+    const slot = new THREE.Mesh(new THREE.BoxGeometry(0.22, m.h * 0.52, m.w * 0.54), amberGlowMat);
+    slot.position.set(0, m.h * 0.6, 0);
+    mg.add(slot);
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(m.w * 0.36, 0.5, m.w * 0.3), spiceBeaconMat);
+    tip.position.set(0, m.h + 0.22, 0);
+    mg.add(tip);
+    monolithBeacons.push(tip);
+    group.add(mg);
+  });
+
+  // —— 3. Colossal Crawler Spice Harvester on the left dune field + Spotter Carrier ——
+  const carrier = new THREE.Group();
+  const hx = -32;
+  const hz = -96;
+  const carrierBasePos = new THREE.Vector3(hx, groundYAt(hx, hz) - 2.2, hz);
+  carrier.position.copy(carrierBasePos);
+  carrier.rotation.set(0.04, 0.42, -0.04);
+
+  // Heavy industrial crawler chassis & ribbed refinery carapace
+  const crawlerBase = new THREE.Mesh(makeTrapezoidGeo(17.5, 9.2, 15.2, 7.8, 2.6), darkHullMat);
+  carrier.add(crawlerBase);
+  const carapace = new THREE.Mesh(makeTrapezoidGeo(14.6, 7.2, 11.2, 5.4, 2.4), brutalistMat);
+  carapace.position.y = 2.5;
+  carrier.add(carapace);
+  for (let r = -2; r <= 2; r++) {
+    const duct = new THREE.Mesh(makeTrapezoidGeo(1.4, 7.5, 1.1, 5.8, 2.6), darkHullMat);
+    duct.position.set(r * 2.6, 2.5, 0);
+    carrier.add(duct);
+  }
+  // Harvester front floodlight slit & soft volumetric dust headlamp beams
+  const harvSlit = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.42, 4.8), amberGlowMat);
+  harvSlit.position.set(7.4, 2.1, 0);
+  carrier.add(harvSlit);
+  const harvBeacon = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), spiceBeaconMat);
+  harvBeacon.position.set(-3.5, 5.1, 0);
+  carrier.add(harvBeacon);
+
+  const scanBeam1 = makeBeamMesh(0.45, 3.8, 14.0, 0xff9838, 0.42);
+  scanBeam1.rotation.z = Math.PI / 2 - 0.22;
+  scanBeam1.position.set(7.4, 2.1, -1.4);
+  carrier.add(scanBeam1);
+  const scanBeam2 = makeBeamMesh(0.45, 3.8, 14.0, 0xff9838, 0.42);
+  scanBeam2.rotation.z = Math.PI / 2 - 0.22;
+  scanBeam2.position.set(7.4, 2.1, 1.4);
+  carrier.add(scanBeam2);
+  group.add(carrier);
+
+  // —— 4. Articulated Atreides Ornithopter Squadron (3 patrolling craft) ——
+  const thopters = [];
+  const wingGeo = new THREE.BoxGeometry(2.45, 0.022, 0.15);
+  wingGeo.translate(1.225, 0, 0); // pivot at wing root
+
+  for (let i = 0; i < 3; i++) {
+    const tg = new THREE.Group();
+    const fuselage = new THREE.Mesh(makeTrapezoidGeo(0.52, 1.9, 0.28, 1.15, 0.38), darkHullMat);
+    tg.add(fuselage);
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.2, 2.0, 5), darkHullMat);
+    tail.rotation.x = -Math.PI / 2;
+    tail.position.set(0, 0.2, -1.7);
+    tg.add(tail);
+    const canopy = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.62), amberGlowMat);
+    canopy.position.set(0, 0.22, 0.55);
+    tg.add(canopy);
+    // Forward searchlight cone with soft fade
+    const searchLight = makeBeamMesh(0.05, 1.25, 5.8, 0xffb868, 0.24);
+    searchLight.rotation.x = Math.PI / 2 - 0.26;
+    searchLight.position.set(0, 0.08, 0.95);
+    tg.add(searchLight);
+
+    const wings = [];
+    for (const side of [-1, 1]) {
+      for (let w = 0; w < 4; w++) {
+        const pivot = new THREE.Group();
+        pivot.position.set(side * 0.2, 0.32, 0.34 - w * 0.23);
+        pivot.rotation.y = side * ((w - 1.5) * 0.16);
+        const wingMesh = new THREE.Mesh(wingGeo, darkHullMat);
+        if (side < 0) wingMesh.scale.x = -1;
+        pivot.add(wingMesh);
+        tg.add(pivot);
+        wings.push({ pivot, side, idx: w });
+      }
+    }
+
+    const scale = 0.58 + i * 0.14;
+    tg.scale.setScalar(scale);
+    group.add(tg);
+    thopters.push({
+      group: tg,
+      wings,
+      cx: -10 + i * 18,
+      cz: -48 - i * 16,
+      rx: 24 + i * 7,
+      rz: 11 + i * 4,
+      yBase: 5.2 + i * 2.1,
+      speed: 0.23 + i * 0.05,
+      phase: i * 2.1,
+    });
+  }
+
+  // —— 5. Foreground-Midground Fremen Thumper (沙槌) & Soft Radial Seismic Waves ——
+  const thumperGroup = new THREE.Group();
+  const tx = -7.4;
+  const tz = -6.2;
+  const ty = groundYAt(tx, tz);
+  thumperGroup.position.set(tx, ty - 0.08, tz);
+  thumperGroup.rotation.z = -0.05;
+
+  const stake = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.016, 1.05, 8), darkHullMat);
+  stake.position.y = 0.32;
+  stake.castShadow = true;
+  thumperGroup.add(stake);
+
+  const thumperCore = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.046, 0.22, 8), spiceBeaconMat);
+  thumperCore.position.y = 0.62;
+  thumperGroup.add(thumperCore);
+
+  const thumperHammer = new THREE.Mesh(new THREE.CylinderGeometry(0.088, 0.072, 0.2, 8), brutalistMat);
+  thumperHammer.position.y = 0.74;
+  thumperHammer.castShadow = true;
+  thumperGroup.add(thumperHammer);
+
+  // Soft radial ring texture for organic sand shockwaves
+  const rc = document.createElement('canvas');
+  rc.width = rc.height = 128;
+  const rctx = rc.getContext('2d');
+  const rg = rctx.createRadialGradient(64, 64, 18, 64, 64, 62);
+  rg.addColorStop(0, 'rgba(255,180,90,0)');
+  rg.addColorStop(0.45, 'rgba(255,175,85,0.65)');
+  rg.addColorStop(0.7, 'rgba(255,140,50,0.25)');
+  rg.addColorStop(1, 'rgba(255,120,30,0)');
+  rctx.fillStyle = rg;
+  rctx.fillRect(0, 0, 128, 128);
+  const ringTex = new THREE.CanvasTexture(rc);
+
+  const seismicRings = [];
+  const ringPlaneGeo = new THREE.PlaneGeometry(0.9, 0.9);
+  ringPlaneGeo.rotateX(-Math.PI / 2);
+  for (let i = 0; i < 2; i++) {
+    const rMat = new THREE.MeshBasicMaterial({
+      map: ringTex,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const rMesh = new THREE.Mesh(ringPlaneGeo, rMat);
+    rMesh.position.y = 0.09;
+    thumperGroup.add(rMesh);
+    seismicRings.push(rMesh);
+  }
+  group.add(thumperGroup);
+
+  // —— 6. Airborne Spice Melange (香料) thermal vortex particles ——
+  const spiceCount = lowPower ? 120 : 320;
+  const spiceGeo = new THREE.BufferGeometry();
+  const spicePos = new Float32Array(spiceCount * 3);
+  const spiceBase = new Float32Array(spiceCount * 3);
+  for (let i = 0; i < spiceCount; i++) {
+    const ix = i * 3;
+    const r = 3 + Math.pow(Math.random(), 1.4) * 42;
+    const a = Math.random() * Math.PI * 2;
+    spiceBase[ix] = Math.cos(a) * r;
+    spiceBase[ix + 1] = -0.35 + Math.pow(Math.random(), 1.8) * 5.5;
+    spiceBase[ix + 2] = Math.sin(a) * r;
+    spicePos[ix] = spiceBase[ix];
+    spicePos[ix + 1] = spiceBase[ix + 1];
+    spicePos[ix + 2] = spiceBase[ix + 2];
+  }
+  spiceGeo.setAttribute('position', new THREE.BufferAttribute(spicePos, 3));
+  const spiceMat = new THREE.PointsMaterial({
+    color: 0xff6818,
+    size: 0.095,
+    map: pMat.map,
+    transparent: true,
+    opacity: 0.78,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true,
+  });
+  const spicePoints = new THREE.Points(spiceGeo, spiceMat);
+  spicePoints.frustumCulled = false;
+  group.add(spicePoints);
+
+  return {
+    group,
+    update(t) {
+      const motionScale = prefersReduced ? 0.2 : 1;
+
+      // Crawler Spice Harvester subtle crawl & headlamp sweep
+      carrier.position.x = carrierBasePos.x + Math.sin(t * 0.08 * motionScale) * 1.2;
+      scanBeam1.rotation.y = Math.sin(t * 0.55 * motionScale) * 0.14;
+      scanBeam2.rotation.y = -Math.cos(t * 0.5 * motionScale) * 0.14;
+
+      // Ornithopter patrol flight + high-frequency articulated wing beat
+      for (let i = 0; i < thopters.length; i++) {
+        const th = thopters[i];
+        const u = t * th.speed * motionScale + th.phase;
+        const x = th.cx + Math.cos(u) * th.rx;
+        const z = th.cz + Math.sin(u * 2) * th.rz * 0.55;
+        const y = th.yBase + Math.sin(u * 1.7) * 0.75;
+        const dx = -Math.sin(u) * th.rx;
+        const dz = Math.cos(u * 2) * 2 * th.rz * 0.55;
+        th.group.position.set(x, y, z);
+        th.group.rotation.y = Math.atan2(dx, dz);
+        th.group.rotation.z = -Math.cos(u) * 0.26;
+        th.group.rotation.x = 0.08 + Math.sin(u * 1.7) * 0.06;
+
+        const wingFreq = prefersReduced ? 6 : 52;
+        for (let w = 0; w < th.wings.length; w++) {
+          const wg = th.wings[w];
+          const flap = Math.sin(t * wingFreq + wg.idx * 0.85 + th.phase) * 0.42;
+          wg.pivot.rotation.z = wg.side * flap;
+        }
+      }
+
+      // Fremen Thumper rhythmic mechanical strike & expanding seismic sand rings
+      const cycle = (t * 0.34 * motionScale) % 1;
+      let hammerY = 0.48;
+      if (cycle < 0.82) {
+        hammerY = 0.48 + (cycle / 0.82) * 0.34;
+      } else if (cycle < 0.88) {
+        const drop = (cycle - 0.82) / 0.06;
+        hammerY = 0.82 - drop * drop * 0.34;
+      }
+      thumperHammer.position.y = hammerY;
+
+      for (let rIdx = 0; rIdx < seismicRings.length; rIdx++) {
+        const ring = seismicRings[rIdx];
+        const waveAge = (cycle - 0.86 + 1 + rIdx * 0.16) % 1;
+        if (waveAge < 0.68) {
+          const prog = waveAge / 0.68;
+          const sc = 0.6 + prog * 9.5;
+          ring.scale.setScalar(sc);
+          ring.material.opacity = Math.sin(prog * Math.PI) * (1 - prog) * 0.48;
+        } else {
+          ring.material.opacity = 0;
+        }
+      }
+
+      // Monolith beacon subtle pulse
+      const pulse = 0.75 + 0.25 * Math.sin(t * 2.6);
+      spiceBeaconMat.color.setRGB(3.2 * pulse, 0.95 * pulse, 0.22 * pulse);
+
+      // Swirling Spice Melange particles
+      for (let i = 0; i < spiceCount; i++) {
+        const ix = i * 3;
+        const drift = ((spiceBase[ix] + t * (1.5 + (i % 5) * 0.4) * motionScale + 45) % 90) - 45;
+        spicePos[ix] = drift;
+        spicePos[ix + 1] = spiceBase[ix + 1] + Math.sin(t * 1.1 + i * 0.9) * 0.32;
+        spicePos[ix + 2] = spiceBase[ix + 2] + Math.cos(t * 0.85 + i * 0.6) * 0.45;
+      }
+      spiceGeo.attributes.position.needsUpdate = true;
+    },
+  };
 }
 
 function buildPlanet() {
