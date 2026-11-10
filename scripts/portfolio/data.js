@@ -58,397 +58,702 @@ const PROJECTS = [
     "name": "The One — China & Global Finals",
     "brand": "Jordan",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-01.webp"
+    "img": "images/portfolio/brand-imc-01.webp",
+    "year": "2026",
+    "summary": {
+      "en": "End-to-end creative for the China debut of Jordan's global 1-on-1 finals: the tournament's visual world, teaser film, social rollout and on-site graphics.",
+      "zh": "为 Jordan 全球 1 对 1 单挑赛总决赛首次落地中国打造全案创意：赛事视觉世界、预告影片、社交传播与现场空间物料。"
+    }
   },
   {
     "name": "The One — Design, Motion & Photography",
     "brand": "Jordan",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-02.webp"
+    "img": "images/portfolio/brand-imc-02.webp",
+    "summary": {
+      "en": "Design, motion and photography for The One: WeChat posters, per-heat films, athlete posters and POV stills.",
+      "zh": "The One 赛事的设计、动态与摄影：微信海报、分站赛影片、球员海报与第一视角剧照。"
+    }
   },
   {
     "name": "Dong Dan Visual",
     "brand": "Jordan",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-03.webp"
+    "img": "images/portfolio/brand-imc-03.webp",
+    "year": "2026",
+    "summary": {
+      "en": "A new visual identity and content suite for the 2026 Next Stop Dong Dan tournament and products, shot with an international production crew.",
+      "zh": "为 2026 年 Jordan「下站东单」赛事与产品打造全新视觉识别与内容物料，携手国际制作团队完成拍摄。"
+    }
   },
   {
     "name": "The Fearless Ones — Double 11 Campaign",
     "brand": "Jordan",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-04.webp"
+    "img": "images/portfolio/brand-imc-04.webp",
+    "summary": {
+      "en": "A Double 11 campaign that folds product and brand expression into one story around the Air Jordan 1, with hip-hop artist Asen and other brand catalysts.",
+      "zh": "以 Air Jordan 1 为核心，把产品战役与品牌表达整合成一个故事的双 11 战役，携手说唱歌手艾志恒等品牌伙伴。"
+    }
   },
   {
     "name": "The Fearless Ones — Double 11 Social Content",
     "brand": "Jordan",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-05.webp"
+    "img": "images/portfolio/brand-imc-05.webp",
+    "summary": {
+      "en": "Social content for The Fearless Ones: WeChat stories, lookbook imagery and e-commerce assets for the Double 11 Air Jordan 1 push.",
+      "zh": "「看我这 1 代」双 11 社交内容：微信图文、造型大片与电商物料，为 Air Jordan 1 造势。"
+    }
   },
   {
     "name": "Our Turn — Brand Voice & Family China Tour",
     "brand": "Jordan",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-06.webp"
+    "img": "images/portfolio/brand-imc-06.webp",
+    "year": "2024",
+    "summary": {
+      "en": "Bringing Jordan's 2024 global brand voice campaign to Greater China: narrative, key visuals, the Family China Tour film, social content, OOH and a mini program.",
+      "zh": "将 Jordan 2024 年全球品牌战役「Our Turn」落地大中华区：叙事与文案、主视觉、中国行影片、社交内容、户外媒体与小程序。"
+    }
   },
   {
     "name": "Our Turn — Social Content & Activation",
     "brand": "Jordan",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-07.webp"
+    "img": "images/portfolio/brand-imc-07.webp",
+    "year": "2024",
+    "summary": {
+      "en": "Our Turn on the ground: social content, OOH, and the Jordan Family China Tour mini program with itinerary, quizzes and rewards.",
+      "zh": "「Our Turn」落地执行：社交内容、户外媒体，以及集行程、答题与奖励于一体的 Jordan Family 中国行小程序。"
+    }
   },
   {
     "name": "WSP Series Launch",
     "brand": "Wilson",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-08.webp"
+    "img": "images/portfolio/brand-imc-08.webp",
+    "year": "2026",
+    "summary": {
+      "en": "360° campaign support for the 2026 China debut of Wilson's WSP collection: hero key visuals, bespoke PR seeding kits, external design, co-branding partnerships and KOL seeding.",
+      "zh": "为 Wilson WSP 系列 2026 年中国首发提供 360° 战役支持：主视觉设计、定制 PR 种草礼盒、对外设计、联名合作与 KOL 种草。"
+    }
   },
   {
     "name": "CNY Brand Voice Film",
     "brand": "Jordan",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-09.webp"
+    "img": "images/portfolio/brand-imc-09.webp",
+    "year": "2024",
+    "summary": {
+      "en": "Campaign concept, narrative and the brand voice film for Jordan's Year of the Dragon CNY collection.",
+      "zh": "为 Jordan 龙年新春系列提供战役概念与叙事，并制作品牌影片。"
+    }
   },
   {
     "name": "CNY Brand Campaign",
     "brand": "Converse",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-10.webp"
+    "img": "images/portfolio/brand-imc-10.webp",
+    "summary": {
+      "en": "Full campaign assets for Converse's Chinese New Year campaigns: concepts, messaging, main films, key visuals, lookbooks and styling motion content.",
+      "zh": "Converse 新春战役全套物料：概念、文案、主片、主视觉、型录与造型动态内容。"
+    }
   },
   {
     "name": "Next Stop Dong Dan Film",
     "brand": "Jordan",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-11.webp"
+    "img": "images/portfolio/brand-imc-11.webp",
+    "year": "2023–2025",
+    "summary": {
+      "en": "Two brand films for Next Stop Dong Dan, Jordan's elite basketball community initiative, carrying the brand's point of view and the Dong Dan spirit.",
+      "zh": "为 Jordan 精英篮球社区项目「下站东单」创作两支品牌影片，传递品牌态度与东单精神。"
+    }
   },
   {
     "name": "Certified PMP Launch",
     "brand": "PMI China",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-12.webp"
+    "img": "images/portfolio/brand-imc-12.webp",
+    "year": "2026",
+    "summary": {
+      "en": "Introducing the new PMP certification exam to China across the full candidate journey: official site, WeChat mini program, airport OOH and email.",
+      "zh": "协助 PMI 将全新 PMP 认证考试引入中国，覆盖考生全旅程：官网、微信小程序、机场户外与邮件营销。"
+    }
   },
   {
     "name": "第207块骨头",
     "brand": "BLACKHEAD",
     "cat": "brand-imc",
-    "img": "images/portfolio/brand-imc-13.webp"
+    "img": "images/portfolio/brand-imc-13.webp",
+    "summary": {
+      "en": "A brand voice film for BLACKHEAD's 15th anniversary, following four individuals across generations to show jewelry as everyday armor for identity.",
+      "zh": "为 BLACKHEAD 十五周年创作品牌影片，以四位不同世代的人物，讲述饰品如何成为个人身份的日常铠甲。"
+    }
   },
   {
     "name": "Coach Fragrance × Liu Yu",
     "brand": "Coach",
     "cat": "product",
-    "img": "images/portfolio/product-01.webp"
+    "img": "images/portfolio/product-01.webp",
+    "summary": {
+      "en": "Year-round campaign films and key visuals for Coach Fragrance with artist Liu Yu, from Qixi romance to holiday warmth.",
+      "zh": "携手艺人刘宇，为 Coach 香水执导并制作全年战役影片与主视觉，从七夕的浪漫到节日的温暖。"
+    }
   },
   {
     "name": "Women's Day ft. Li Jiage",
     "brand": "OGR",
     "cat": "product",
-    "img": "images/portfolio/product-02.webp"
+    "img": "images/portfolio/product-02.webp",
+    "year": "2026",
+    "summary": {
+      "en": "An International Women's Day campaign for OGR with artist Li Jiage, echoing the metamorphosis idea behind the brand's butterfly-cocoon sneaker.",
+      "zh": "携手艺人李嘉格，为 OGR 打造 2026 妇女节战役，呼应品牌蝶茧鞋款背后的「蜕变」概念。"
+    }
   },
   {
     "name": "Thai Talents Collaborations",
     "brand": "BLOSSOMIN",
     "cat": "product",
-    "img": "images/portfolio/product-03.webp"
+    "img": "images/portfolio/product-03.webp",
+    "year": "2026",
+    "summary": {
+      "en": "Two content waves with Thai talent for BLOSSOMIN's body wash launch, with scripts tailored to each artist's persona.",
+      "zh": "为 BLOSSOMIN 沐浴露上市执导两波泰国艺人内容，按每位艺人的人设定制叙事脚本。"
+    }
   },
   {
     "name": "Viral Beauty Campaign",
     "brand": "SOFEI",
     "cat": "product",
-    "img": "images/portfolio/product-04.webp"
+    "img": "images/portfolio/product-04.webp",
+    "summary": {
+      "en": "A narrative mini-drama commercial launching SOFEI's new blush with Thai duo LING & ORM, built to travel on social.",
+      "zh": "为 SOFEI 新款腮红上市执导剧情短片广告，由泰国组合 LING & ORM 出演，为社交传播而生。"
+    }
   },
   {
     "name": "Air Max 95 Family Reunion",
     "brand": "Nike",
     "cat": "product",
-    "img": "images/portfolio/product-05.webp"
+    "img": "images/portfolio/product-05.webp",
+    "year": "2025",
+    "summary": {
+      "en": "Four Hong Kong musicians, followed through neon streets, night markets and milk tea shops, for the Air Max 95.",
+      "zh": "为 Air Max 95 跟拍四位香港音乐人，穿行于霓虹街头、夜市与茶餐厅。"
+    }
   },
   {
     "name": "CNY — Year of the Horse",
     "brand": "Burton",
     "cat": "product",
-    "img": "images/portfolio/product-06.webp"
+    "img": "images/portfolio/product-06.webp",
+    "year": "2026",
+    "summary": {
+      "en": "Concept and production of Burton's 2026 Chinese New Year campaign shoot for the Year of the Horse.",
+      "zh": "Burton 2026 马年新春战役的创意与拍摄制作。"
+    }
   },
   {
     "name": "Winter Campaign",
     "brand": "Decathlon",
     "cat": "product",
-    "img": "images/portfolio/product-07.webp"
+    "img": "images/portfolio/product-07.webp",
+    "year": "2025",
+    "summary": {
+      "en": "Season-long creative content across all of Decathlon's winter sports categories, supporting the overall winter campaign launch.",
+      "zh": "整合迪卡侬全部冬季运动品类，产出贯穿整季的创意内容，支持冬季战役上线。"
+    }
   },
   {
     "name": "3-in-1 Product Campaign",
     "brand": "Moose Knuckles",
     "cat": "product",
-    "img": "images/portfolio/product-08.webp"
+    "img": "images/portfolio/product-08.webp",
+    "summary": {
+      "en": "A shoot pairing an elevator set with changing weather to show what Moose Knuckles' 3-in-1 jacket does in everyday life.",
+      "zh": "以电梯场景搭配变化的天气，呈现 Moose Knuckles 三合一外套在日常中的功能。"
+    }
   },
   {
     "name": "Lightweight Jacket",
     "brand": "Moose Knuckles",
     "cat": "product",
-    "img": "images/portfolio/product-09.webp"
+    "img": "images/portfolio/product-09.webp",
+    "summary": {
+      "en": "Campaign visuals and motion built on a gravity-defying \"aerial float\" idea for Moose Knuckles' Lightweight Jacket series.",
+      "zh": "以「空中漂浮」为概念，为 Moose Knuckles 轻量外套系列执导并制作战役视觉与动态内容。"
+    }
   },
   {
     "name": "Genesis",
     "brand": "Salomon",
     "cat": "product",
-    "img": "images/portfolio/product-10.webp"
+    "img": "images/portfolio/product-10.webp",
+    "year": "2025",
+    "summary": {
+      "en": "Concept-to-production creative assets for Salomon's key trail running shoe, Genesis, with the Greater China team.",
+      "zh": "携手 Salomon 大中华区团队，为主力越野跑鞋 Genesis 提供从概念到制作的创意物料。"
+    }
   },
   {
     "name": "Snowboard CNY Campaign",
     "brand": "Salomon",
     "cat": "product",
-    "img": "images/portfolio/product-11.webp"
+    "img": "images/portfolio/product-11.webp",
+    "year": "2025",
+    "summary": {
+      "en": "A Year of the Snake campaign pairing Chinese paper-cutting craft with Salomon's snowboard design, in visuals and film.",
+      "zh": "将中国剪纸工艺与 Salomon 蛇年单板设计结合，以视觉与影片讲述带有中国元素的滑雪故事。"
+    }
   },
   {
     "name": "Color Shell Collection",
     "brand": "Peak Performance",
     "cat": "product",
-    "img": "images/portfolio/product-12.webp"
+    "img": "images/portfolio/product-12.webp",
+    "year": "2025",
+    "summary": {
+      "en": "Creative concept, visual direction, key visuals, stills and a brand video for Peak Performance's FW25 Color Shell launch.",
+      "zh": "为 Peak Performance FW25 Color Shell 系列上市提供创意概念与视觉方向，并制作主视觉、平面与品牌影片。"
+    }
   },
   {
     "name": "Yoga Zenvy Collection",
     "brand": "Nike",
     "cat": "product",
-    "img": "images/portfolio/product-13.webp"
+    "img": "images/portfolio/product-13.webp",
+    "summary": {
+      "en": "Social films with RED creators and national team sprinter Ge Manqi, showing the softness of Nike Yoga's Zenvy collection through everyday scenes.",
+      "zh": "携手小红书达人与国家队短跑运动员葛曼棋创作系列社交影片，以日常场景演绎 Nike Yoga Zenvy 系列的柔软。"
+    }
   },
   {
     "name": "V-Day Campaign",
     "brand": "Jordan",
     "cat": "product",
-    "img": "images/portfolio/product-14.webp"
+    "img": "images/portfolio/product-14.webp",
+    "summary": {
+      "en": "\"Jordan Meets Love\": stories and fashion-forward content around key footwear and apparel for Valentine's Day and Qixi.",
+      "zh": "以「Jordan Meets Love」为概念，为情人节与七夕创作故事内容与时尚向的鞋服大片。"
+    }
   },
   {
     "name": "Kids Drips",
     "brand": "Jordan",
     "cat": "product",
-    "img": "images/portfolio/product-15.webp"
+    "img": "images/portfolio/product-15.webp",
+    "summary": {
+      "en": "A kids campaign built on the belief that Jordan kids can achieve anything they set their minds to, once they have the drip.",
+      "zh": "Jordan 儿童系列战役：Jordan 小孩相信只要用心就无所不能，但首先得有型。"
+    }
   },
   {
     "name": "Remix Series",
     "brand": "Jordan",
     "cat": "product",
-    "img": "images/portfolio/product-16.webp"
+    "img": "images/portfolio/product-16.webp",
+    "summary": {
+      "en": "Style-led content for Jordan's Remix series, where classic Jordan designs are mixed into new shoes.",
+      "zh": "为 Jordan Remix 系列创作造型向内容，呼应将经典 Jordan 设计混搭成新鞋款的产品理念。"
+    }
   },
   {
     "name": "Air Peg 2K5 Retro Styling",
     "brand": "Nike Running",
     "cat": "product",
-    "img": "images/portfolio/product-17.webp"
+    "img": "images/portfolio/product-17.webp",
+    "year": "2024",
+    "summary": {
+      "en": "A lookbook for the Air Peg 2K5 built on the \"morning fit check\", with everyday ways to style retro runners.",
+      "zh": "以「出门前的穿搭检查」为灵感，为 Air Peg 2K5 打造复古跑鞋日常穿搭型录。"
+    }
   },
   {
     "name": "Sneakers Art Creative",
     "brand": "Nike / Jordan / Converse",
     "cat": "product",
-    "img": "images/portfolio/product-18.webp"
+    "img": "images/portfolio/product-18.webp",
+    "summary": {
+      "en": "Sneaker art direction and still-life imagery for Nike, Jordan and Converse footwear marketing.",
+      "zh": "为 Nike、Jordan 与 Converse 的鞋款营销提供球鞋艺术创意与静物影像。"
+    }
   },
   {
     "name": "Styles of All Seasons",
     "brand": "UGG",
     "cat": "product",
-    "img": "images/portfolio/product-19.webp"
+    "img": "images/portfolio/product-19.webp",
+    "year": "2023–2025",
+    "summary": {
+      "en": "Styling assets across four seasons for UGG, built on self-discovery and comfort as part of a long-term partnership.",
+      "zh": "在与 UGG 的长期合作中，围绕「自我探索」与「舒适」产出四季造型物料。"
+    }
   },
   {
     "name": "Visual Upgrade",
     "brand": "UGG",
     "cat": "product",
-    "img": "images/portfolio/product-20.webp"
+    "img": "images/portfolio/product-20.webp",
+    "year": "2026",
+    "summary": {
+      "en": "A new e-commerce photography and visual style for UGG's Tmall flagship and WeChat mini program, cleaner and more premium.",
+      "zh": "为 UGG 天猫旗舰店与微信小程序焕新电商摄影与视觉风格，更简约、更有质感。"
+    }
   },
   {
     "name": "Urban Styles",
     "brand": "Samsonite",
     "cat": "product",
-    "img": "images/portfolio/product-21.webp"
+    "img": "images/portfolio/product-21.webp",
+    "summary": {
+      "en": "Content that blends urban aesthetics with pan-Asian style to strengthen Samsonite's presence across Asia.",
+      "zh": "以都市美学融合泛亚洲风格的内容，提升 Samsonite 在亚洲市场的品牌认知。"
+    }
   },
   {
     "name": "Urban Girls' Escape",
     "brand": "Apede Mod",
     "cat": "product",
-    "img": "images/portfolio/product-22.webp"
+    "img": "images/portfolio/product-22.webp",
+    "year": "2021",
+    "summary": {
+      "en": "The SS21 Gradient Color Collection launch for Apede Mod: a Douyin filter and all-channel assets supporting the store opening and offline activation.",
+      "zh": "Apede Mod SS21 渐变色系列上市：开发抖音滤镜与全渠道物料，支持店铺开业与线下活动。"
+    }
   },
   {
     "name": "Pets Collection",
     "brand": "Le Creuset",
     "cat": "product",
-    "img": "images/portfolio/product-23.webp"
+    "img": "images/portfolio/product-23.webp",
+    "summary": {
+      "en": "Product shoots, campaign films and key visuals for Le Creuset's Pets Collection, in the brand's saturated colour.",
+      "zh": "为 Le Creuset 宠物系列上市执导产品拍摄、战役影片与主视觉，延续品牌标志性的饱和色彩。"
+    }
   },
   {
     "name": "Barry's Game",
     "brand": "Jordan",
     "cat": "digital",
-    "img": "images/portfolio/digital-01.webp"
+    "img": "images/portfolio/digital-01.webp",
+    "summary": {
+      "en": "A retro 8-bit basketball game that turns an elite athlete's journey, from campus to the Jordan Family, into a playable adventure.",
+      "zh": "一款复古 8-bit 像素篮球游戏，把精英球员从校园到加入 Jordan Family 的历程变成可玩的冒险。"
+    }
   },
   {
     "name": "Tmall Kids Engagement",
     "brand": "Nike",
     "cat": "digital",
-    "img": "images/portfolio/digital-02.webp"
+    "img": "images/portfolio/digital-02.webp",
+    "year": "2025",
+    "summary": {
+      "en": "A three-phase gamified campaign on Nike Tmall Kids for parents and kids to play together: 283.7K visitors and ¥13.9M GMV.",
+      "zh": "Nike 天猫儿童店三阶段互动游戏战役，让家长与孩子一起玩：28.37 万访客，GMV 1390 万元。"
+    }
   },
   {
     "name": "Tmall Store Digital Retainer",
     "brand": "Jordan",
     "cat": "digital",
-    "img": "images/portfolio/digital-03.webp"
+    "img": "images/portfolio/digital-03.webp",
+    "year": "2025",
+    "summary": {
+      "en": "A redesign of Jordan's Tmall flagship, a store with 15 million followers: five modules rebuilt and two new ones added.",
+      "zh": "为拥有 1500 万粉丝的 Jordan 天猫旗舰店改版：重新设计 5 个模块，新增 2 个。"
+    }
   },
   {
     "name": "World of Flight — Grand Opening O2O AR Experience",
     "brand": "Jordan",
     "cat": "digital",
-    "img": "images/portfolio/digital-04.webp"
+    "img": "images/portfolio/digital-04.webp",
+    "year": "2024",
+    "summary": {
+      "en": "An AR digital hub for the opening of Jordan's Beijing World of Flight store; 10% of users went on to visit, and it won Store Opening of the Year at the Glossy Fashion and Luxury Awards 2024.",
+      "zh": "为 Jordan 北京 World of Flight 开业打造 AR 数字互动平台；10% 的用户到店，并获 2024 Glossy Fashion and Luxury Awards 年度开店奖。"
+    }
   },
   {
     "name": "Member Days Engagement Hub",
     "brand": "Nike",
     "cat": "digital",
-    "img": "images/portfolio/digital-05.webp"
+    "img": "images/portfolio/digital-05.webp",
+    "year": "2024",
+    "summary": {
+      "en": "\"Member Land\", a clay-crafted digital world for Nike Member Days across the Nike App and WeChat mini program, lifting app traffic by over 52%.",
+      "zh": "为 Nike 会员日打造黏土风数字世界「Member Land」，贯通 Nike App 与微信小程序，App 流量提升超 52%。"
+    }
   },
   {
     "name": "Olympics \"Road to Paris\" Air Hub",
     "brand": "Nike",
     "cat": "digital",
-    "img": "images/portfolio/digital-06.webp"
+    "img": "images/portfolio/digital-06.webp",
+    "year": "2024",
+    "summary": {
+      "en": "A digital hub with AR shoe try-on for Nike's Air for Athletes collection, launched for the Paris 2024 Olympics and Paralympics.",
+      "zh": "为巴黎 2024 奥运会与残奥会期间发布的 Nike Air for Athletes 系列开发带 AR 试鞋的数字互动工具。"
+    }
   },
   {
     "name": "Monitor II ANC Launch",
     "brand": "Marshall",
     "cat": "digital",
-    "img": "images/portfolio/digital-07.webp"
+    "img": "images/portfolio/digital-07.webp",
+    "summary": {
+      "en": "An immersive H5 that takes users inside the Monitor II ANC headphones, reaching 60M social exposures.",
+      "zh": "带用户走进 Monitor II ANC 耳机内部的沉浸式 H5，社交曝光达 6000 万。"
+    }
   },
   {
     "name": "Festival H5",
     "brand": "Jordan",
     "cat": "digital",
-    "img": "images/portfolio/digital-08.webp"
+    "img": "images/portfolio/digital-08.webp",
+    "summary": {
+      "en": "An interactive vinyl-turntable H5 for the Jordan Music Festival store, with a 90-second average stay.",
+      "zh": "为 Jordan 音乐节店铺打造黑胶唱机互动 H5，平均停留 90 秒。"
+    }
   },
   {
     "name": "Family Tour Mini Program",
     "brand": "Jordan",
     "cat": "digital",
-    "img": "images/portfolio/digital-09.webp"
+    "img": "images/portfolio/digital-09.webp",
+    "year": "2024",
+    "summary": {
+      "en": "A lightweight quiz game for the Jordan Family China Tour, with 7.38M unique visitors and 90% engagement in its first week.",
+      "zh": "Jordan Family 中国行轻量答题小程序：738 万独立访客，首周互动率 90%。"
+    }
   },
   {
     "name": "Engagement Center — WeChat Mini Program",
     "brand": "Nike",
     "cat": "digital",
-    "img": "images/portfolio/digital-10.webp"
+    "img": "images/portfolio/digital-10.webp",
+    "year": "2022–2025",
+    "summary": {
+      "en": "A WeChat mini program hub that turns Nike's seasonal campaigns into collectible cards, linking followers to member benefits and commerce.",
+      "zh": "把 Nike 季度战役变成可收集卡片的微信小程序互动中心，将粉丝导向会员权益与电商。"
+    }
   },
   {
     "name": "Family Day Mini Program",
     "brand": "Jordan",
     "cat": "digital",
-    "img": "images/portfolio/digital-11.webp"
+    "img": "images/portfolio/digital-11.webp",
+    "year": "2024–",
+    "summary": {
+      "en": "\"Jordan Family Day\", an always-on community programme on the 23rd of every month, each drop a product-led interactive card.",
+      "zh": "「Jordan 飞翔家族日」：每月 23 日的常态化社区项目，每期以一张产品向互动卡片上线。"
+    }
   },
   {
     "name": "CHBL Journey",
     "brand": "Nike",
     "cat": "digital",
-    "img": "images/portfolio/digital-12.webp"
+    "img": "images/portfolio/digital-12.webp",
+    "summary": {
+      "en": "An engagement platform for Nike during the CHBL season where school fans earn points for their teams: 95% active users and 913K+ page views.",
+      "zh": "Nike 在 CHBL 赛季期间的互动平台，校园球迷为主队赢取积分：活跃用户 95%，总浏览量超 91.3 万。"
+    }
   },
   {
     "name": "Nike Training Club",
     "brand": "Nike",
     "cat": "digital",
-    "img": "images/portfolio/digital-13.webp"
+    "img": "images/portfolio/digital-13.webp",
+    "year": "2021–",
+    "summary": {
+      "en": "Ongoing work on the Nike Training Club mini program: year-round communication, online course shoots, in-app assets and trainer management.",
+      "zh": "Nike Training Club 小程序长期运营：全年传播规划、线上课程拍摄、站内物料与教练关系管理。"
+    }
   },
   {
     "name": "Luka 4 OOH",
     "brand": "Jordan",
     "cat": "design",
-    "img": "images/portfolio/design-01.webp"
+    "img": "images/portfolio/design-01.webp",
+    "year": "2025",
+    "summary": {
+      "en": "Contributing to the signature basketball court design and creating release design for Jordan's SU25 Luka 4 campaign, online and offline.",
+      "zh": "参与 Jordan SU25 Luka 4 战役的签名球场设计，并完成线上线下的发布设计。"
+    }
   },
   {
     "name": "Retail Design",
     "brand": "Jordan",
     "cat": "design",
-    "img": "images/portfolio/design-02.webp"
+    "img": "images/portfolio/design-02.webp",
+    "year": "2023–2025",
+    "summary": {
+      "en": "Store design elements and LED packages for Jordan World of Flight stores and retail sites across China, adapted to each campaign.",
+      "zh": "为中国各地的 Jordan World of Flight 门店与零售点位，按不同战役设计店铺元素与 LED 物料。"
+    }
   },
   {
     "name": "Release Design",
     "brand": "Nike",
     "cat": "design",
-    "img": "images/portfolio/design-03.webp"
+    "img": "images/portfolio/design-03.webp",
+    "year": "2025",
+    "summary": {
+      "en": "Concept work for O2O and digital engagement, plus release design, for Nike's HO25 Swoosh Puffer campaign.",
+      "zh": "参与 Nike HO25 Swoosh Puffer 战役的 O2O 与数字互动概念，并完成线上线下的发布设计。"
+    }
   },
   {
     "name": "Brand Design",
     "brand": "La Mer",
     "cat": "design",
-    "img": "images/portfolio/design-04.webp"
+    "img": "images/portfolio/design-04.webp",
+    "year": "2023–2025",
+    "summary": {
+      "en": "Full-platform brand design for La Mer: official website, digital service content, in-store light boxes and more.",
+      "zh": "为 La Mer 提供全平台、全触点品牌设计：官网、数字服务内容、门店灯箱等。"
+    }
   },
   {
     "name": "Campaign Release",
     "brand": "Estée Lauder",
     "cat": "design",
-    "img": "images/portfolio/design-05.webp"
+    "img": "images/portfolio/design-05.webp",
+    "year": "2025",
+    "summary": {
+      "en": "Brand design release for Estée Lauder across multiple platforms, starting Fall 2025.",
+      "zh": "自 2025 年秋季起，为雅诗兰黛提供多平台的品牌设计发布服务。"
+    }
   },
   {
     "name": "Double 11 KV Design",
     "brand": "YSL",
     "cat": "design",
-    "img": "images/portfolio/design-06.webp"
+    "img": "images/portfolio/design-06.webp",
+    "year": "2025",
+    "summary": {
+      "en": "Key visuals for YSL's Double 11 Tmall campaign, built from 3D models in the brand's fashion show tone.",
+      "zh": "为 YSL 天猫双 11 设计主视觉，以 3D 建模呈现品牌时装秀的视觉调性。"
+    }
   },
   {
     "name": "Fresh Off — Running Magazine",
     "brand": "Nike",
     "cat": "design",
-    "img": "images/portfolio/design-07.webp"
+    "img": "images/portfolio/design-07.webp",
+    "year": "2022–",
+    "summary": {
+      "en": "FRESH OFF, a running magazine for Nike made of stories from runners met on tracks, city streets and trails.",
+      "zh": "为 Nike 打造跑步杂志 FRESH OFF《跑了再说》，收录在跑道、街头与山野遇见的跑者故事。"
+    }
   },
   {
     "name": "3D & Illustration",
     "brand": "Multi-brand",
     "cat": "design",
-    "img": "images/portfolio/design-08.webp"
+    "img": "images/portfolio/design-08.webp",
+    "summary": {
+      "en": "3D characters, scenes and product models, with illustration, made for brand campaigns.",
+      "zh": "为品牌战役创作的 3D 角色、场景、产品模型与插画。"
+    }
   },
   {
     "name": "Logo & Lockup Design",
     "brand": "Nike / Jordan / Converse",
     "cat": "design",
-    "img": "images/portfolio/design-09.webp"
+    "img": "images/portfolio/design-09.webp",
+    "summary": {
+      "en": "Chinese campaign logos and lockups for Nike, Jordan and Converse.",
+      "zh": "为 Nike、Jordan 与 Converse 设计的中文战役标识与组合字标。"
+    }
   },
   {
     "name": "Chuck 70 X ft. KARINA",
     "brand": "Converse",
     "cat": "design",
-    "img": "images/portfolio/design-10.webp"
+    "img": "images/portfolio/design-10.webp",
+    "summary": {
+      "en": "The visual rollout for Chuck 70 X with ambassador KARINA, adapted across digital flagships, e-commerce pages and OOH in subways and malls nationwide.",
+      "zh": "携手品牌代言人 KARINA，完成 Chuck 70 X 全触点视觉落地：线上旗舰店、电商落地页，以及全国地铁与商场户外大屏。"
+    }
   },
   {
     "name": "Ambassador Announcement",
     "brand": "Harbin Beer × NBA",
     "cat": "consumer",
-    "img": "images/portfolio/consumer-01.webp"
+    "img": "images/portfolio/consumer-01.webp",
+    "year": "2025",
+    "summary": {
+      "en": "Social strategy and execution for Harbin Beer × NBA's new ambassador duo, Dylan Wang and Tyrese Haliburton, in a phased rollout with KOLs.",
+      "zh": "为哈尔滨啤酒 × NBA 全新代言人组合王鹤棣与哈利伯顿的社交官宣提供策略与执行，分阶段释出并联动 KOL。"
+    }
   },
   {
     "name": "Mini Music Talent Show",
     "brand": "Converse",
     "cat": "consumer",
-    "img": "images/portfolio/consumer-02.webp"
+    "img": "images/portfolio/consumer-02.webp",
+    "year": "2022",
+    "summary": {
+      "en": "A Converse reality show bringing 12 up-and-coming artists to a music camp mentored by Khalil Fong, with label 明堂唱片 and Bilibili creators.",
+      "zh": "携手明堂唱片与 B 站创作者打造 Converse 音乐真人秀「爱小声」，12 组新声代音乐人参加由方大同担任导师的音乐营。"
+    }
   },
   {
     "name": "Basketball Community Building & Offline Experience",
     "brand": "Converse",
     "cat": "consumer",
-    "img": "images/portfolio/consumer-03.webp"
+    "img": "images/portfolio/consumer-03.webp",
+    "year": "2021–2022",
+    "summary": {
+      "en": "Two years establishing Converse Basketball in Greater China: strategy, key visuals and films, events, live streams and talent management.",
+      "zh": "历时两年在大中华区建立 Converse 篮球：策略规划、主视觉与影片、活动制作、直播与球员管理。"
+    }
   },
   {
     "name": "Summer Street Fit Fest",
     "brand": "Nike NTC",
     "cat": "consumer",
-    "img": "images/portfolio/consumer-04.webp"
+    "img": "images/portfolio/consumer-04.webp",
+    "year": "2023",
+    "summary": {
+      "en": "Nike trainers take NTC courses to the streets and challenge passers-by, turned into short-form video content.",
+      "zh": "携手 Nike 教练把 NTC 课程带上街头，向路人发起挑战，并产出短视频内容。"
+    }
   },
   {
     "name": "Snowboard Day",
     "brand": "Salomon",
     "cat": "consumer",
-    "img": "images/portfolio/consumer-05.webp"
+    "img": "images/portfolio/consumer-05.webp",
+    "year": "2020",
+    "summary": {
+      "en": "Key visuals, story films and social posts for Snowboard Day, Salomon's offline event connecting top athletes with the snowboarding community.",
+      "zh": "为 Salomon「神级玩家」Snowboard Day 创作主视觉、主题影片与社交内容，这是品牌连接顶尖滑手与单板社群的线下活动。"
+    }
   },
   {
     "name": "Editorial",
     "brand": "Multi-brand",
     "cat": "consumer",
-    "img": "images/portfolio/consumer-07.webp"
+    "img": "images/portfolio/consumer-07.webp",
+    "summary": {
+      "en": "WeChat editorials for a range of brands, weaving together stories, product inspiration and interaction.",
+      "zh": "为多个品牌定制微信图文，融合故事、产品灵感与互动。"
+    }
   },
   {
     "name": "Editorial",
     "brand": "Nike / Jordan",
     "cat": "consumer",
-    "img": "images/portfolio/consumer-08.webp"
+    "img": "images/portfolio/consumer-08.webp",
+    "summary": {
+      "en": "WeChat editorial content for Nike and Jordan across brand campaigns, product launches and community stories.",
+      "zh": "为 Nike 与 Jordan 制作微信图文内容，涵盖品牌战役、产品上市与社区故事。"
+    }
   }
 ];
 
@@ -505,7 +810,7 @@ const IMAGE_MANIFEST = {
   "brand-imc-08": {
     "webp": "images/portfolio/brand-imc-08-preview.webp",
     "full": "images/portfolio/brand-imc-08.webp",
-    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAMBAgQF/8QAIhAAAgEEAQQDAAAAAAAAAAAAAQIDAAQRIRIFExUxMnGR/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQP/xAAWEQEBAQAAAAAAAAAAAAAAAAAAEQH/2gAMAwEAAhEDEQA/AF+IV03dqUxs8V1v7pF10+G1jljMoaUhWTOiRkg4rmreT4Ydz5DB0NirNcy3CMZn5lVVVJA0AfVTFxLxKjYLH8orPk0UCv/Z",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAMBAgQF/8QAIhAAAgEEAgEFAAAAAAAAAAAAAQIDAAQRIQUSMRMyQVFx/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQP/xAAWEQEBAQAAAAAAAAAAAAAAAAAAEQH/2gAMAwEAAhEDEQA/AFjiFdN3alMbPVdb/aRdcfDbJJGZQ0pCsmdEjJBxiuat5Phh6nuGDobFWa5luEYzP3KqqqSBoA+KmLiZIRG2C3xnxRWck/dFAr//2Q==",
     "width": 1920,
     "height": 1080
   },

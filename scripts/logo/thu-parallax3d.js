@@ -14,13 +14,13 @@ import {
 } from 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mjs';
 import { BevelFilter } from 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 import {
-  prepareStage, makeApp, trackPointer, onResize,
+  prepareStage, makeApp, trackPointer, onResize, wordmarkFont,
 } from './shared.js';
 
 // Chrome / brushed-steel gradient wordmark -> reads as metal under BevelFilter.
 function metallicTextCanvas({ text = 'SKAND', size = 210, weight = 600, letterSpacing = 8, supersample = 2 } = {}) {
   const fpx = size * supersample;
-  const font = `${weight} ${fpx}px 'Cormorant Garamond', Georgia, serif`;
+  const font = wordmarkFont(fpx);
   const meas = document.createElement('canvas').getContext('2d');
   meas.font = font;
   try { meas.letterSpacing = letterSpacing * supersample + 'px'; } catch (e) {}
@@ -141,8 +141,14 @@ export async function init(stageEl) {
   app.ticker.add(() => {
     const cx = app.screen.width / 2;
     const cy = app.screen.height / 2;
-    const ox = (ptr.x - cx) / cx; // -1..1
-    const oy = (ptr.y - cy) / cy;
+    // Until the pointer has actually moved, trackPointer reports (-9999, -9999).
+    // Unclamped, that drove the tilt to ~27x its range: the group was sheared
+    // and its scale.y pushed through zero, so the wordmark collapsed into a few
+    // hairlines — a blank screen on touch devices and on desktop until the first
+    // mousemove. Rest centred until there is a pointer, and never exceed -1..1.
+    const clamp = (v) => Math.max(-1, Math.min(1, v));
+    const ox = ptr.moved ? clamp((ptr.x - cx) / cx) : 0;
+    const oy = ptr.moved ? clamp((ptr.y - cy) / cy) : 0;
     const t = performance.now() * 0.001;
 
     // ---- Pseudo-3D parallax: shear + foreshorten + positional shift ----

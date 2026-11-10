@@ -33,10 +33,14 @@
 /* === RESET & BASE === */
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --black:#0a0a0a;--white:#f0ede8;--blue:#4052B5;--coral:#E8563A;
+  --black:#0a0a0a;--white:#f0ede8;--coral:#E8563A;
   --grey:#888;--dark:#131313;--card-bg:#1a1a1a;
   --font-display:'Cormorant Garamond',Georgia,serif;
-  --font-body:'Outfit','Helvetica Neue',sans-serif;
+  --font-body:'Outfit','Helvetica Neue','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  /* Chinese headings: the Latin display serif has no CJK glyphs, so they used
+     to fall through to whatever serif the OS had (Songti on macOS, SimSun on
+     Windows). A named sans stack is consistent across both. */
+  --font-zh-display:'PingFang SC','HarmonyOS Sans SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',sans-serif;
 }
 html{scroll-behavior:smooth;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--coral) var(--black);scroll-snap-type:y proximity}
 /* gallery.js sets .hall-active while the pinned hall is on screen: the hall is
@@ -68,7 +72,6 @@ html.custom-cursor-enabled body,
 html.custom-cursor-enabled a,
 html.custom-cursor-enabled button,
 html.custom-cursor-enabled .nav-dropdown-toggle,
-html.custom-cursor-enabled .service-card,
 html.custom-cursor-enabled .hall-art-btn,
 html.custom-cursor-enabled .gallery-video-cta,
 html.custom-cursor-enabled .bside-float,
@@ -76,7 +79,6 @@ html.custom-cursor-enabled .viewer-close,
 html.custom-cursor-enabled .viewer-nav button{cursor:none!important}
 html:not(.custom-cursor-enabled) a,
 html:not(.custom-cursor-enabled) button,
-html:not(.custom-cursor-enabled) .service-card,
 html:not(.custom-cursor-enabled) .hall-art-btn,
 html:not(.custom-cursor-enabled) .bside-float{cursor:pointer!important}
 html:not(.custom-cursor-enabled) .gallery-scene{cursor:grab!important}
@@ -85,6 +87,9 @@ html:not(.custom-cursor-enabled) .gallery-scene.is-dragging{cursor:grabbing!impo
 /* === NAVIGATION === */
 /* Blend only the top-level controls so the Tool panel stays opaque. */
 nav{position:fixed;top:0;left:0;width:100%;z-index:1000;padding:24px 40px;display:flex;justify-content:space-between;align-items:center;mix-blend-mode:normal}
+/* A soft ground behind the bar so page headings scrolling underneath do not
+   collide with the links. Invisible over the dark hall. */
+nav::before{content:'';position:absolute;left:0;right:0;top:0;height:132px;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(10,10,10,.94) 0%,rgba(10,10,10,.78) 42%,rgba(10,10,10,0) 100%)}
 .nav-actions{display:flex;align-items:center;gap:32px}
 .nav-logo,.nav-links>li>a,.nav-dropdown-toggle,.lang-toggle{mix-blend-mode:difference}
 .nav-logo{font-family:var(--font-body);font-weight:700;font-size:18px;letter-spacing:4px;text-transform:uppercase;color:var(--white)}
@@ -133,7 +138,17 @@ body {
 /* === SECTIONS SHARED === */
 section{padding:clamp(80px,12vw,160px) clamp(24px,5vw,80px)}
 .section-label{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--coral);margin-bottom:12px;font-weight:500}
-.section-heading{font-family:var(--font-display);font-size:clamp(36px,5vw,72px);font-weight:300;line-height:1.1;margin-bottom:40px}
+.section-heading{font-family:var(--font-display);font-size:clamp(36px,5vw,72px);font-weight:400;line-height:1.1;letter-spacing:-.01em;margin-bottom:40px;text-wrap:balance}
+.section-heading em,.contact-heading em{font-style:italic;color:var(--coral)}
+/* Chinese: sans display stack, no synthesised italics, phrase-level breaks. */
+html:lang(zh) .section-heading,
+html:lang(zh) .contact-heading,
+html:lang(zh) .service-name{font-family:var(--font-zh-display);font-weight:500;letter-spacing:.01em;line-height:1.25}
+html:lang(zh) .section-heading em,
+html:lang(zh) .contact-heading em{font-style:normal}
+html:lang(zh) .about-left .section-heading{font-size:clamp(28px,3.4vw,48px)}
+html:lang(zh) .contact-heading{font-size:clamp(34px,5.2vw,72px)}
+.nb{white-space:nowrap}
 
 /* === ABOUT === */
 .about{
@@ -167,51 +182,28 @@ section{padding:clamp(80px,12vw,160px) clamp(24px,5vw,80px)}
 }
 .about-right-copy{display:flex;flex-direction:column;gap:18px}
 .about-text{font-size:clamp(15px,1.15vw,17px);line-height:1.75;color:rgba(240,237,232,.72);max-width:480px}
-.about-stats{
+/* Client wall — replaces the three count-up stats. The names are the
+   credential, so they sit with About rather than under Contact. */
+.about-clients{
   grid-column:1/-1;
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:clamp(20px,3vw,40px);
-  width:100%;
-  max-width:none;
-  margin-top:0;
-  padding-top:clamp(32px,4vw,48px);
-  border-top:1px solid rgba(240,237,232,.08);
+  padding-top:clamp(28px,3.5vw,44px);
+  border-top:1px solid rgba(240,237,232,.1);
 }
-.stat-item{
-  min-width:0;
-  text-align:center;
-  padding:0 clamp(8px,1.5vw,16px);
-  position:relative;
+.about-clients-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:clamp(18px,2vw,26px)}
+.about-clients-head .section-label{margin-bottom:0}
+.about-clients-count{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(240,237,232,.45)}
+.clients-marquee{
+  position:relative;overflow:hidden;
+  padding:clamp(6px,1vw,12px) 0;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
 }
-.stat-item:not(:last-child)::after{
-  content:'';
-  position:absolute;
-  right:0;
-  top:18%;
-  bottom:18%;
-  width:1px;
-  background:rgba(240,237,232,.08);
-}
-.stat-num{
-  font-family:var(--font-display);
-  font-size:clamp(40px,4.2vw,64px);
-  font-weight:300;
-  color:var(--coral);
-  line-height:1;
-  display:inline-flex;
-  align-items:baseline;
-  justify-content:center;
-  gap:2px;
-}
-.stat-num .stat-suffix{font-size:.55em;letter-spacing:1px}
-.stat-label{
-  font-size:11px;
-  letter-spacing:2.5px;
-  text-transform:uppercase;
-  color:var(--grey);
-  margin-top:10px;
-}
+.marquee-track{display:flex;animation:marqueeScroll 40s linear infinite;width:max-content}
+.marquee-track:hover{animation-play-state:paused}
+.marquee-item{font-family:var(--font-display);font-size:clamp(20px,2.4vw,36px);font-weight:300;white-space:nowrap;padding:0 clamp(16px,2.5vw,36px);color:rgba(240,237,232,.5);transition:color .3s ease}
+.marquee-item:hover{color:var(--coral)}
+@keyframes marqueeScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.marquee-track{animation:none}}
 
 /* === SERVICES (compact horizontal rail) === */
 .services-section{
@@ -364,36 +356,19 @@ section{padding:clamp(80px,12vw,160px) clamp(24px,5vw,80px)}
 }
 .services-rail-dot.is-active{background:var(--coral);transform:scale(1.25)}
 
-/* === CONTACT (+ brand marquee) === */
+/* === CONTACT === */
 .contact-section{
   text-align:center;
-  padding:clamp(88px,12vw,140px) 0 clamp(56px,8vw,96px);
+  padding:clamp(88px,12vw,140px) 0 clamp(72px,9vw,112px);
   overflow:hidden;
   background:var(--black);
 }
 .contact-inner{padding:0 clamp(24px,5vw,80px)}
-.contact-heading{font-family:var(--font-display);font-size:clamp(40px,6.5vw,88px);font-weight:300;line-height:1.05;margin-bottom:36px}
-.contact-heading em{color:var(--coral);font-style:italic}
+.contact-heading{font-family:var(--font-display);font-size:clamp(40px,6.5vw,88px);font-weight:400;line-height:1.05;letter-spacing:-.01em;margin-bottom:36px}
 .contact-name{font-family:var(--font-display);font-size:clamp(22px,2.4vw,32px);font-weight:400;margin-bottom:10px}
 .contact-email{display:inline-block;color:var(--coral);font-size:clamp(15px,1.35vw,20px);letter-spacing:1px;text-decoration:none;transition:opacity .3s ease}
 .contact-email:hover{opacity:.75}
 .contact-location{color:rgba(240,237,232,.55);font-size:clamp(13px,1.1vw,15px);letter-spacing:1px;margin-top:14px}
-/* Brand names scroll under contact details */
-.contact-marquee-wrap{
-  position:relative;
-  margin-top:clamp(48px,7vw,80px);
-  mask-image:linear-gradient(90deg,transparent,black 8%,black 92%,transparent);
-  -webkit-mask-image:linear-gradient(90deg,transparent,black 8%,black 92%,transparent);
-}
-.marquee-track{display:flex;animation:marqueeScroll 32s linear infinite;width:max-content}
-.marquee-track.marquee-reverse{animation-name:marqueeScrollReverse;animation-duration:40s;margin-top:12px}
-.marquee-track:hover{animation-play-state:paused}
-.marquee-item{font-family:var(--font-display);font-size:clamp(20px,2.4vw,36px);font-weight:300;white-space:nowrap;padding:0 clamp(16px,2.5vw,36px);color:rgba(240,237,232,.22);transition:color .3s ease}
-.marquee-item:hover{color:var(--coral)}
-.marquee-sep{color:var(--blue);padding:0 8px;font-size:clamp(14px,1.6vw,24px);opacity:.35}
-@keyframes marqueeScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-@keyframes marqueeScrollReverse{0%{transform:translateX(-50%)}100%{transform:translateX(0)}}
-
 /* === FOOTER === */
 footer{padding:40px clamp(24px,5vw,80px);display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(240,237,232,.08);font-size:12px;color:var(--grey);flex-wrap:wrap;gap:16px}
 @media(max-width:480px){footer{justify-content:center;text-align:center;flex-direction:column}}
@@ -498,8 +473,6 @@ footer a{color:var(--grey);text-decoration:none}
 @media(max-width:1024px){
   .about{grid-template-columns:1fr}
   .about-right{border-left:none;padding-left:0;border-top:1px solid rgba(232,86,58,.35);padding-top:24px;min-height:0}
-  .about-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-  .stat-item:not(:last-child)::after{display:none}
 }
 .nav-hamburger{position:relative;display:none;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:44px;height:44px;background:none;border:none;cursor:pointer;padding:4px;z-index:1001}
 .nav-hamburger span{display:block;width:24px;height:2px;background:var(--white);transition:all .3s ease}
@@ -510,6 +483,7 @@ footer a{color:var(--grey);text-decoration:none}
   :root{--mobile-nav-height:calc(76px + env(safe-area-inset-top,0px))}
   html{scroll-padding-top:var(--mobile-nav-height)}
   nav{padding:calc(16px + env(safe-area-inset-top,0px)) 20px 16px;mix-blend-mode:normal;background:var(--black);box-shadow:0 1px 0 rgba(240,237,232,.08)}
+  nav::before{display:none}
   .nav-actions{gap:8px}
   .nav-logo{position:relative;z-index:1001}
   .nav-logo,.nav-links>li>a,.nav-dropdown-toggle,.lang-toggle{mix-blend-mode:normal}
@@ -574,18 +548,18 @@ footer a{color:var(--grey);text-decoration:none}
   }
   .nav-dropdown-menu a::after{display:none}
   .nav-dropdown-menu a:hover{padding-left:18px}
-  .about-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-  .stat-label{letter-spacing:1.2px;font-size:10px}
   .service-card{flex-basis:min(78vw,220px);padding:14px}
+  .services-rail{cursor:auto}
+  /* the day's wordmark does not need a whole phone screen to itself */
+  .logo-showcase{height:72vh;height:72dvh;min-height:440px}
   .cursor-dot,.cursor-ring{display:none}
   body{cursor:auto}
-  .nav-links a,.nav-hamburger,.service-card,.services-rail-dot,.contact-email{cursor:pointer}
-  .services-rail{cursor:auto}
+  .nav-links a,.nav-hamburger,.contact-email{cursor:pointer}
 }
 </style>
 <!-- Gallery hall. Loaded after the inline block so it wins on equal
      specificity; everything in it is scoped under .gallery / .viewer. -->
-<link rel="stylesheet" href="styles/gallery.css?v=10">
+<link rel="stylesheet" href="styles/gallery.css?v=11">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -672,10 +646,15 @@ footer a{color:var(--grey);text-decoration:none}
     <div class="viewer-kicker" id="viewerKicker"></div>
     <div class="viewer-brand" id="viewerBrand"></div>
     <h2 class="viewer-name" id="viewerName"></h2>
+    <!-- Optional: shown only for works whose catalog entry carries a summary. -->
+    <p class="viewer-summary" id="viewerSummary" hidden></p>
+    <!-- Each fact appears once. The client is the brand line above and the
+         position is the counter below, so neither is repeated here; Year and
+         Scope show only when the catalog provides them. -->
     <dl class="viewer-facts">
-      <div class="viewer-fact"><dt data-tk="viewer-client">Client</dt><dd id="viewerClient"></dd></div>
       <div class="viewer-fact"><dt data-tk="viewer-category">Category</dt><dd id="viewerCategory"></dd></div>
-      <div class="viewer-fact"><dt data-tk="viewer-index">Index</dt><dd id="viewerIndex"></dd></div>
+      <div class="viewer-fact" id="viewerYearRow" hidden><dt data-tk="viewer-year">Year</dt><dd id="viewerYear"></dd></div>
+      <div class="viewer-fact" id="viewerScopeRow" hidden><dt data-tk="viewer-scope">Scope</dt><dd id="viewerScope"></dd></div>
     </dl>
     <div class="viewer-nav">
       <button type="button" id="viewerPrev" data-tk="viewer-prev" aria-label="Previous work">&#8249;</button>
@@ -794,19 +773,12 @@ footer a{color:var(--grey);text-decoration:none}
       <p class="about-text" data-t="about-text2">We embody a startup mentality, driven by a passion to create for more: to spark conversations, build connections, shape cultures, drive innovation, and generate growth and value — for ourselves and our partners.</p>
     </div>
   </div>
-  <div class="about-stats reveal" id="aboutStats">
-    <div class="stat-item">
-      <div class="stat-num"><span data-count="17">0</span><span class="stat-suffix">+</span></div>
-      <div class="stat-label" data-t="stat-brands">Partner Brands</div>
+  <div class="about-clients reveal">
+    <div class="about-clients-head">
+      <div class="section-label" data-t="clients-label">Selected Clients</div>
+      <span class="about-clients-count" id="clientsCount"></span>
     </div>
-    <div class="stat-item">
-      <div class="stat-num"><span data-count="50">0</span><span class="stat-suffix">+</span></div>
-      <div class="stat-label" data-t="stat-campaigns">Campaigns</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num"><span data-count="30">0</span><span class="stat-suffix">+</span></div>
-      <div class="stat-label" data-t="stat-creators">Creators</div>
-    </div>
+    <div class="clients-marquee" aria-hidden="true"><div class="marquee-track" id="marqueeTrack"><!-- brand names injected --></div></div>
   </div>
 </section>
 
@@ -837,21 +809,13 @@ footer a{color:var(--grey);text-decoration:none}
     <a class="contact-email" href="mailto:kris.wang@skandstudio.com">kris.wang@skandstudio.com</a>
     <p class="contact-location" data-t="contact-location">Shanghai, China</p>
   </div>
-  <div class="contact-marquee-wrap" aria-hidden="true">
-    <div class="marquee-track" id="marqueeTrack">
-      <!-- brand names injected -->
-    </div>
-    <div class="marquee-track marquee-reverse" id="marqueeTrackAlt">
-      <!-- reverse marquee -->
-    </div>
-  </div>
 </section>
 
 <!-- DAILY LOGO SHOWCASE -->
 <!-- The daily Pixi effect, full screen. It was a 120x44 footer slot, which is a
      size that cannot show what these effects do — a pixel-melt and an ink-bloom
-     both need room to breathe. Contact's brand marquee above already carries the
-     client names, so this screen deliberately holds nothing but the effect. The
+     both need room to breathe. About's client wall already carries the client
+     names, so this screen deliberately holds nothing but the effect. The
      module lazy-loads on approach (see scripts/logo/dispatcher.js), and pauses
      its ticker whenever the screen is off-screen. -->
 <section class="logo-showcase" id="logoShowcase" aria-label="Daily logo study">
@@ -879,7 +843,7 @@ footer a{color:var(--grey);text-decoration:none}
 <!-- FOOTER -->
 <footer>
   <div style="display:flex;flex-direction:column;gap:4px">
-    <span data-t="footer-copy">&copy; 2025 SKAND Creative Studio</span>
+    <span data-t="footer-copy">&copy; 2026 SKAND Creative Studio</span>
     <a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow noopener" style="font-family:var(--font-body);font-size:11px;letter-spacing:1px">沪ICP备2026019644号</a>
   </div>
   <a href="egg.html?v=8" class="footer-egg" id="footerEgg" data-t="footer-egg">
@@ -890,7 +854,7 @@ footer a{color:var(--grey);text-decoration:none}
 </footer>
 </div> <!-- /pageWrapper -->
 
-<script src="scripts/portfolio/data.js?v=20261012-1"></script>
+<script src="scripts/portfolio/data.js?v=20261110-2"></script>
 <script>
 /* === i18n DATA === */
 const T = {
@@ -898,18 +862,16 @@ const T = {
   hero: { tagline:{en:'Create For More',zh:'Create For More'}, subtitle:{en:'and be seen by the world',zh:'让世界看见你的光芒'}, scroll:{en:'Scroll',zh:'向下'}, findBSide:{en:'Find B-Side',zh:'探索 B-Side'}, playGame:{en:'Enter The Game',zh:'Enter The Game'} },
   about: { 
     label:{en:'About Us',zh:'关于我们'}, 
-    heading:{en:'Shanghai independent studio for brands that need China-native creative with global craft.',zh:'上海独立创意工作室——为需要中国本地化创意与全球级执行的品牌而生。'},
+    heading:{en:'Shanghai independent studio for brands that need China-native creative with global craft.',zh:'<span class="nb">上海独立</span><span class="nb">创意工作室，</span><span class="nb">为需要</span><span class="nb">中国本地化创意</span><span class="nb">与全球级执行</span><span class="nb">的品牌而生。</span>'},
     text1:{en:'Grounded in versatile creative production, we help global brands navigate the Chinese market and connect with local audiences — while keeping the craft sharp enough for the world stage.',zh:'植根于多元创意制作，我们帮助全球品牌洞察中国市场、连接本土受众，同时保持面向世界舞台的创作锋芒。'}, 
     text2:{en:'We embody a startup mentality, driven by a passion to create for more: to spark conversations, build connections, shape cultures, drive innovation, and generate growth and value — for ourselves and our partners.',zh:'我们拥有创业心态，源自对“创造更多”的渴望：激发对话、建立连接、塑造文化、推动创新，为自身和合作伙伴创造增长与价值。'},
-    stats:{
-      brands:{en:'Partner Brands',zh:'合作品牌'},
-      campaigns:{en:'Campaigns',zh:'品牌战役'},
-      creators:{en:'Creators',zh:'创作者'}
-    }
+    clients:{en:'Selected Clients',zh:'合作品牌'},
+    clientsCount:{en:'{n} brands',zh:'{n} 个品牌'},
+    clientsMore:{en:'& more',zh:'及更多'}
   },
   services: {
     label:{en:'What We Do',zh:'我们的服务'},
-    heading:{en:'Seven pillars of <em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">creative</em> craft',zh:'七大<em style="font-family:var(--font-display);font-style:italic;color:var(--coral)">创意</em>支柱'},
+    heading:{en:'Seven pillars of <em>creative</em> craft',zh:'七大<em>创意</em>支柱'},
     lead:{en:'From brand voice to social systems — capabilities built for China, executed with global craft.',zh:'从品牌声量到社交体系——为中国而生，以全球级工艺执行。'}
   },
   work: {
@@ -929,9 +891,9 @@ const T = {
     close:{en:'Close',zh:'关闭'},
     prev:{en:'Previous work',zh:'上一个作品'},
     next:{en:'Next work',zh:'下一个作品'},
-    client:{en:'Client',zh:'客户'},
     category:{en:'Category',zh:'类别'},
-    index:{en:'Index',zh:'编号'},
+    year:{en:'Year',zh:'年份'},
+    scope:{en:'Scope',zh:'服务范围'},
     filter:{en:'Filter by category',zh:'按类别筛选'},
     works:{en:'works',zh:'件作品'},
     work1:{en:'work',zh:'件作品'},
@@ -948,7 +910,7 @@ const T = {
     location:{en:'Shanghai, China',zh:'中国上海'}
   },
   footer: {
-    copy:{en:'© 2025 SKAND Creative Studio',zh:'© 2025 SKAND 创意工作室'},
+    copy:{en:'© 2026 SKAND Creative Studio',zh:'© 2026 SKAND 创意工作室'},
     tagline:{en:'Create For More',zh:'Create For More'},
     egg:{en:'Find the Egg',zh:'找到彩蛋'}
   },
@@ -1023,9 +985,9 @@ function applyLang() {
   // the arrows carry a glyph, so they get a localised aria-label, not text
   gAria('viewer-prev', T.gallery.prev[lang]);
   gAria('viewer-next', T.gallery.next[lang]);
-  gSet('viewer-client', T.gallery.client[lang]);
   gSet('viewer-category', T.gallery.category[lang]);
-  gSet('viewer-index', T.gallery.index[lang]);
+  gSet('viewer-year', T.gallery.year[lang]);
+  gSet('viewer-scope', T.gallery.scope[lang]);
   if (q('[data-t="hero-find-b-side"]')) {
     q('[data-t="hero-find-b-side"]').querySelector('span').textContent = T.hero.findBSide[lang];
   }
@@ -1034,12 +996,13 @@ function applyLang() {
   }
   // About
   q('[data-t="about-label"]').textContent = T.about.label[lang];
-  q('[data-t="about-heading"]').textContent = T.about.heading[lang];
+  q('[data-t="about-heading"]').innerHTML = T.about.heading[lang];
   q('[data-t="about-text1"]').textContent = T.about.text1[lang];
   q('[data-t="about-text2"]').textContent = T.about.text2[lang];
-  if (q('[data-t="stat-brands"]')) q('[data-t="stat-brands"]').textContent = T.about.stats.brands[lang];
-  if (q('[data-t="stat-campaigns"]')) q('[data-t="stat-campaigns"]').textContent = T.about.stats.campaigns[lang];
-  if (q('[data-t="stat-creators"]')) q('[data-t="stat-creators"]').textContent = T.about.stats.creators[lang];
+  q('[data-t="clients-label"]').textContent = T.about.clients[lang];
+  q('#clientsCount').textContent = T.about.clientsCount[lang].replace('{n}', CLIENTS.length + '+');
+  const marqueeHTML = CLIENTS.map(c => `<span class="marquee-item">${c}</span>`).join('');
+  q('#marqueeTrack').innerHTML = marqueeHTML + marqueeHTML;
   // Services
   q('[data-t="services-label"]').textContent = T.services.label[lang];
   q('[data-t="services-heading"]').innerHTML = T.services.heading[lang];
@@ -1066,7 +1029,7 @@ function applyLang() {
   }
   // Service cards
   document.querySelectorAll('.service-card').forEach((card, i) => {
-    const data = SERVICE_DATA[i];
+    const data = SERVICE_DATA[i % SERVICE_DATA.length];
     if (!data) return;
     card.querySelector('.service-name').textContent = data.name[lang] || '';
     card.querySelector('.service-desc').textContent = data.desc[lang] || '';
@@ -1079,12 +1042,6 @@ function applyLang() {
   document.querySelectorAll('[data-cat-label]').forEach(el => {
     el.textContent = FILTER_LABELS[el.dataset.catLabel]?.[lang] || el.dataset.catLabel;
   });
-  // Marquee + reverse
-  const marqueeHTML = CLIENTS.map(c => `<span class="marquee-item">${c}</span><span class="marquee-sep">◆</span>`).join('');
-  const marqueeTrack = document.getElementById('marqueeTrack');
-  const marqueeTrackAlt = document.getElementById('marqueeTrackAlt');
-  if (marqueeTrack) marqueeTrack.innerHTML = marqueeHTML + marqueeHTML;
-  if (marqueeTrackAlt) marqueeTrackAlt.innerHTML = marqueeHTML + marqueeHTML;
   // Lang toggle button
   q('#langToggle').textContent = lang === 'en' ? '中文' : 'EN';
   q('#langToggle').setAttribute('aria-label', lang === 'en' ? 'Switch to Chinese' : '切换到英文');
@@ -1135,7 +1092,7 @@ function applyLang() {
 
 
   // Render dual marquees
-  const mItems = CLIENTS.map(c => `<span class="marquee-item">${c}</span><span class="marquee-sep">◆</span>`).join('');
+  const mItems = CLIENTS.map(c => `<span class="marquee-item">${c}</span>`).join('');
   const marqueeTrack = document.getElementById('marqueeTrack');
   const marqueeTrackAlt = document.getElementById('marqueeTrackAlt');
   if (marqueeTrack) marqueeTrack.innerHTML = mItems + mItems;
@@ -1143,7 +1100,6 @@ function applyLang() {
 
   applyLang();
   initServicesRail();
-  initAboutStats();
 })();
 
 /* === SERVICES HORIZONTAL RAIL === */
@@ -1365,44 +1321,6 @@ function initServicesRail() {
   updateActiveFromScroll();
 }
 
-/* === ABOUT STATS COUNT-UP === */
-function initAboutStats() {
-  const stats = document.getElementById('aboutStats');
-  if (!stats) return;
-  let played = false;
-
-  const run = () => {
-    if (played) return;
-    played = true;
-    stats.querySelectorAll('[data-count]').forEach(el => {
-      const target = parseInt(el.dataset.count, 10);
-      if (Number.isNaN(target)) return;
-      const duration = 1100;
-      const start = performance.now();
-      const tick = (now) => {
-        const t = Math.min(1, (now - start) / duration);
-        const eased = 1 - Math.pow(1 - t, 3);
-        el.textContent = String(Math.round(target * eased));
-        if (t < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    });
-  };
-
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        run();
-        io.disconnect();
-      }
-    });
-  }, { threshold: 0.35 });
-  io.observe(stats);
-}
-
-/* === RENDER MARQUEE (duplicated for seamless loop) === */
-/* (merged into init above) */
-
 /* === NAV DROPDOWN (desktop hover + mobile tap) === */
 const dropdown = document.querySelector('.nav-dropdown');
 const dropdownToggle = dropdown?.querySelector('.nav-dropdown-toggle');
@@ -1570,8 +1488,8 @@ bindPageFlip('a[href^="egg.html"]', () => 'egg.html?v=8&lang=' + lang);
 <!-- Gallery hall. Classic script, not a module: it reads PROJECTS,
      IMAGE_MANIFEST, T and `lang` from the lexical scope above. Must load
      after the inline script, hence no `defer` and no `type=module`. -->
-<script src="scripts/gallery/gallery.js?v=10"></script>
+<script src="scripts/gallery/gallery.js?v=12"></script>
 <script src="scripts/share/wechat.js?v=2"></script>
-<script type="module" src="scripts/logo/dispatcher.js?v=17"></script>
+<script type="module" src="scripts/logo/dispatcher.js?v=19"></script>
 </body>
 </html>

@@ -5,6 +5,20 @@ export const PIXI_URL = 'https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.mj
 export const FILTERS_URL = 'https://cdn.jsdelivr.net/npm/pixi-filters@6/dist/pixi-filters.mjs';
 export const MATTER_URL = 'https://esm.sh/matter-js@0.20.0';
 
+// The wordmark's typeface. It was the display serif, which made the closing
+// screen show a second, different "SKAND" from the block logo in the nav. The
+// heavy sans is the same voice as the logo and the hero headline. Every day
+// module draws through these, so the face is set once here; the per-call
+// `weight` the modules pass was tuned for the serif and is no longer used.
+export const WORDMARK_FAMILY = "'Outfit', 'Helvetica Neue', Arial, sans-serif";
+export const WORDMARK_WEIGHT = 700;
+export const wordmarkFont = (px) => `${WORDMARK_WEIGHT} ${px}px ${WORDMARK_FAMILY}`;
+// Canvas text does not trigger a font download, so make sure the face is in
+// before anything rasterises the wordmark.
+export const wordmarkReady = () =>
+  (document.fonts && document.fonts.load ? document.fonts.load(wordmarkFont(64), 'SKAND') : Promise.resolve())
+    .catch(() => {});
+
 // Match index.html hero fallback: coarse pointer OR narrow viewport.
 export const isMobile =
   window.matchMedia('(pointer: coarse)').matches ||
@@ -119,8 +133,6 @@ export function fitAndCenter(sprite, app, ratio = 0.7) {
 export function createTextCanvas(opts = {}) {
   const {
     text = 'SKAND',
-    fontFamily = "'Cormorant Garamond', Georgia, serif",
-    weight = 500,
     size = 200,
     color = '#f0ede8',
     letterSpacing = 6,
@@ -133,7 +145,7 @@ export function createTextCanvas(opts = {}) {
   const c = document.createElement('canvas');
   const ctx = c.getContext('2d');
   const fpx = size * supersample;
-  const font = `${weight} ${fpx}px ${fontFamily}`;
+  const font = wordmarkFont(fpx);
   ctx.font = font;
   try {
     ctx.letterSpacing = letterSpacing * supersample + 'px';
@@ -154,9 +166,17 @@ export function createTextCanvas(opts = {}) {
   x2.textBaseline = 'middle';
   if (mode === 'stroke') {
     x2.lineJoin = 'round';
-    x2.lineWidth = strokeWidth * supersample;
+    // The sans glyphs are built from overlapping contours, and stroking them
+    // directly also draws the seams inside each letter. Stroke at double width,
+    // then cut the letter's own fill back out: what is left is the outer half
+    // of the stroke — a clean outline of the visible shape only.
+    x2.lineWidth = strokeWidth * supersample * 2;
     x2.strokeStyle = strokeColor;
     x2.strokeText(text, w / 2, h / 2);
+    x2.globalCompositeOperation = 'destination-out';
+    x2.fillStyle = '#000';
+    x2.fillText(text, w / 2, h / 2);
+    x2.globalCompositeOperation = 'source-over';
   } else {
     x2.fillStyle = color;
     x2.fillText(text, w / 2, h / 2);
@@ -168,8 +188,6 @@ export function createTextCanvas(opts = {}) {
 // .hero-title. Use this for all daily Pixi effects so the logo keeps its color.
 export function brandTextCanvas(opts = {}) {
   const text = opts.text || 'SKAND';
-  const fontFamily = opts.fontFamily || "'Cormorant Garamond', Georgia, serif";
-  const weight = opts.weight || 500;
   const size = opts.size || 200;
   const letterSpacing = opts.letterSpacing != null ? opts.letterSpacing : 6;
   const supersample = opts.supersample || 2;
@@ -177,7 +195,7 @@ export function brandTextCanvas(opts = {}) {
   const c = document.createElement('canvas');
   const ctx = c.getContext('2d');
   const fpx = size * supersample;
-  const font = `${weight} ${fpx}px ${fontFamily}`;
+  const font = wordmarkFont(fpx);
   ctx.font = font;
   try {
     ctx.letterSpacing = letterSpacing * supersample + 'px';

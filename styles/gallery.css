@@ -553,14 +553,15 @@
    ============================================================ */
 .gallery-hint {
   position: absolute;
-  z-index: 4;
+  /* above the vignette (z 6), which was dimming it to near-invisible */
+  z-index: 7;
   left: 6vw;
   bottom: 42px;
   display: flex;
   align-items: center;
   gap: 10px;
-  color: rgba(240, 237, 232, .45);
-  font: 10px var(--gallery-mono);
+  color: rgba(240, 237, 232, .82);
+  font: 11px var(--gallery-mono);
   letter-spacing: .16em;
   text-transform: uppercase;
   transition: opacity .4s ease;
@@ -832,6 +833,14 @@
   line-height: 1.1;
   letter-spacing: -.015em;
 }
+.viewer-summary {
+  margin: 18px 0 0;
+  color: rgba(240, 237, 232, .72);
+  font-size: 14px;
+  line-height: 1.65;
+}
+.viewer-summary[hidden],
+.viewer-fact[hidden] { display: none; }
 .viewer-facts {
   margin-top: 34px;
   border-top: 1px solid rgba(240, 237, 232, .12);
@@ -846,7 +855,7 @@
   letter-spacing: .1em;
 }
 .viewer-fact dt { color: rgba(240, 237, 232, .42); text-transform: uppercase; }
-.viewer-fact dd { color: var(--white); text-align: right; }
+.viewer-fact dd { color: var(--white); text-align: right; line-height: 1.5; }
 
 .viewer-nav {
   display: flex;
