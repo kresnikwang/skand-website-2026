@@ -89,3 +89,9 @@ Published and verified: https://skandstudio.com/
 - Counts: Brand IMC 13, Product 23, Digital 12, Design 10, Consumer 7; total 65.
 - Restore only after explicit owner instruction: remove published=false (or set true), rebuild with node scripts/portfolio/build.js --reuse-images, bump data.js version, verify and deploy. Missing restored images will be encoded automatically.
 - New full-resolution WebP pixels match the supplied JPEG; all 65 published full-resolution files verified.
+
+2026-11-12 publication update:
+- Replaced Brand IMC Wilson WSP Series Launch (`brand-imc-08`, `Brand IMC/WILSON WSP.jpeg`) with the updated slide (including both offline and online asset breakdowns) and added `?v=20261112` cache-busting revision to bypass browser immutable cache.
+- Added Design/SKAND Portfolio 2026 SEP.001.jpeg as Salomon — Tsaigu Trail Campaign (`design-11`, 2026).
+- Added the complete Social category (`social-01` through `social-11`, 11 works from `Social/SKAND Portfolio 2026 SEP.001.jpeg` to `011.jpeg`).
+- Counts: Brand IMC 13, Product 23, Social 11, Digital 13, Design 11, Consumer 7; total 78.

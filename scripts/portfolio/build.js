@@ -17,6 +17,7 @@ const labels = {
   all: { en: 'All', zh: '全部' },
   'brand-imc': { en: 'Brand IMC', zh: '品牌整合营销' },
   product: { en: 'Product', zh: '产品' },
+  social: { en: 'Social', zh: '社交叙事' },
   digital: { en: 'Digital', zh: '数字体验' },
   design: { en: 'Design', zh: '设计' },
   consumer: { en: 'Consumer', zh: '消费者连接' }
@@ -59,14 +60,15 @@ async function build() {
     assert.deepEqual(after.info, before.info, p.source + ': dimensions/channels changed');
     assert(before.data.equals(after.data), p.source + ': full-resolution pixels changed');
     const blur = await sharp(input).resize(20).jpeg({ quality: 40 }).toBuffer();
+    const ver = p.rev ? '?v=' + p.rev : '';
     const full = 'images/portfolio/' + p.id + '.webp';
     // year / scope / summary are optional catalog fields shown in the work
     // viewer's side panel. scope and summary may be a string or { en, zh }.
     const extra = Object.fromEntries(['year', 'scope', 'summary'].filter(k => p[k]).map(k => [k, p[k]]));
     projects[index] = { name: p.name, brand: p.brand, cat: p.cat, img: full, ...extra };
     manifest[p.id] = {
-      webp: 'images/portfolio/' + p.id + '-preview.webp',
-      full, blur: 'data:image/jpeg;base64,' + blur.toString('base64'),
+      webp: 'images/portfolio/' + p.id + '-preview.webp' + ver,
+      full: full + ver, blur: 'data:image/jpeg;base64,' + blur.toString('base64'),
       width: meta.width, height: meta.height
     };
     report[index] = { source: p.source, name: p.name, brand: p.brand, category: p.cat,

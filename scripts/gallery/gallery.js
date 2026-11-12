@@ -26,7 +26,7 @@
   const railCat   = document.getElementById('galleryRailCat');
 
   const LQIP = m => (m && m.blur) || '';
-  const basename = img => img.split('/').pop().replace(/\.[^.]+$/, '');
+  const basename = img => img.split('?')[0].split('/').pop().replace(/\.[^.]+$/, '');
   const pad2 = n => String(n).padStart(2, '0');
 
   /* ---------- layout ----------
@@ -1051,7 +1051,7 @@
       requestAnimationFrame(settle);
     };
     full.onerror = () => { if (token === loadToken) viewer.loading.hidden = true; };
-    full.src = p.img;
+    full.src = man.full || p.img;
   }
 
   function openViewer(i, source = isHall() ? 'hall' : 'featured', push = true) {

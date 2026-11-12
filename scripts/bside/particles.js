@@ -148,7 +148,9 @@ const velocityShader = /* glsl */ `
       f *= f;
       vel += (toPointer / pd) * f * uPointerForce;
       if (uPointerForce > 0.0) {
-        vel += normalize(vec3(-toPointer.y, toPointer.x, 0.0)) * f * 0.85;
+        // Ethereal spiral vortex around the pointer center
+        vec3 tangent = normalize(vec3(-toPointer.y, toPointer.x, sin(time * 3.0 + seed * 6.28) * 0.35));
+        vel += tangent * f * (1.15 + uChaos * 0.75);
       }
     }
 
@@ -200,7 +202,16 @@ const renderVertex = /* glsl */ `
     // Colour: idle grey → per-letter accent as it locks in → hot on ignite.
     float mixT = clamp(uMorph * 1.2, 0.0, 1.0);
     vec3 col = mix(uIdleColor, aColor, mixT);
-    col = mix(col, vec3(1.0, 0.94, 0.88), uIgnite * 0.8);
+
+    // Ethereal living energy wave sweeping through the letters as they assemble
+    if (mixT > 0.08) {
+      float wave = sin(pos.x * 2.2 + pos.y * 2.8 - uTime * 3.4 + aSeed * 3.1415);
+      float pulse = smoothstep(0.68, 1.0, wave);
+      vec3 energyColor = mix(vec3(0.91, 0.34, 0.23), vec3(1.0, 0.88, 0.72), aRandom);
+      col = mix(col, energyColor, pulse * 0.58 * mixT);
+    }
+
+    col = mix(col, vec3(1.0, 0.95, 0.90), uIgnite * 0.85);
 
     /* Squeeze mode: the contact patch runs hot. Without this there is no cue at
        all for WHERE the press is landing — the mark deforms globally and a
@@ -245,13 +256,18 @@ const renderFragment = /* glsl */ `
   varying float vCore;
 
   void main() {
-    // Soft circular sprite: bright core, feathered edge, additive-friendly.
+    // Ethereal photonic sprite: ultra-crisp luminous core + feathered atmospheric halo
     vec2 c = gl_PointCoord - 0.5;
     float d = length(c) * 2.0;
     if (d > 1.0) discard;
-    float body = 1.0 - smoothstep(0.15, 1.0, d);
-    float core = 1.0 - smoothstep(0.0, 0.38, d);
-    vec3 col = vColor * (body * 0.85 + core * 0.8 * vCore);
+
+    float body = 1.0 - smoothstep(0.12, 1.0, d);
+    float core = 1.0 - smoothstep(0.0, 0.28, d);
+    float spark = 1.0 - smoothstep(0.0, 0.09, d); // pinpoint star core
+
+    vec3 col = vColor * (body * 0.78 + core * 0.95 * vCore);
+    col += vec3(1.0, 0.98, 0.95) * spark * 0.65;
+
     gl_FragColor = vec4(col, vAlpha * body);
   }
 `;

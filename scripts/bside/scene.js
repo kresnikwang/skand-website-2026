@@ -15,6 +15,7 @@ import { RenderPass } from 'https://esm.sh/three@0.170.0/examples/jsm/postproces
 import { UnrealBloomPass } from 'https://esm.sh/three@0.170.0/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { AfterimagePass } from 'https://esm.sh/three@0.170.0/examples/jsm/postprocessing/AfterimagePass.js';
 import { PALETTE } from './config.js?v=20260925d';
+import { createBackground } from './background.js?v=20261112';
 
 export function createScene({ canvas, tier, reduced }) {
   let renderer;
@@ -38,10 +39,12 @@ export function createScene({ canvas, tier, reduced }) {
   renderer.toneMappingExposure = 1.05;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(PALETTE.black);
-  // Depth fog so the far side of the chaos cloud falls away instead of
-  // stacking into a flat wall of dots.
-  scene.fog = new THREE.FogExp2(PALETTE.black, tier.name === 'desktop' ? 0.03 : 0.04);
+  // Depth fog blended with deep cosmic void so the far side of the chaos
+  // cloud melts into the ethereal nebula.
+  scene.fog = new THREE.FogExp2(0x060810, tier.name === 'desktop' ? 0.016 : 0.022);
+
+  // Ethereal cosmic nebula dome, ambient stardust bokeh & shockwaves.
+  const background = createBackground(scene, tier, reduced);
 
   const camera = new THREE.PerspectiveCamera(
     40,
@@ -63,9 +66,9 @@ export function createScene({ canvas, tier, reduced }) {
       composer.addPass(new RenderPass(scene, camera));
       bloomPass = new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth, window.innerHeight),
-        0.22,
         0.36,
-        0.72
+        0.42,
+        0.65
       );
       composer.addPass(bloomPass);
       if (!reduced) {
@@ -125,7 +128,7 @@ export function createScene({ canvas, tier, reduced }) {
   function setIgnite(heat) {
     if (bloomPass) {
       // Bloom ramps hard at the ignition beat then relaxes.
-      bloomPass.strength = 0.22 + heat * 1.05;
+      bloomPass.strength = 0.36 + heat * 1.35;
     }
     if (afterimagePass) {
       afterimagePass.uniforms.damp.value = heat * 0.88;
@@ -133,7 +136,7 @@ export function createScene({ canvas, tier, reduced }) {
   }
 
   function setBloomBase(v) {
-    if (bloomPass && bloomPass.strength < 0.55 + 0.0001) {
+    if (bloomPass && bloomPass.strength < 0.65 + 0.0001) {
       bloomPass.strength = v;
     }
   }
@@ -147,6 +150,7 @@ export function createScene({ canvas, tier, reduced }) {
     renderer.setSize(w, h, false);
     if (composer) composer.setSize(w, h);
     if (bloomPass) bloomPass.resolution.set(w, h);
+    background.resize(renderer.getPixelRatio(), h);
     return { w, h, height: h, pixelRatio: renderer.getPixelRatio() };
   }
 
@@ -161,6 +165,7 @@ export function createScene({ canvas, tier, reduced }) {
     camera,
     composer,
     bloomPass,
+    background,
     setParallaxTarget,
     setIgnite,
     setShake,

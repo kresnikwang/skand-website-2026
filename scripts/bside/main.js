@@ -16,12 +16,12 @@
  */
 
 import * as THREE from 'https://esm.sh/three@0.170.0';
-import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER, PALETTE } from './config.js?v=20260929b';
-import { createScene } from './scene.js?v=20260929b';
-import { createParticleSystem } from './particles.js?v=20260929b';
+import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER, PALETTE } from './config.js?v=20261112b';
+import { createScene } from './scene.js?v=20261112b';
+import { createParticleSystem } from './particles.js?v=20261112b';
 import { buildTargets } from './targets.js';
-import { createPhases } from './phases.js?v=20260929b';
-import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20260929b';
+import { createPhases } from './phases.js?v=20261112b';
+import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20261112b';
 import { createAudio } from './audio.js';
 
 /* ---------- language ---------- */
@@ -321,6 +321,12 @@ function init() {
       audio.onIgnite();
       shell.classList.add('is-revealed');
       hud.setAttribute('aria-hidden', 'true');
+      if (scene && scene.background) {
+        scene.background.triggerShockwave(0xffd166, 1.8);
+        setTimeout(() => {
+          if (scene && scene.background) scene.background.triggerShockwave(0xe8563a, 1.3);
+        }, 180);
+      }
       updateHud();
     },
   });
@@ -376,6 +382,9 @@ function loop() {
           poppedAt = time;
           audio.onPop();
           flashImpact();
+          if (scene && scene.background) {
+            scene.background.triggerShockwave(0xe8563a, 2.2);
+          }
         },
         onPhase: () => {},
       },
@@ -403,6 +412,28 @@ function loop() {
   scene.setParallaxTarget(pointerInside ? ndc.x : 0, pointerInside ? ndc.y : 0);
 
   scene.updateCamera(dt);
+
+  if (scene && scene.background) {
+    if (mode === 'squeeze') {
+      scene.background.update(dt, time, {
+        camera: scene.camera,
+        energy: 1.0,
+        tension: u.tension || 0,
+        pop: u.impulse || 0,
+        ndc: pointerInside ? ndc : { x: 0, y: 0 },
+      });
+      scene.background.setPointerRipple(pointerWorld, started && pointerDown, pointerSpeed);
+    } else {
+      scene.background.update(dt, time, {
+        camera: scene.camera,
+        energy: phases ? phases.charge : 0,
+        ignite: u.ignite || 0,
+        ndc: pointerInside ? ndc : { x: 0, y: 0 },
+      });
+      scene.background.setPointerRipple(pointerWorld, started && pointerDown, pointerSpeed);
+    }
+  }
+
   particles.update(dt, time);
   scene.render();
 
@@ -512,6 +543,7 @@ startBtn.addEventListener('click', () => {
 });
 
 resetBtn.addEventListener('click', () => {
+  if (scene && scene.background) scene.background.reset();
   if (mode === 'squeeze') {
     squeeze.reset();
     audio.onReset();

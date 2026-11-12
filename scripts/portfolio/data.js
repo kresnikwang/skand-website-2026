@@ -12,6 +12,10 @@ const FILTER_LABELS = {
     "en": "Product",
     "zh": "产品"
   },
+  "social": {
+    "en": "Social",
+    "zh": "社交叙事"
+  },
   "digital": {
     "en": "Digital",
     "zh": "数字体验"
@@ -38,6 +42,10 @@ const FILTER_SHORT = {
   "product": {
     "en": "Product",
     "zh": "产品"
+  },
+  "social": {
+    "en": "Social",
+    "zh": "社交叙事"
   },
   "digital": {
     "en": "Digital",
@@ -135,8 +143,8 @@ const PROJECTS = [
     "img": "images/portfolio/brand-imc-08.webp",
     "year": "2026",
     "summary": {
-      "en": "360° campaign support for the 2026 China debut of Wilson's WSP collection: hero key visuals, bespoke PR seeding kits, external design, co-branding partnerships and KOL seeding.",
-      "zh": "为 Wilson WSP 系列 2026 年中国首发提供 360° 战役支持：主视觉设计、定制 PR 种草礼盒、对外设计、联名合作与 KOL 种草。"
+      "en": "360° campaign support for the 2026 China debut of Wilson's WSP collection: hero key visuals, visual guidelines, digital posters and banners, bespoke PR seeding kits, co-branded posters, stickers and KOL seeding.",
+      "zh": "为 Wilson WSP 系列 2026 年中国首发提供 360° 战役支持：主视觉与视觉规范、线上线下全套海报物料、定制 PR 种草礼盒、联名合作与 KOL 种草。"
     }
   },
   {
@@ -435,6 +443,126 @@ const PROJECTS = [
     }
   },
   {
+    "name": "Portraits of Runners — 跑了再说",
+    "brand": "Nike Running",
+    "cat": "social",
+    "img": "images/portfolio/social-01.webp",
+    "year": "2022–2024",
+    "summary": {
+      "en": "A two-year Nike Running IP content series evolved from in-situ product reviews—exploring where running intersects with pro athletes, music, art and fashion.",
+      "zh": "历时两年打造的 Nike Running「跑了再说」原创内容 IP，从实景鞋测演进为探索跑步与职业运动员、音乐、艺术及潮流文化交汇的深度人物故事。"
+    }
+  },
+  {
+    "name": "Portraits of Runners — Multi-City Stories & Social Rollout",
+    "brand": "Nike Running",
+    "cat": "social",
+    "img": "images/portfolio/social-02.webp",
+    "year": "2022–2024",
+    "summary": {
+      "en": "Nine-city runner portraits and WeChat Channels video stories for Portraits of Runners, spanning Kunming, Beijing, Shanghai, Chengdu, Taipei, Hong Kong, Seoul and Taoyuan.",
+      "zh": "「跑了再说」九城跑者纪实与微信视频号连载内容，足迹横跨昆明、北京、上海、成都、台北、香港、首尔与桃园。"
+    }
+  },
+  {
+    "name": "EK Fast Tour Social Content",
+    "brand": "Nike",
+    "cat": "social",
+    "img": "images/portfolio/social-03.webp",
+    "year": "2024",
+    "summary": {
+      "en": "Rapid-turnaround brand voice content for Eliud Kipchoge’s 2024 China Tour, pre-engineered with story arcs and production templates around “Winning Isn’t Comfortable.”",
+      "zh": "围绕「胜者爱找虐」为 2024 基普乔格破速中国行打造实时品牌社交内容，通过前置叙事设计与标准化制作体系实现高质量极速产出。"
+    }
+  },
+  {
+    "name": "Kids Run — 难点才带劲",
+    "brand": "Nike Kids",
+    "cat": "social",
+    "img": "images/portfolio/social-04.webp",
+    "year": "2024",
+    "summary": {
+      "en": "Character-driven social stories around the 2024 Nike Kids Running race, capturing the competitive spirit of young runners who refuse to back down.",
+      "zh": "围绕 2024 耐克少儿跑打造「难点才带劲」少儿跑者人物故事系列，以有力量的镜头与语言展现小跑者不服输的竞技精神。"
+    }
+  },
+  {
+    "name": "UTMB 2026 — Back to Where Futures Begin",
+    "brand": "Salomon",
+    "cat": "social",
+    "img": "images/portfolio/social-05.webp",
+    "year": "2026",
+    "summary": {
+      "en": "Campaign theme and four-episode social film series for Salomon at UTMB 2026, framing Chamonix as an Alpine homecoming and launchpad for the future of trail running.",
+      "zh": "为 Salomon 2026 UTMB 打造「回家了再出发」战役主题与四集系列社交短片，以霞慕尼阿尔卑斯主场为起点重塑全球越野跑叙事。"
+    }
+  },
+  {
+    "name": "24 Solar Terms — Grain Full (小满)",
+    "brand": "Jack Wolfskin",
+    "cat": "social",
+    "img": "images/portfolio/social-06.webp",
+    "summary": {
+      "en": "A social story film and editorial chapter for 小满 (Grain Full) in Jack Wolfskin’s 24 Solar Terms outdoor storytelling series.",
+      "zh": "为狼爪 Jack Wolfskin「二十四节气」内容系列创作小满篇户外叙事短片与图文内容，诠释小得盈满的自然生活哲学。"
+    }
+  },
+  {
+    "name": "Kobe Protro Brand Film",
+    "brand": "Nike",
+    "cat": "social",
+    "img": "images/portfolio/social-07.webp",
+    "year": "2024",
+    "summary": {
+      "en": "Three short brand films built on “Betterment Is an Infinite Journey” for the Kobe 9 Halo launch, starring Cui Yongxi, high-school standout Zhao Ling and hooper Guo Yang.",
+      "zh": "围绕 Kobe 9 Halo 发售提出「精进永无止境」策略视角，携手崔永熙、耐高球员赵令和草根球手郭洋创作三支曼巴精神短片。"
+    }
+  },
+  {
+    "name": "CHBL Social Video — 一生只有一次耐高",
+    "brand": "Nike Basketball",
+    "cat": "social",
+    "img": "images/portfolio/social-08.webp",
+    "year": "2024–2025",
+    "summary": {
+      "en": "Multi-series social video franchises for the 2024–25 Chinese High School Basketball League—covering gear stories, scouting room analysis and team camp visits.",
+      "zh": "为 2024–2025 赛季耐克中国高中篮球联赛打造「耐高装备」「耐高观察室」「耐高探营」三大社交视频栏目，呈现高中生球员的争胜之路。"
+    }
+  },
+  {
+    "name": "CHBL Social Video — None Like Us",
+    "brand": "Nike Basketball",
+    "cat": "social",
+    "img": "images/portfolio/social-09.webp",
+    "year": "2025–2026",
+    "summary": {
+      "en": "CTA teaser and Finals preheat social films for the 2025–26 CHBL season under “None Like Us,” rallying high-school basketball culture nationwide.",
+      "zh": "围绕「没谁比得了我们」为 2025–2026 赛季耐高联赛打造揭幕号召短片与全国总决赛预热影片，点燃校园篮球社交声量。"
+    }
+  },
+  {
+    "name": "2025 RISE — 打出名堂",
+    "brand": "Nike Basketball",
+    "cat": "social",
+    "img": "images/portfolio/social-10.webp",
+    "year": "2025",
+    "summary": {
+      "en": "Athlete-centered social documentary storytelling for the 2025 Nike Basketball RISE return, following young ballers through trials, call-outs and breakthroughs.",
+      "zh": "聚焦 2025 Nike Basketball「打出名堂 RISE」年轻球员的成长轨迹，以「决议时刻」「听我叫板」「这里有名堂」系列叙事深化情感共鸣。"
+    }
+  },
+  {
+    "name": "All Star Music Videos",
+    "brand": "Converse",
+    "cat": "social",
+    "img": "images/portfolio/social-11.webp",
+    "year": "2022",
+    "summary": {
+      "en": "Original music videos co-created with hip-hop, urban and indie bands—bringing Converse’s All Star spirit to life through community music culture.",
+      "zh": "携手说唱、都市与独立乐队共创原创音乐录影带，以音乐语言诠释 Converse All Star 品牌表达并深耕青年社群连接。"
+    }
+  },
+  {
     "name": "Barry's Game",
     "brand": "Jordan",
     "cat": "digital",
@@ -571,6 +699,17 @@ const PROJECTS = [
     "summary": {
       "en": "Ongoing work on the Nike Training Club mini program: year-round communication, online course shoots, in-app assets and trainer management.",
       "zh": "Nike Training Club 小程序长期运营：全年传播规划、线上课程拍摄、站内物料与教练关系管理。"
+    }
+  },
+  {
+    "name": "Tsaigu Trail Campaign",
+    "brand": "Salomon",
+    "cat": "design",
+    "img": "images/portfolio/design-11.webp",
+    "year": "2026",
+    "summary": {
+      "en": "Key visual identity and campaign design around “All For This Peak” for Salomon’s 2026 Tsaigu Trail race, uniting elite trail runners for an ultimate summit showdown.",
+      "zh": "围绕「只为这一峰」主题打造 Salomon 2026 柴古唐斯括苍越野赛战役主视觉与品牌设计，集结全球顶尖越野跑者共赴巅峰对决。"
     }
   },
   {
@@ -808,9 +947,9 @@ const IMAGE_MANIFEST = {
     "height": 1080
   },
   "brand-imc-08": {
-    "webp": "images/portfolio/brand-imc-08-preview.webp",
-    "full": "images/portfolio/brand-imc-08.webp",
-    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAMBAgQF/8QAIhAAAgEEAgEFAAAAAAAAAAAAAQIDAAQRIQUSMRMyQVFx/8QAFQEBAQAAAAAAAAAAAAAAAAAAAQP/xAAWEQEBAQAAAAAAAAAAAAAAAAAAEQH/2gAMAwEAAhEDEQA/AFjiFdN3alMbPVdb/aRdcfDbJJGZQ0pCsmdEjJBxiuat5Phh6nuGDobFWa5luEYzP3KqqqSBoA+KmLiZIRG2C3xnxRWck/dFAr//2Q==",
+    "webp": "images/portfolio/brand-imc-08-preview.webp?v=20261112",
+    "full": "images/portfolio/brand-imc-08.webp?v=20261112",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwABAAMAAAAAAAAAAAAAAAAAAAMEBf/EACQQAAICAQMCBwAAAAAAAAAAAAECAxEABBIhEzEFIkFRgZGx/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAED/8QAFxEBAQEBAAAAAAAAAAAAAAAAABEBEv/aAAwDAQACEQMRAD8Ax59AUji3BW6lUFaj+Yk8IeLqPdolA0Se/FdsAlSrAkHviTV6hyY2mco5G5b4Ne/1kuteVSXTJHIV81enOMndFO1iOSLJ+cYpMf/Z",
     "width": 1920,
     "height": 1080
   },
@@ -838,7 +977,7 @@ const IMAGE_MANIFEST = {
   "brand-imc-12": {
     "webp": "images/portfolio/brand-imc-12-preview.webp",
     "full": "images/portfolio/brand-imc-12.webp",
-    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAIEBf/EACAQAAICAgICAwAAAAAAAAAAAAEDAhEABBIhE1EFMUH/xAAWAQEBAQAAAAAAAAAAAAAAAAACAAT/xAAZEQEBAAMBAAAAAAAAAAAAAAABAAIDESH/2gAMAwEAAhEDEQA/AK5butdFvAjq5XmJvaKmtgdRUwWt49ixZ/bPs3lKUrbICcbs995nO3HrdKMJiIWwmNRFgg9H6zbsGack3vjGaWx4mRF1YsjDE2dzY2meR7TOQFWfWGAxOe1f/9k=",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAIEBf/EAB8QAAICAwACAwAAAAAAAAAAAAEDAhEABCESUQUTQf/EABYBAQEBAAAAAAAAAAAAAAAAAAIABP/EABkRAQEAAwEAAAAAAAAAAAAAAAEAAgMRIf/aAAwDAQACEQMRAD8Arlu610W+Bjy5XmJvaKmtgdRUwWt8eixZ/bPs3lSErbKInG7PenM1249b5xhMRC2ExqAsEHhus27BmnJN74xmk/6mR7ViyMMTY3NjaYGPaZyqrPrDAYnPav/Z",
     "width": 1920,
     "height": 1080
   },
@@ -1010,6 +1149,83 @@ const IMAGE_MANIFEST = {
     "width": 1920,
     "height": 1080
   },
+  "social-01": {
+    "webp": "images/portfolio/social-01-preview.webp",
+    "full": "images/portfolio/social-01.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAUBBAb/xAAiEAABAwMDBQAAAAAAAAAAAAABAAIDBBEhEiJBBRMxUaH/xAAWAQEBAQAAAAAAAAAAAAAAAAACAAH/xAAXEQEBAQEAAAAAAAAAAAAAAAAAARFR/9oADAMBAAIRAxEAPwDKOJJB7ouPiZdJLRK0mEyHRk68FK5De102ottNERgmM3tzlGJM8z6qZz5GuJbsGeB4QrGhvoIS2ca//9k=",
+    "width": 1920,
+    "height": 1080
+  },
+  "social-02": {
+    "webp": "images/portfolio/social-02-preview.webp",
+    "full": "images/portfolio/social-02.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAUBAgME/8QAIRAAAgICAQQDAAAAAAAAAAAAAQIAEQMSBBMhMTJRYZH/xAAVAQEBAAAAAAAAAAAAAAAAAAABAv/EABYRAQEBAAAAAAAAAAAAAAAAAAARIf/aAAwDAQACEQMRAD8AQ4Xvirkcb99Ca9R9fspykTrDZdG0tgvzIwk48TaEgFhYvzNFxp51F2ZJuRwENQsHuIRg+HGwQlR6wil//9k=",
+    "width": 1920,
+    "height": 1080
+  },
+  "social-03": {
+    "webp": "images/portfolio/social-03-preview.webp",
+    "full": "images/portfolio/social-03.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAQFAv/EACAQAAICAwABBQAAAAAAAAAAAAECAxEABCExBRIygaH/xAAWAQEBAQAAAAAAAAAAAAAAAAABAgP/xAAWEQEBAQAAAAAAAAAAAAAAAAAAAQL/2gAMAwEAAhEDEQA/AES+qmsI0MgU9Mgon98ZcXciiYIqMWIo1Rsc7mtKCJI5USNAr/IAcPMW3QE9RhVAFB9gIAqxRzPMkVViB1kjDWLPnxzDFdNQI2A4A1AfQwxD/9k=",
+    "width": 1920,
+    "height": 1080
+  },
+  "social-04": {
+    "webp": "images/portfolio/social-04-preview.webp",
+    "full": "images/portfolio/social-04.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAABQADBv/EACAQAAICAgICAwAAAAAAAAAAAAECABEDIQQSMWETMpH/xAAXAQADAQAAAAAAAAAAAAAAAAAAAgME/8QAGhEBAAMBAQEAAAAAAAAAAAAAAQACEQMSUf/aAAwDAQACEQMRAD8A5bCVbKO9sKPqMFlbEE7bdaFG6FAQX8jqYkXHxOq/YG/epG7hs0chXPs1fJ0cj5FA8AE1oCpQzlMTnYE+NDUoFbpvqM35jnmf/9k=",
+    "width": 1920,
+    "height": 1080
+  },
+  "social-05": {
+    "webp": "images/portfolio/social-05-preview.webp",
+    "full": "images/portfolio/social-05.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQBAgX/xAAmEAABBAEBBwUAAAAAAAAAAAABAAIDESFxBBITFDJBYQUVIjGx/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAID/8QAGBEBAQEBAQAAAAAAAAAAAAAAAQADESH/2gAMAwEAAhEDEQA/AM1kfuDjHt83L8Ihw3hl16+EptkcccrY4nCUOFlzSDWfHdW9Wmk4sXy6WkDS0pDI472a74FIPY+THMuPU9xrAsX+oUyZdZyT9k6oWhhS7Pb/2Q==",
+    "width": 1920,
+    "height": 1080
+  },
+  "social-06": {
+    "webp": "images/portfolio/social-06-preview.webp",
+    "full": "images/portfolio/social-06.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwAAAwEAAAAAAAAAAAAAAAAAAAIEBf/EACAQAAICAQQDAQAAAAAAAAAAAAECAAMRBBIhMSJRcaH/xAAWAQEBAQAAAAAAAAAAAAAAAAAAAQP/xAAWEQEBAQAAAAAAAAAAAAAAAAAAARH/2gAMAwEAAhEDEQA/AM0C10ybVKj0kKSrK247yDgFRgGLXfaQAbGx9i6glyu4k457maXFN509bhVDPwPIWd/kJHZw5wBCB//Z",
+    "width": 1920,
+    "height": 1080
+  },
+  "social-07": {
+    "webp": "images/portfolio/social-07-preview.webp",
+    "full": "images/portfolio/social-07.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAMFAgT/xAAhEAACAQQCAgMAAAAAAAAAAAABAgMABBEhMUESIiNRkf/EABYBAQEBAAAAAAAAAAAAAAAAAAABAv/EABcRAQEBAQAAAAAAAAAAAAAAAAIAARH/2gAMAwEAAhEDEQA/AMpawvMtuZfn8chO8Vz3lq8DOggdygHA+81JtppHnMzOxlVhhs7FUFvLlj7TyHXbVrWqYckm2DE4Rta4xRTHnlLbkb9opiU4b//Z",
+    "width": 1920,
+    "height": 1080
+  },
+  "social-08": {
+    "webp": "images/portfolio/social-08-preview.webp",
+    "full": "images/portfolio/social-08.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAQUAAAAAAAAAAAAAAAAAAAECAwQF/8QAIBAAAwACAgEFAAAAAAAAAAAAAQIDABEEITESIjJRYf/EABUBAQEAAAAAAAAAAAAAAAAAAAAB/8QAFhEBAQEAAAAAAAAAAAAAAAAAABEB/9oADAMBAAIRAxEAPwDBqlo8WF69Tr8Ts4iLyOVWckIHr2NsdAa87ynTk1fiTkzkzQ+1frCXLvF0adCpXZB0OifOLq1JdaToVZiSP3DGXvSlNs2yOvAwwV//2Q==",
+    "width": 1920,
+    "height": 1080
+  },
+  "social-09": {
+    "webp": "images/portfolio/social-09-preview.webp",
+    "full": "images/portfolio/social-09.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAABQACBv/EACIQAAICAgIABwAAAAAAAAAAAAECAAMEERIhBRQxMkFRcf/EABUBAQEAAAAAAAAAAAAAAAAAAAAC/8QAFhEBAQEAAAAAAAAAAAAAAAAAABEB/9oADAMBAAIRAxEAPwAHFpWxQzXrxVQzD0O/oRPxfy91GOtd3FhUFJJ60Pic9SSTomI5R51VFuyqAD8iLyQdks1joWcMQgHQ1qUzZ75Qh//Z",
+    "width": 1920,
+    "height": 1080
+  },
+  "social-10": {
+    "webp": "images/portfolio/social-10-preview.webp",
+    "full": "images/portfolio/social-10.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAgMAAAAAAAAAAAAAAAAAAAQCAwb/xAAiEAACAQQCAwADAAAAAAAAAAABAwIABBESBSEiMUFRceH/xAAWAQEBAQAAAAAAAAAAAAAAAAAAAQP/xAAXEQEBAQEAAAAAAAAAAAAAAAAAAQMR/9oADAMBAAIRAxEAPwDMKS90olSjLC9jqR6H2nOJsp3N2ndaxAEk7EYJ/VJsay2bIoZJZ7HifY/FWcc6a25jLBJznHdFifNWDLTkmwis6S8o6jrB/uaKane3JIy6R6+0UaTPr//Z",
+    "width": 1920,
+    "height": 1080
+  },
+  "social-11": {
+    "webp": "images/portfolio/social-11-preview.webp",
+    "full": "images/portfolio/social-11.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAIBAwQG/8QAIBAAAQQCAQUAAAAAAAAAAAAAAQACAxESITEEIkFRgf/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDlDISG6vEaUyROzo+r50nzcImUa7fAVnUOLnSAm+EGUZAUCK+IS0hB/9k=",
+    "width": 1920,
+    "height": 1080
+  },
   "digital-01": {
     "webp": "images/portfolio/digital-01-preview.webp",
     "full": "images/portfolio/digital-01.webp",
@@ -1098,6 +1314,13 @@ const IMAGE_MANIFEST = {
     "webp": "images/portfolio/digital-13-preview.webp",
     "full": "images/portfolio/digital-13.webp",
     "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAAAAQFAgP/xAAfEAACAgICAwEAAAAAAAAAAAABAgMRAAQFIRITMdH/xAAVAQEBAAAAAAAAAAAAAAAAAAACAP/EABkRAQACAwAAAAAAAAAAAAAAAAABERJBYf/aAAwDAQACEQMRAD8ArScjDHbAO9sV8VIu8X5LZ1JteBpXZAWNWRYPV3mZlWOSFUUKDJ3Q+9Zz5HT1/TAnqBUeZAPdfMO6Lqjr6MbQq3nILs0GH5hjeqK10AwyxgX/2Q==",
+    "width": 1920,
+    "height": 1080
+  },
+  "design-11": {
+    "webp": "images/portfolio/design-11-preview.webp",
+    "full": "images/portfolio/design-11.webp",
+    "blur": "data:image/jpeg;base64,/9j/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAALABQDASIAAhEBAxEB/8QAFwABAQEBAAAAAAAAAAAAAAAABQADBP/EACUQAAEDAwMDBQAAAAAAAAAAAAEAAgQDERITITEFJGFBQ1GRwf/EABYBAQEBAAAAAAAAAAAAAAAAAAABAv/EABURAQEAAAAAAAAAAAAAAAAAAAAh/9oADAMBAAIRAxEAPwAZsWRSmvpsOVOO4nO1ht+rvmP1I2IrZlzbuyYBY7JWYe2kccfCFmAN6c8gAGw9PKA7SLfe+gpYVCXvJcb22HgBS1Uf/9k=",
     "width": 1920,
     "height": 1080
   },

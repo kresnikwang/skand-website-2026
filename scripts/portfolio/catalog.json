@@ -88,16 +88,17 @@
     }
   },
   {
-    "source": "Brand IMC/SKAND Portfolio 2026 SEP.008.jpeg",
+    "source": "Brand IMC/WILSON WSP.jpeg",
     "cat": "brand-imc",
     "brand": "Wilson",
     "name": "WSP Series Launch",
     "metadataSource": "ocr-reviewed",
     "id": "brand-imc-08",
+    "rev": "20261112",
     "year": "2026",
     "summary": {
-      "en": "360° campaign support for the 2026 China debut of Wilson's WSP collection: hero key visuals, bespoke PR seeding kits, external design, co-branding partnerships and KOL seeding.",
-      "zh": "为 Wilson WSP 系列 2026 年中国首发提供 360° 战役支持：主视觉设计、定制 PR 种草礼盒、对外设计、联名合作与 KOL 种草。"
+      "en": "360° campaign support for the 2026 China debut of Wilson's WSP collection: hero key visuals, visual guidelines, digital posters and banners, bespoke PR seeding kits, co-branded posters, stickers and KOL seeding.",
+      "zh": "为 Wilson WSP 系列 2026 年中国首发提供 360° 战役支持：主视觉与视觉规范、线上线下全套海报物料、定制 PR 种草礼盒、联名合作与 KOL 种草。"
     }
   },
   {
@@ -139,7 +140,7 @@
     }
   },
   {
-    "source": "Brand IMC/SKAND Portfolio 2026 SEP.012.jpeg",
+    "source": "Brand IMC/SKAND Portfolio 2026 SEP.012.png",
     "cat": "brand-imc",
     "brand": "PMI China",
     "name": "Certified PMP Launch",
@@ -452,6 +453,148 @@
     }
   },
   {
+    "source": "Social/SKAND Portfolio 2026 SEP.001.jpeg",
+    "cat": "social",
+    "brand": "Nike Running",
+    "name": "Portraits of Runners — 跑了再说",
+    "metadataSource": "ocr-reviewed",
+    "id": "social-01",
+    "year": "2022–2024",
+    "summary": {
+      "en": "A two-year Nike Running IP content series evolved from in-situ product reviews—exploring where running intersects with pro athletes, music, art and fashion.",
+      "zh": "历时两年打造的 Nike Running「跑了再说」原创内容 IP，从实景鞋测演进为探索跑步与职业运动员、音乐、艺术及潮流文化交汇的深度人物故事。"
+    }
+  },
+  {
+    "source": "Social/SKAND Portfolio 2026 SEP.002.jpeg",
+    "cat": "social",
+    "brand": "Nike Running",
+    "name": "Portraits of Runners — Multi-City Stories & Social Rollout",
+    "metadataSource": "filename-and-visual-review",
+    "id": "social-02",
+    "year": "2022–2024",
+    "summary": {
+      "en": "Nine-city runner portraits and WeChat Channels video stories for Portraits of Runners, spanning Kunming, Beijing, Shanghai, Chengdu, Taipei, Hong Kong, Seoul and Taoyuan.",
+      "zh": "「跑了再说」九城跑者纪实与微信视频号连载内容，足迹横跨昆明、北京、上海、成都、台北、香港、首尔与桃园。"
+    }
+  },
+  {
+    "source": "Social/SKAND Portfolio 2026 SEP.003.jpeg",
+    "cat": "social",
+    "brand": "Nike",
+    "name": "EK Fast Tour Social Content",
+    "metadataSource": "ocr-reviewed",
+    "id": "social-03",
+    "year": "2024",
+    "summary": {
+      "en": "Rapid-turnaround brand voice content for Eliud Kipchoge’s 2024 China Tour, pre-engineered with story arcs and production templates around “Winning Isn’t Comfortable.”",
+      "zh": "围绕「胜者爱找虐」为 2024 基普乔格破速中国行打造实时品牌社交内容，通过前置叙事设计与标准化制作体系实现高质量极速产出。"
+    }
+  },
+  {
+    "source": "Social/SKAND Portfolio 2026 SEP.004.jpeg",
+    "cat": "social",
+    "brand": "Nike Kids",
+    "name": "Kids Run — 难点才带劲",
+    "metadataSource": "ocr-reviewed",
+    "id": "social-04",
+    "year": "2024",
+    "summary": {
+      "en": "Character-driven social stories around the 2024 Nike Kids Running race, capturing the competitive spirit of young runners who refuse to back down.",
+      "zh": "围绕 2024 耐克少儿跑打造「难点才带劲」少儿跑者人物故事系列，以有力量的镜头与语言展现小跑者不服输的竞技精神。"
+    }
+  },
+  {
+    "source": "Social/SKAND Portfolio 2026 SEP.005.jpeg",
+    "cat": "social",
+    "brand": "Salomon",
+    "name": "UTMB 2026 — Back to Where Futures Begin",
+    "metadataSource": "ocr-reviewed",
+    "id": "social-05",
+    "year": "2026",
+    "summary": {
+      "en": "Campaign theme and four-episode social film series for Salomon at UTMB 2026, framing Chamonix as an Alpine homecoming and launchpad for the future of trail running.",
+      "zh": "为 Salomon 2026 UTMB 打造「回家了再出发」战役主题与四集系列社交短片，以霞慕尼阿尔卑斯主场为起点重塑全球越野跑叙事。"
+    }
+  },
+  {
+    "source": "Social/SKAND Portfolio 2026 SEP.006.jpeg",
+    "cat": "social",
+    "brand": "Jack Wolfskin",
+    "name": "24 Solar Terms — Grain Full (小满)",
+    "metadataSource": "ocr-reviewed",
+    "id": "social-06",
+    "summary": {
+      "en": "A social story film and editorial chapter for 小满 (Grain Full) in Jack Wolfskin’s 24 Solar Terms outdoor storytelling series.",
+      "zh": "为狼爪 Jack Wolfskin「二十四节气」内容系列创作小满篇户外叙事短片与图文内容，诠释小得盈满的自然生活哲学。"
+    }
+  },
+  {
+    "source": "Social/SKAND Portfolio 2026 SEP.007.jpeg",
+    "cat": "social",
+    "brand": "Nike",
+    "name": "Kobe Protro Brand Film",
+    "metadataSource": "ocr-reviewed",
+    "id": "social-07",
+    "year": "2024",
+    "summary": {
+      "en": "Three short brand films built on “Betterment Is an Infinite Journey” for the Kobe 9 Halo launch, starring Cui Yongxi, high-school standout Zhao Ling and hooper Guo Yang.",
+      "zh": "围绕 Kobe 9 Halo 发售提出「精进永无止境」策略视角，携手崔永熙、耐高球员赵令和草根球手郭洋创作三支曼巴精神短片。"
+    }
+  },
+  {
+    "source": "Social/SKAND Portfolio 2026 SEP.008.jpeg",
+    "cat": "social",
+    "brand": "Nike Basketball",
+    "name": "CHBL Social Video — 一生只有一次耐高",
+    "metadataSource": "ocr-reviewed",
+    "id": "social-08",
+    "year": "2024–2025",
+    "summary": {
+      "en": "Multi-series social video franchises for the 2024–25 Chinese High School Basketball League—covering gear stories, scouting room analysis and team camp visits.",
+      "zh": "为 2024–2025 赛季耐克中国高中篮球联赛打造「耐高装备」「耐高观察室」「耐高探营」三大社交视频栏目，呈现高中生球员的争胜之路。"
+    }
+  },
+  {
+    "source": "Social/SKAND Portfolio 2026 SEP.009.jpeg",
+    "cat": "social",
+    "brand": "Nike Basketball",
+    "name": "CHBL Social Video — None Like Us",
+    "metadataSource": "ocr-reviewed",
+    "id": "social-09",
+    "year": "2025–2026",
+    "summary": {
+      "en": "CTA teaser and Finals preheat social films for the 2025–26 CHBL season under “None Like Us,” rallying high-school basketball culture nationwide.",
+      "zh": "围绕「没谁比得了我们」为 2025–2026 赛季耐高联赛打造揭幕号召短片与全国总决赛预热影片，点燃校园篮球社交声量。"
+    }
+  },
+  {
+    "source": "Social/SKAND Portfolio 2026 SEP.010.jpeg",
+    "cat": "social",
+    "brand": "Nike Basketball",
+    "name": "2025 RISE — 打出名堂",
+    "metadataSource": "ocr-reviewed",
+    "id": "social-10",
+    "year": "2025",
+    "summary": {
+      "en": "Athlete-centered social documentary storytelling for the 2025 Nike Basketball RISE return, following young ballers through trials, call-outs and breakthroughs.",
+      "zh": "聚焦 2025 Nike Basketball「打出名堂 RISE」年轻球员的成长轨迹，以「决议时刻」「听我叫板」「这里有名堂」系列叙事深化情感共鸣。"
+    }
+  },
+  {
+    "source": "Social/SKAND Portfolio 2026 SEP.011.jpeg",
+    "cat": "social",
+    "brand": "Converse",
+    "name": "All Star Music Videos",
+    "metadataSource": "ocr-reviewed",
+    "id": "social-11",
+    "year": "2022",
+    "summary": {
+      "en": "Original music videos co-created with hip-hop, urban and indie bands—bringing Converse’s All Star spirit to life through community music culture.",
+      "zh": "携手说唱、都市与独立乐队共创原创音乐录影带，以音乐语言诠释 Converse All Star 品牌表达并深耕青年社群连接。"
+    }
+  },
+  {
     "source": "Digital/Digital.001.jpeg",
     "cat": "digital",
     "brand": "Jordan",
@@ -614,6 +757,19 @@
     "summary": {
       "en": "Ongoing work on the Nike Training Club mini program: year-round communication, online course shoots, in-app assets and trainer management.",
       "zh": "Nike Training Club 小程序长期运营：全年传播规划、线上课程拍摄、站内物料与教练关系管理。"
+    }
+  },
+  {
+    "source": "Design/SKAND Portfolio 2026 SEP.001.jpeg",
+    "cat": "design",
+    "brand": "Salomon",
+    "name": "Tsaigu Trail Campaign",
+    "metadataSource": "ocr-reviewed",
+    "id": "design-11",
+    "year": "2026",
+    "summary": {
+      "en": "Key visual identity and campaign design around “All For This Peak” for Salomon’s 2026 Tsaigu Trail race, uniting elite trail runners for an ultimate summit showdown.",
+      "zh": "围绕「只为这一峰」主题打造 Salomon 2026 柴古唐斯括苍越野赛战役主视觉与品牌设计，集结全球顶尖越野跑者共赴巅峰对决。"
     }
   },
   {

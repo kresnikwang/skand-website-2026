@@ -659,7 +659,7 @@ footer a{color:var(--grey);text-decoration:none}
     <div class="viewer-nav">
       <button type="button" id="viewerPrev" data-tk="viewer-prev" aria-label="Previous work">&#8249;</button>
       <button type="button" id="viewerNext" data-tk="viewer-next" aria-label="Next work">&#8250;</button>
-      <span class="viewer-nav-count"><b id="viewerCurrent">01</b> / <span id="viewerTotal">65</span></span>
+      <span class="viewer-nav-count"><b id="viewerCurrent">01</b> / <span id="viewerTotal">78</span></span>
     </div>
   </aside>
   <button type="button" class="viewer-close" id="viewerClose"><span data-tk="viewer-close">Close</span><i aria-hidden="true">&times;</i></button>
@@ -749,9 +749,9 @@ footer a{color:var(--grey);text-decoration:none}
 
   <div class="gallery-rail">
    <span class="gallery-rail-cat" id="galleryRailCat" aria-hidden="true"></span>
-   <span class="gallery-rail-count"><b id="galleryRailCount">01</b> / <span id="galleryRailTotal">65</span></span>
+   <span class="gallery-rail-count"><b id="galleryRailCount">01</b> / <span id="galleryRailTotal">78</span></span>
    <div class="gallery-rail-track" id="galleryRailTrack" role="slider" tabindex="0"
-        aria-label="Exhibition position" aria-valuemin="1" aria-valuemax="65" aria-valuenow="1">
+        aria-label="Exhibition position" aria-valuemin="1" aria-valuemax="78" aria-valuenow="1">
     <div class="gallery-rail-ticks" id="galleryRailTicks" aria-hidden="true"></div>
     <div class="gallery-rail-fill" id="galleryRailFill"></div>
     <div class="gallery-rail-knob" id="galleryRailKnob"></div>
@@ -825,7 +825,7 @@ footer a{color:var(--grey);text-decoration:none}
        be about the work — so it floats here instead, under the day's wordmark,
        as the last quiet thing on the page before the footer. -->
   <div class="logo-showcase-float">
-    <a href="b-side.html?v=1.4" class="bside-float reveal" id="findBSideBtn" data-t="hero-find-b-side" data-tk="findBSide">
+    <a href="b-side.html?v=2.0" class="bside-float reveal" id="findBSideBtn" data-t="hero-find-b-side" data-tk="findBSide">
       <span>Find B-Side</span>
       <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
         <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
@@ -854,7 +854,7 @@ footer a{color:var(--grey);text-decoration:none}
 </footer>
 </div> <!-- /pageWrapper -->
 
-<script src="scripts/portfolio/data.js?v=20261110-2"></script>
+<script src="scripts/portfolio/data.js?v=20261112-1"></script>
 <script>
 /* === i18n DATA === */
 const T = {
@@ -1482,13 +1482,13 @@ function bindPageFlip(selector, buildUrl) {
     });
   });
 }
-bindPageFlip('a[href^="b-side.html"]', () => 'b-side.html?v=1.4&lang=' + lang);
+bindPageFlip('a[href^="b-side.html"]', () => 'b-side.html?v=2.0&lang=' + lang);
 bindPageFlip('a[href^="egg.html"]', () => 'egg.html?v=11&lang=' + lang);
 </script>
 <!-- Gallery hall. Classic script, not a module: it reads PROJECTS,
      IMAGE_MANIFEST, T and `lang` from the lexical scope above. Must load
      after the inline script, hence no `defer` and no `type=module`. -->
-<script src="scripts/gallery/gallery.js?v=12"></script>
+<script src="scripts/gallery/gallery.js?v=13"></script>
 <script src="scripts/share/wechat.js?v=2"></script>
 <script type="module" src="scripts/logo/dispatcher.js?v=19"></script>
 </body>
