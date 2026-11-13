@@ -17,7 +17,7 @@
  * from feeling like a chore, and idle decay means letting go drops the bar.
  */
 
-import { PHASE_STOPS, PHASE_ORDER } from './config.js?v=20260925d';
+import { PHASE_STOPS, PHASE_ORDER } from './config.js?v=20261113';
 
 const CHARGE_PER_SEC_DRAG = 0.9;
 const CHARGE_PER_SEC_PASSIVE = 0.05; // gentle trickle from moving the pointer

@@ -32,8 +32,20 @@
  * games.
  */
 
-import * as THREE from 'https://esm.sh/three@0.170.0';
-import { PALETTE } from './config.js?v=20260929b';
+import * as THREE from 'https://esm.sh/three@0.187.0/webgpu';
+import {
+  Fn,
+  If,
+  Discard,
+  float,
+  uniform,
+  uv,
+  length,
+  pow,
+  mix,
+  smoothstep,
+} from 'https://esm.sh/three@0.187.0/tsl';
+import { PALETTE } from './config.js?v=20261113';
 
 /* ------------------------------------------------------------------ */
 /* tuning                                                              */
@@ -98,87 +110,67 @@ export const SQUEEZE_ORDER = ['press', 'strain', 'burst'];
 function createContactPatch(scene) {
   const geo = new THREE.PlaneGeometry(1, 1);
 
+  const uGlowColor = uniform(new THREE.Color(PALETTE.coral));
+  const uGlowStrength = uniform(0);
+
   // Soft core: a wide falloff, additive, no depth interaction.
-  const glowMat = new THREE.ShaderMaterial({
+  const glowMat = new THREE.MeshBasicNodeMaterial({
     transparent: true,
     depthTest: false,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     toneMapped: false,
-    uniforms: {
-      uColor: { value: new THREE.Color(PALETTE.coral) },
-      uStrength: { value: 0 },
-    },
-    vertexShader: /* glsl */ `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uColor;
-      uniform float uStrength;
-      varying vec2 vUv;
-      void main() {
-        float d = length(vUv - 0.5) * 2.0;
-        if (d > 1.0) discard;
-        // Two-stop falloff: a tight bright centre inside a narrow halo. The
-        // halo term is deliberately weak — anything broader stops reading as
-        // a glow around a contact point and starts reading as a coloured
-        // wash over the whole mark.
-        float core = pow(1.0 - d, 4.0);
-        float halo = pow(1.0 - d, 2.2) * 0.18;
-        float a = (core + halo) * uStrength;
-        gl_FragColor = vec4(uColor * (0.45 + core * 0.7), a);
-      }
-    `,
   });
+  glowMat.colorNode = Fn(() => {
+    const d = length(uv().sub(0.5)).mul(2.0);
+    If(d.greaterThan(1.0), () => {
+      Discard();
+    });
+    const core = pow(float(1.0).sub(d), 4.0);
+    return uGlowColor.mul(float(0.45).add(core.mul(0.7)));
+  })();
+  glowMat.opacityNode = Fn(() => {
+    const d = length(uv().sub(0.5)).mul(2.0);
+    const core = pow(float(1.0).sub(d), 4.0);
+    const halo = pow(float(1.0).sub(d), 2.2).mul(0.18);
+    return core.add(halo).mul(uGlowStrength);
+  })();
+
   const glow = new THREE.Mesh(geo, glowMat);
   glow.renderOrder = 3;
   glow.frustumCulled = false;
   scene.add(glow);
 
-  // Contact ring: a thin annulus at the edge of the press. Brightens and
-  // contracts as pressure rises, so the ring itself is a tension read-out.
-  const ringMat = new THREE.ShaderMaterial({
+  // Contact ring: a thin annulus at the edge of the press.
+  const uRingColor = uniform(new THREE.Color(PALETTE.white));
+  const uRingStrength = uniform(0);
+  const uRingTension = uniform(0);
+
+  const ringMat = new THREE.MeshBasicNodeMaterial({
     transparent: true,
     depthTest: false,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     toneMapped: false,
-    uniforms: {
-      uColor: { value: new THREE.Color(PALETTE.white) },
-      uStrength: { value: 0 },
-      uTension: { value: 0 },
-    },
-    vertexShader: /* glsl */ `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uColor;
-      uniform float uStrength;
-      uniform float uTension;
-      varying vec2 vUv;
-      void main() {
-        float d = length(vUv - 0.5) * 2.0;
-        if (d > 1.0) discard;
-        // The rim sits at 0.78 of the quad and tightens toward 0.66 as the mark
-        // strains — the hand closing, made visible. Thin on purpose: this is
-        // additive and then goes through bloom, so a wide band blows out to a
-        // solid white hoop and buries the mark underneath it.
-        float r = mix(0.78, 0.66, uTension);
-        float w = mix(0.075, 0.04, uTension);
-        float band = smoothstep(r - w, r, d) * (1.0 - smoothstep(r, r + w, d));
-        float a = band * uStrength;
-        gl_FragColor = vec4(uColor * (0.55 + band * 0.5), a);
-      }
-    `,
   });
+  ringMat.colorNode = Fn(() => {
+    const d = length(uv().sub(0.5)).mul(2.0);
+    If(d.greaterThan(1.0), () => {
+      Discard();
+    });
+    const r = mix(0.78, 0.66, uRingTension);
+    const w = mix(0.075, 0.04, uRingTension);
+    const band = smoothstep(r.sub(w), r, d).mul(float(1.0).sub(smoothstep(r, r.add(w), d)));
+    return uRingColor.mul(float(0.55).add(band.mul(0.5)));
+  })();
+  ringMat.opacityNode = Fn(() => {
+    const d = length(uv().sub(0.5)).mul(2.0);
+    const r = mix(0.78, 0.66, uRingTension);
+    const w = mix(0.075, 0.04, uRingTension);
+    const band = smoothstep(r.sub(w), r, d).mul(float(1.0).sub(smoothstep(r, r.add(w), d)));
+    return band.mul(uRingStrength);
+  })();
+
   const ring = new THREE.Mesh(geo, ringMat);
   ring.renderOrder = 4;
   ring.frustumCulled = false;
@@ -193,28 +185,19 @@ function createContactPatch(scene) {
    * @param tension 0..1 current tension
    */
   function sync(x, y, radius, press, tension) {
-    /* The glow is a soft bloom AROUND the contact, not a disc over it. At 5.2×
-       the radius it was wide enough to tint the whole viewport coral and the
-       mark stopped reading as white particles at all; 3.2× keeps it local.
-
-       The ring is scaled so its drawn edge lands ON the dent's rim (the shader
-       puts the band at 0.78 of the quad half-width). At 2.0× it came out
-       three times the width of the actual deformation and read as a separate
-       circular control sitting on top of the logo rather than the boundary of
-       a hand pressing it. */
     const s = radius * 3.2;
     glow.position.set(x, y, 0.03);
     glow.scale.set(s, s, 1);
-    glowMat.uniforms.uStrength.value = press * 0.30;
+    uGlowStrength.value = press * 0.30;
 
     ring.position.set(x, y, 0.04);
     ring.scale.set(radius * 1.28, radius * 1.28, 1);
-    ringMat.uniforms.uStrength.value = press * 0.45;
-    ringMat.uniforms.uTension.value = tension;
+    uRingStrength.value = press * 0.45;
+    uRingTension.value = tension;
 
     // Rises white as the mark strains: coral says "hand", white says "hot".
     const hot = new THREE.Color(PALETTE.coral).lerp(new THREE.Color(PALETTE.white), tension * 0.8);
-    glowMat.uniforms.uColor.value.copy(hot);
+    uGlowColor.value.copy(hot);
   }
 
   function setVisible(v) { glow.visible = v; ring.visible = v; }

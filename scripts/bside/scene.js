@@ -1,36 +1,32 @@
 /**
- * SKAND B-Side — three scene, camera and post-processing.
+ * SKAND B-Side — Three.js r187 WebGPURenderer scene, camera & TSL RenderPipeline.
  *
- * Mirrors scripts/egg/scene.js: same three@0.170.0 pin via absolute esm.sh
- * URLs, same renderer settings, same EffectComposer + UnrealBloomPass stack.
- * The one deliberate difference is the camera — no OrbitControls here. Letting
- * the visitor fly the camera would let them tumble the composition apart and
- * lose the reveal; instead the camera does a slow parallax drift that follows
- * the pointer, which reads as depth without ever handing over control.
+ * Uses WebGPURenderer (with automatic WebGL2 backend fallback), TSL RenderPipeline
+ * with HDR BloomNode + AfterImageNode, and camera parallax drift.
  */
 
-import * as THREE from 'https://esm.sh/three@0.170.0';
-import { EffectComposer } from 'https://esm.sh/three@0.170.0/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'https://esm.sh/three@0.170.0/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'https://esm.sh/three@0.170.0/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { AfterimagePass } from 'https://esm.sh/three@0.170.0/examples/jsm/postprocessing/AfterimagePass.js';
-import { PALETTE } from './config.js?v=20260925d';
-import { createBackground } from './background.js?v=20261112';
+import * as THREE from 'https://esm.sh/three@0.187.0/webgpu';
+import { pass, uniform } from 'https://esm.sh/three@0.187.0/tsl';
+import { bloom } from 'https://esm.sh/three@0.187.0/examples/jsm/tsl/display/BloomNode.js';
+import { afterImage } from 'https://esm.sh/three@0.187.0/examples/jsm/tsl/display/AfterImageNode.js';
+import { createBackground } from './background.js?v=20261113';
 
-export function createScene({ canvas, tier, reduced }) {
+export async function createScene({ canvas, tier, reduced }) {
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({
+    renderer = new THREE.WebGPURenderer({
       canvas,
       antialias: tier.name !== 'mobile',
       alpha: false,
       powerPreference: tier.name === 'desktop' ? 'high-performance' : 'low-power',
     });
+    await renderer.init();
   } catch (e) {
-    console.error('[bside] WebGL init failed', e);
+    console.error('[bside] Renderer init failed', e);
     return null;
   }
-  if (!renderer.getContext()) return null;
+
+  const isWebGPU = Boolean(renderer.backend?.isWebGPUBackend);
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, tier.maxPixelRatio));
   renderer.setSize(window.innerWidth, window.innerHeight, false);
@@ -39,8 +35,6 @@ export function createScene({ canvas, tier, reduced }) {
   renderer.toneMappingExposure = 1.05;
 
   const scene = new THREE.Scene();
-  // Depth fog blended with deep cosmic void so the far side of the chaos
-  // cloud melts into the ethereal nebula.
   scene.fog = new THREE.FogExp2(0x060810, tier.name === 'desktop' ? 0.016 : 0.022);
 
   // Ethereal cosmic nebula dome, ambient stardust bokeh & shockwaves.
@@ -55,31 +49,27 @@ export function createScene({ canvas, tier, reduced }) {
   const camBaseZ = tier.name === 'mobile' ? 13.5 : 11;
   camera.position.set(0, 0, camBaseZ);
 
-  // Post-processing. Bloom is the whole point of the upgrade; Afterimage only
-  // rides along for the ignition trails and is skipped under reduced motion.
-  let composer = null;
-  let bloomPass = null;
-  let afterimagePass = null;
+  // TSL RenderPipeline: HDR pass + BloomNode + AfterImageNode (unless reduced motion).
+  let renderPipeline = null;
+  const bloomStrength = uniform(0.36);
+  const bloomRadius = uniform(0.42);
+  const bloomThreshold = uniform(0.65);
+  const afterImageDamp = uniform(0.0);
+
   if (tier.bloom) {
     try {
-      composer = new EffectComposer(renderer);
-      composer.addPass(new RenderPass(scene, camera));
-      bloomPass = new UnrealBloomPass(
-        new THREE.Vector2(window.innerWidth, window.innerHeight),
-        0.36,
-        0.42,
-        0.65
-      );
-      composer.addPass(bloomPass);
+      renderPipeline = new THREE.RenderPipeline(renderer);
+      const scenePass = pass(scene, camera);
+      const scenePassColor = scenePass.getTextureNode('output');
+      const bloomNode = bloom(scenePassColor, bloomStrength, bloomRadius, bloomThreshold);
+      let outputNode = scenePassColor.add(bloomNode);
       if (!reduced) {
-        afterimagePass = new AfterimagePass(0.0);
-        composer.addPass(afterimagePass);
+        outputNode = afterImage(outputNode, afterImageDamp);
       }
+      renderPipeline.outputNode = outputNode;
     } catch (e) {
-      console.warn('[bside] post-processing unavailable, rendering direct', e);
-      composer = null;
-      bloomPass = null;
-      afterimagePass = null;
+      console.warn('[bside] RenderPipeline unavailable, rendering direct', e);
+      renderPipeline = null;
     }
   }
 
@@ -88,9 +78,6 @@ export function createScene({ canvas, tier, reduced }) {
   let parallaxY = 0;
   let targetPX = 0;
   let targetPY = 0;
-  // Impact shake, 0..1. Squeeze mode kicks this on every pop and the pop timeline
-  // decays it; at that magnitude the kick is large enough to feel in the frame
-  // edges but small enough that nothing on screen goes unreadable.
   let shakeAmt = 0;
   let shakeT = 0;
 
@@ -99,18 +86,16 @@ export function createScene({ canvas, tier, reduced }) {
   }
 
   function setParallaxTarget(nx, ny) {
-    // nx, ny are normalized device coords (-1..1) from the pointer.
     targetPX = nx;
     targetPY = ny;
   }
 
   function updateCamera(dt) {
-    const k = reduced ? 1 : 1 - Math.pow(0.001, dt); // frame-rate independent ease
+    const k = reduced ? 1 : 1 - Math.pow(0.001, dt);
     parallaxX += (targetPX - parallaxX) * k;
     parallaxY += (targetPY - parallaxY) * k;
     camera.position.x = parallaxX * 0.9;
     camera.position.y = -parallaxY * 0.6;
-    // A slow idle breathing on z keeps the frame alive when the pointer is still.
     const t = performance.now() * 0.001;
     camera.position.z = camBaseZ + (reduced ? 0 : Math.sin(t * 0.25) * 0.25);
     if (shakeAmt > 0.0001) {
@@ -126,18 +111,15 @@ export function createScene({ canvas, tier, reduced }) {
   }
 
   function setIgnite(heat) {
-    if (bloomPass) {
-      // Bloom ramps hard at the ignition beat then relaxes.
-      bloomPass.strength = 0.36 + heat * 1.35;
-    }
-    if (afterimagePass) {
-      afterimagePass.uniforms.damp.value = heat * 0.88;
+    bloomStrength.value = 0.36 + heat * 1.35;
+    if (!reduced) {
+      afterImageDamp.value = heat * 0.88;
     }
   }
 
   function setBloomBase(v) {
-    if (bloomPass && bloomPass.strength < 0.65 + 0.0001) {
-      bloomPass.strength = v;
+    if (bloomStrength.value < 0.65 + 0.0001) {
+      bloomStrength.value = v;
     }
   }
 
@@ -148,14 +130,12 @@ export function createScene({ canvas, tier, reduced }) {
     camera.updateProjectionMatrix();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, tier.maxPixelRatio));
     renderer.setSize(w, h, false);
-    if (composer) composer.setSize(w, h);
-    if (bloomPass) bloomPass.resolution.set(w, h);
     background.resize(renderer.getPixelRatio(), h);
     return { w, h, height: h, pixelRatio: renderer.getPixelRatio() };
   }
 
   function render() {
-    if (composer) composer.render();
+    if (renderPipeline) renderPipeline.render();
     else renderer.render(scene, camera);
   }
 
@@ -163,8 +143,8 @@ export function createScene({ canvas, tier, reduced }) {
     renderer,
     scene,
     camera,
-    composer,
-    bloomPass,
+    renderPipeline,
+    isWebGPU,
     background,
     setParallaxTarget,
     setIgnite,

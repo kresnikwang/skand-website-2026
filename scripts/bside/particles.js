@@ -1,433 +1,321 @@
 /**
- * SKAND B-Side — GPU particle system.
+ * SKAND B-Side — Three.js r187 WebGPU Compute Particle System.
  *
- * 65,536 particles (desktop) whose physics runs entirely in a fragment shader
- * on ping-pong float render targets via GPUComputationRenderer. The CPU only
- * pushes a handful of uniforms per frame; per-particle motion, the chaos flow,
- * the target spring, the pointer wake and the ignition burst are all computed
- * on-GPU. That's the leap from the old 2D version, which ran every particle's
- * integration in a JS forEach each frame.
- *
- * Per-particle data lives in two places, kept in lockstep by construction:
- *   • a texture (targetTex / metaTex) the COMPUTE shaders sample by gl_FragCoord
- *   • matching geometry attributes the RENDER vertex shader samples by aRef
- * buildParticles lays both down from the same arrays, so index i always maps
- * to texel (i % W, floor(i / W)) in the compute texture AND to aRef in the
- * geometry. The compute shader derives that same uv from gl_FragCoord /
- * resolution, so the two views never diverge.
+ * Up to 129,600 particles (WebGPU desktop) / 65,536 (WebGL2 fallback) whose
+ * physics runs on-GPU via TSL compute shaders (`Fn(...).compute(total)`) over
+ * storage buffers (`instancedArray`), rendered with `PointsNodeMaterial` on an
+ * instanced `THREE.Sprite` so particles scale cleanly past WebGPU's 1px point
+ * limit. Automatically runs as native WGSL compute on WebGPU or double-buffered
+ * Transform Feedback on WebGL2 fallback.
  */
 
-import * as THREE from 'https://esm.sh/three@0.170.0';
-import { GPUComputationRenderer } from 'https://esm.sh/three@0.170.0/examples/jsm/misc/GPUComputationRenderer.js';
-import { PALETTE, LETTER_COLORS } from './config.js?v=20260925d';
-
-/* ---------- compute shaders ---------- */
-
-const positionShader = /* glsl */ `
-  uniform float dt;
-  void main() {
-    vec2 uv = gl_FragCoord.xy / resolution.xy;
-    vec4 posData = texture2D(texturePosition, uv);
-    vec3 vel = texture2D(textureVelocity, uv).xyz;
-    vec3 pos = posData.xyz + vel * dt;
-    gl_FragColor = vec4(pos, posData.w);
-  }
-`;
-
-const velocityShader = /* glsl */ `
-  uniform float dt;
-  uniform float time;
-  uniform float uMorph;        // 0 → 1 global assemble progress
-  uniform float uChaos;        // 1 → 0 chaos strength
-  uniform float uImpulse;      // ignition radial burst (decays in JS)
-  uniform vec3  uPointer;      // world-space pointer on the z=0 plane
-  uniform float uPointerForce; // signed: + attract (dragging), − repel
-  uniform float uRevealed;
-  uniform float uBounds;       // half-extent of the chaos volume
-  uniform float uWorldScale;   // normalized target → world units
-  uniform sampler2D uTarget;  // xyz = target, w = stagger 0..1
-  uniform sampler2D uMeta;    // x = random, y = group, z = seed, w = letterIdx
-  uniform float uSqueeze;     // Squeeze mode: 0 → 1 compression of the whole mark
-  uniform vec3  uPress;       // Squeeze mode: xy = contact point in world, z = strength
-  uniform float uPressRadius; // Squeeze mode: contact radius in world units
-
-  void main() {
-    vec2 uv = gl_FragCoord.xy / resolution.xy;
-    vec3 pos = texture2D(texturePosition, uv).xyz;
-    vec3 vel = texture2D(textureVelocity, uv).xyz;
-    vec4 tgt = texture2D(uTarget, uv);
-    vec4 meta = texture2D(uMeta, uv);
-
-    float group   = meta.y;   // 0 = frame, 1 = letters
-    float seed    = meta.z;
-    float stagger = tgt.w;
-
-    // Per-particle effective morph. The frame leads (group 0, no delay);
-    // letters wait for the frame to draw before they fill in. The stagger
-    // term makes particles arrive in a wave, never as one block. The 0.40
-    // divisor is sized so that at uMorph = 1.0 even the most-delayed letter
-    // (groupDelay 0.30 + stagger 0.30 = 0.60) reaches m = 1.0 exactly — the
-    // settled mark has to be crisp, not soft.
-    float groupDelay = group * 0.30;
-    float m = clamp((uMorph - groupDelay - stagger * 0.30) / 0.40, 0.0, 1.0);
-    m = m * m * (3.0 - 2.0 * m); // smoothstep
-
-    vec3 target = tgt.xyz * uWorldScale;
-
-    // Cheap divergence-free-ish flow for the chaos cloud. Three offset sines
-    // per axis read as turbulent drift at this scale; a real curl-noise texture
-    // isn't worth the extra fetch for a background cloud.
-    float s = seed * 6.2831;
-    vec3 flow = vec3(
-      sin(pos.y * 0.55 + time * 0.7 + s),
-      cos(pos.z * 0.55 + time * 0.55 + s * 1.7),
-      sin(pos.x * 0.55 + time * 0.8 + s * 2.3)
-    );
-
-    // Spring toward the target, gated by morph.
-    vec3 toTarget = target - pos;
-    vel += toTarget * (m * 2.8);
-
-    // Squeeze mode: the mark is under pressure. Compress along X and let the
-    // mark bulge in Y and Z, so it reads as a body under pressure rather than
-    // a shape being scaled. The wobble term is what sells it — a real thing
-    // being squeezed does not stay perfectly symmetric, and the per-seed phase
-    // keeps the shiver from looking like a global pulse.
-    if (uSqueeze > 0.001) {
-      float s = uSqueeze;
-      vec3 sq = target;
-      sq.x *= 1.0 - 0.13 * s;
-      sq.y *= 1.0 + 0.17 * s;
-      sq.z *= 1.0 + 0.12 * s;
-      // Higher-frequency shiver the closer it gets to letting go.
-      sq.y += sin(time * 34.0 + seed * 21.0) * 0.035 * s * s;
-      sq.x += sin(time * 27.0 + seed * 13.0) * 0.020 * s * s;
-      vel += (sq - pos) * (m * s * 7.5);
-    }
-
-    // Squeeze mode: the press itself. The global squeeze above contracts the
-    // WHOLE mark; this is the local part, and it is what makes the gesture
-    // read as a hand rather than a slider — a dent forms under the contact
-    // point and the material it displaces piles up just outside the rim.
-    //
-    // Critically this displaces the TARGET and lets the existing spring pull
-    // toward it, exactly like the global squeeze does. An earlier version added
-    // a raw force to the velocity instead, which has no counter-term: the
-    // particles accelerated without limit and the mark blew apart, because
-    // nothing was pulling them back. A displaced target is bounded by
-    // construction — the worst case is the mark sitting in a dent, which is
-    // exactly the pose we want.
-    if (uPress.z > 0.001) {
-      vec3 rel = target - uPress.xyz;
-      float d = length(rel);
-      float t = d / uPressRadius;
-      if (t < 2.0) {
-        float k = uPress.z * m;
-        // Bowl: cosine falloff, 1 at the contact point → 0 at the rim. Pulls
-        // the target in by at most 42% of the local radius.
-        float bowl = t < 1.0 ? 0.5 + 0.5 * cos(t * 3.14159265) : 0.0;
-        // Rim: material squeezed out of the bowl has to go somewhere. Peaks
-        // just past the contact radius and is gone by 2×.
-        float rim = smoothstep(0.85, 1.15, t) * (1.0 - smoothstep(1.15, 2.0, t));
-        vec3 dir = rel / max(d, 0.001);
-        vec3 to = uPress.xyz + dir * d * (1.0 - 0.42 * bowl * k);
-        to += dir * rim * uPressRadius * 0.10 * k;
-        vel += (to - pos) * (m * uPress.z * 7.0);
-      }
-    }
-
-    // Chaos flow.
-    vel += flow * (uChaos * 1.5);
-
-    // Pointer wake. Attract while dragging (builds charge), repel otherwise.
-    vec3 toPointer = uPointer - pos;
-    float pd = length(toPointer);
-    float pointerRadius = uRevealed > 0.5 ? 0.9 : 6.5;
-    if (pd < pointerRadius && pd > 0.001) {
-      float f = (pointerRadius - pd) / pointerRadius;
-      f *= f;
-      vel += (toPointer / pd) * f * uPointerForce;
-      if (uPointerForce > 0.0) {
-        // Ethereal spiral vortex around the pointer center
-        vec3 tangent = normalize(vec3(-toPointer.y, toPointer.x, sin(time * 3.0 + seed * 6.28) * 0.35));
-        vel += tangent * f * (1.15 + uChaos * 0.75);
-      }
-    }
-
-    // Ignition: radial burst from the centre.
-    if (uImpulse > 0.001) {
-      vec3 dir = normalize(pos + vec3(0.0001));
-      vel += dir * uImpulse * (0.4 + seed * 1.2);
-    }
-
-    // Damping: floaty while chaotic, heavy as it locks in, so it settles crisp.
-    vel *= mix(0.945, 0.86, m);
-
-    // Soft containment of the chaos volume (skip once mostly assembled).
-    if (m < 0.5) {
-      vec3 over = max(abs(pos) - uBounds, 0.0) * sign(pos);
-      vel -= over * 0.9;
-    }
-
-    gl_FragColor = vec4(vel, 0.0);
-  }
-`;
-
-/* ---------- render shaders ---------- */
-
-const renderVertex = /* glsl */ `
-  uniform sampler2D uPositions;
-  uniform float uSize;
-  uniform float uPixelRatio;
-  uniform float uHeight;      // css pixels, for size attenuation
-  uniform float uMorph;
-  uniform float uIgnite;
-  uniform vec3  uIdleColor;
-  uniform float uTime;
-  uniform vec3  uPress;       // Squeeze mode: xy = contact point, z = strength
-  uniform float uPressRadius;
-
-  attribute vec2  aRef;       // uv into the compute position texture
-  attribute vec3  aColor;     // per-letter accent
-  attribute float aRandom;
-  attribute float aSeed;
-
-  varying vec3  vColor;
-  varying float vAlpha;
-  varying float vCore;
-
-  void main() {
-    vec3 pos = texture2D(uPositions, aRef).xyz;
-
-    // Colour: idle grey → per-letter accent as it locks in → hot on ignite.
-    float mixT = clamp(uMorph * 1.2, 0.0, 1.0);
-    vec3 col = mix(uIdleColor, aColor, mixT);
-
-    // Ethereal living energy wave sweeping through the letters as they assemble
-    if (mixT > 0.08) {
-      float wave = sin(pos.x * 2.2 + pos.y * 2.8 - uTime * 3.4 + aSeed * 3.1415);
-      float pulse = smoothstep(0.68, 1.0, wave);
-      vec3 energyColor = mix(vec3(0.91, 0.34, 0.23), vec3(1.0, 0.88, 0.72), aRandom);
-      col = mix(col, energyColor, pulse * 0.58 * mixT);
-    }
-
-    col = mix(col, vec3(1.0, 0.95, 0.90), uIgnite * 0.85);
-
-    /* Squeeze mode: the contact patch runs hot. Without this there is no cue at
-       all for WHERE the press is landing — the mark deforms globally and a
-       player cannot tell what they are holding. Scoped to the contact radius so
-       it reads as pressure under a fingertip, not a second ignition.
-
-       Capped at 0.45 and reached over a fairly narrow band: pushed harder it
-       blew straight through the letterform and burned a hole in the A, which
-       loses more than the heat cue gains. The mark has to stay readable while
-       it is being squeezed — that legibility IS the effect. */
-    float hot = 0.0;
-    if (uPress.z > 0.001) {
-      hot = uPress.z * (1.0 - smoothstep(uPressRadius * 0.2, uPressRadius * 1.1, distance(pos, uPress.xyz)));
-      col = mix(col, vec3(1.0, 0.93, 0.86), hot * 0.45);
-    }
-
-    // Twinkle: subtle per-particle flicker, stronger in chaos.
-    float tw = 0.85 + 0.15 * sin(uTime * 2.0 + aSeed * 40.0);
-    float chaosT = 1.0 - clamp(uMorph, 0.0, 1.0);
-    col *= mix(1.0, tw, chaosT * 0.6);
-
-    vColor = col;
-    vAlpha = mix(0.62, 1.0, mixT) + hot * 0.12;
-    vCore = 0.5 + 0.5 * aRandom;
-
-    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-    gl_Position = projectionMatrix * mv;
-
-    float size = uSize * (0.65 + aRandom * 0.7) * mix(1.0, 0.58, uMorph) * (1.0 + uIgnite * 0.65);
-    // Particles crushed into the contact bowl overlap more than the rest of the
-    // mark; a little extra size there turns that density into a readable
-    // hotspot. Kept modest — the same bump at 0.8 merged into one white blob
-    // and swallowed the letterform underneath it.
-    size *= 1.0 + hot * 0.3;
-    gl_PointSize = max(1.0, size * uPixelRatio * (uHeight / -mv.z) * 0.01);
-  }
-`;
-
-const renderFragment = /* glsl */ `
-  varying vec3  vColor;
-  varying float vAlpha;
-  varying float vCore;
-
-  void main() {
-    // Ethereal photonic sprite: ultra-crisp luminous core + feathered atmospheric halo
-    vec2 c = gl_PointCoord - 0.5;
-    float d = length(c) * 2.0;
-    if (d > 1.0) discard;
-
-    float body = 1.0 - smoothstep(0.12, 1.0, d);
-    float core = 1.0 - smoothstep(0.0, 0.28, d);
-    float spark = 1.0 - smoothstep(0.0, 0.09, d); // pinpoint star core
-
-    vec3 col = vColor * (body * 0.78 + core * 0.95 * vCore);
-    col += vec3(1.0, 0.98, 0.95) * spark * 0.65;
-
-    gl_FragColor = vec4(col, vAlpha * body);
-  }
-`;
-
-/* ---------- public factory ---------- */
+import * as THREE from 'https://esm.sh/three@0.187.0/webgpu';
+import {
+  Fn,
+  If,
+  Discard,
+  float,
+  vec3,
+  vec4,
+  uniform,
+  uv,
+  length,
+  distance,
+  normalize,
+  sin,
+  cos,
+  abs,
+  sign,
+  max,
+  mix,
+  clamp,
+  smoothstep,
+  instancedArray,
+  instanceIndex,
+} from 'https://esm.sh/three@0.187.0/tsl';
+import { PALETTE, LETTER_COLORS } from './config.js?v=20261113';
 
 /**
- * @param {WebGLRenderer} renderer
- * @param {object} opts { size, targets, worldScale, bounds, pixelRatio, height }
+ * @param {WebGPURenderer} renderer
+ * @param {object} opts { size, targets, worldScale, bounds }
  * @returns particle system handle with .points, .setState(), .update(), .dispose()
  */
 export function createParticleSystem(renderer, opts) {
-  const { size, targets, worldScale, bounds, pixelRatio, height } = opts;
+  const { size, targets, worldScale, bounds } = opts;
   const total = size * size;
 
-  const data = buildParticles(size, targets, worldScale, bounds);
+  const data = buildParticles(size, targets, bounds);
 
-  const gpu = new GPUComputationRenderer(size, size, renderer);
-  // Half-float keeps us safe on devices without full float render targets;
-  // position magnitudes (~±12) are well inside half-float's usable range.
-  gpu.setDataType(THREE.HalfFloatType);
+  // Storage buffers (instancedArray).
+  const positionBuffer = instancedArray(data.position, 'vec4');
+  const velocityBuffer = instancedArray(data.velocity, 'vec4');
+  const targetBuffer = instancedArray(data.targetData, 'vec4'); // xyz = normalized target, w = stagger
+  const metaBuffer = instancedArray(data.metaData, 'vec4');     // x = random, y = group, z = seed, w = letterIdx
+  const colorBuffer = instancedArray(data.aColor, 'vec3');
 
-  const posTex = gpu.createTexture();
-  const velTex = gpu.createTexture();
-  for (let i = 0; i < total; i++) {
-    posTex.image.data[i * 4] = data.position[i * 4];
-    posTex.image.data[i * 4 + 1] = data.position[i * 4 + 1];
-    posTex.image.data[i * 4 + 2] = data.position[i * 4 + 2];
-    posTex.image.data[i * 4 + 3] = data.position[i * 4 + 3];
-    velTex.image.data[i * 4] = data.velocity[i * 4];
-    velTex.image.data[i * 4 + 1] = data.velocity[i * 4 + 1];
-    velTex.image.data[i * 4 + 2] = data.velocity[i * 4 + 2];
-    velTex.image.data[i * 4 + 3] = 0;
-  }
+  // Uniforms driven by JS each frame.
+  const uDt = uniform(0.016);
+  const uTime = uniform(0);
+  const uMorph = uniform(0);
+  const uChaos = uniform(1);
+  const uImpulse = uniform(0);
+  const uPointer = uniform(new THREE.Vector3(0, 0, 0));
+  const uPointerForce = uniform(0);
+  const uRevealed = uniform(0);
+  const uBounds = uniform(bounds);
+  const uWorldScale = uniform(worldScale);
+  const uSqueeze = uniform(0);
+  const uPress = uniform(new THREE.Vector3(0, 0, 0));
+  const uPressRadius = uniform(1);
+  const uIgnite = uniform(0);
+  const uSize = uniform(size >= 256 ? 3.8 : 5.0);
+  const uIdleColor = uniform(new THREE.Color(PALETTE.white).lerp(new THREE.Color(PALETTE.dim), 0.35));
 
-  const posVar = gpu.addVariable('texturePosition', positionShader, posTex);
-  const velVar = gpu.addVariable('textureVelocity', velocityShader, velTex);
-  gpu.setVariableDependencies(posVar, [posVar, velVar]);
-  gpu.setVariableDependencies(velVar, [posVar, velVar]);
+  /* ---------- GPU Compute: Velocity ---------- */
+  const computeVelocity = Fn(() => {
+    const posData = positionBuffer.element(instanceIndex);
+    const pos = posData.xyz;
+    const vel = velocityBuffer.element(instanceIndex).xyz.toVar();
+    const tgt = targetBuffer.element(instanceIndex);
+    const meta = metaBuffer.element(instanceIndex);
 
-  // Static per-particle textures the velocity shader samples.
-  const targetTex = new THREE.DataTexture(
-    data.targetData, size, size, THREE.RGBAFormat, THREE.FloatType
-  );
-  targetTex.needsUpdate = true;
-  const metaTex = new THREE.DataTexture(
-    data.metaData, size, size, THREE.RGBAFormat, THREE.FloatType
-  );
-  metaTex.needsUpdate = true;
+    const group = meta.y;     // 0 = frame, 1 = letters
+    const seed = meta.z;
+    const stagger = tgt.w;
 
-  // Shared uniforms driven by JS each frame.
-  const shared = {
-    dt: { value: 0.016 },
-    time: { value: 0 },
-    uMorph: { value: 0 },
-    uChaos: { value: 1 },
-    uImpulse: { value: 0 },
-    uPointer: { value: new THREE.Vector3(0, 0, 0) },
-    uPointerForce: { value: 0 },
-    uRevealed: { value: 0 },
-    uBounds: { value: bounds },
-    uWorldScale: { value: worldScale },
-    uSqueeze: { value: 0 },
-    uPress: { value: new THREE.Vector3(0, 0, 0) },
-    uPressRadius: { value: 1 },
-    uTarget: { value: targetTex },
-    uMeta: { value: metaTex },
-  };
-  Object.assign(posVar.material.uniforms, { dt: shared.dt, time: shared.time });
-  Object.assign(velVar.material.uniforms, shared);
+    const groupDelay = group.mul(0.30);
+    const mRaw = clamp(uMorph.sub(groupDelay).sub(stagger.mul(0.30)).div(0.40), 0.0, 1.0);
+    const m = mRaw.mul(mRaw).mul(float(3.0).sub(mRaw.mul(2.0)));
 
-  const err = gpu.init();
-  if (err) {
-    console.error('[bside] GPUComputationRenderer init failed:', err);
-    return null;
-  }
+    const target = tgt.xyz.mul(uWorldScale);
 
-  // Render geometry / material.
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(total * 3), 3));
-  geometry.setAttribute('aRef', new THREE.BufferAttribute(data.aRef, 2));
-  geometry.setAttribute('aColor', new THREE.BufferAttribute(data.aColor, 3));
-  geometry.setAttribute('aRandom', new THREE.BufferAttribute(data.aRandom, 1));
-  geometry.setAttribute('aSeed', new THREE.BufferAttribute(data.aSeed, 1));
-  // Give the frustum a sane bounding sphere so it isn't culled when settled.
-  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), bounds * 2);
+    // Divergence-free-ish flow for the chaos cloud.
+    const sAngle = seed.mul(6.2831);
+    const flow = vec3(
+      sin(pos.y.mul(0.55).add(uTime.mul(0.7)).add(sAngle)),
+      cos(pos.z.mul(0.55).add(uTime.mul(0.55)).add(sAngle.mul(1.7))),
+      sin(pos.x.mul(0.55).add(uTime.mul(0.8)).add(sAngle.mul(2.3)))
+    );
 
-  const idleColor = new THREE.Color(PALETTE.white).lerp(new THREE.Color(PALETTE.dim), 0.35);
-  const material = new THREE.ShaderMaterial({
-    uniforms: {
-      uPositions: { value: null },
-      uSize: { value: size >= 256 ? 3.8 : 5.0 },
-      uPixelRatio: { value: pixelRatio },
-      uHeight: { value: height },
-      uMorph: shared.uMorph,
-      uIgnite: { value: 0 },
-      uIdleColor: { value: idleColor },
-      uTime: shared.time,
-      // Shares the velocity shader's uPress object, so one write per frame in
-      // setState feeds both the dent and its hotspot.
-      uPress: shared.uPress,
-      uPressRadius: shared.uPressRadius,
-    },
-    vertexShader: renderVertex,
-    fragmentShader: renderFragment,
+    // Spring toward target, gated by morph.
+    const toTarget = target.sub(pos);
+    vel.addAssign(toTarget.mul(m.mul(2.8)));
+
+    // Squeeze mode: global anisotropic compression + high-frequency shiver.
+    If(uSqueeze.greaterThan(0.001), () => {
+      const sq = target.toVar();
+      sq.x.mulAssign(float(1.0).sub(uSqueeze.mul(0.13)));
+      sq.y.mulAssign(float(1.0).add(uSqueeze.mul(0.17)));
+      sq.z.mulAssign(float(1.0).add(uSqueeze.mul(0.12)));
+      const s2 = uSqueeze.mul(uSqueeze);
+      sq.y.addAssign(sin(uTime.mul(34.0).add(seed.mul(21.0))).mul(0.035).mul(s2));
+      sq.x.addAssign(sin(uTime.mul(27.0).add(seed.mul(13.0))).mul(0.020).mul(s2));
+      vel.addAssign(sq.sub(pos).mul(m.mul(uSqueeze).mul(7.5)));
+    });
+
+    // Squeeze mode: local fingertip dent + rim bulge.
+    If(uPress.z.greaterThan(0.001), () => {
+      const rel = target.sub(uPress);
+      const d = length(rel);
+      const t = d.div(uPressRadius);
+      If(t.lessThan(2.0), () => {
+        const k = uPress.z.mul(m);
+        const bowl = float(0.0).toVar();
+        If(t.lessThan(1.0), () => {
+          bowl.assign(float(0.5).add(float(0.5).mul(cos(t.mul(3.14159265)))));
+        });
+        const rim = smoothstep(0.85, 1.15, t).mul(float(1.0).sub(smoothstep(1.15, 2.0, t)));
+        const dir = rel.div(max(d, 0.001));
+        const to = uPress.add(dir.mul(d).mul(float(1.0).sub(bowl.mul(0.42).mul(k)))).toVar();
+        to.addAssign(dir.mul(rim).mul(uPressRadius).mul(0.10).mul(k));
+        vel.addAssign(to.sub(pos).mul(m.mul(uPress.z).mul(7.0)));
+      });
+    });
+
+    // Chaos flow.
+    vel.addAssign(flow.mul(uChaos.mul(1.5)));
+
+    // Pointer wake: attract while dragging, repel otherwise.
+    const toPointer = uPointer.sub(pos);
+    const pd = length(toPointer);
+    const pointerRadius = uRevealed.greaterThan(0.5).select(float(0.9), float(6.5));
+    If(pd.lessThan(pointerRadius).and(pd.greaterThan(0.001)), () => {
+      const f = pointerRadius.sub(pd).div(pointerRadius);
+      const f2 = f.mul(f);
+      vel.addAssign(toPointer.div(pd).mul(f2).mul(uPointerForce));
+      If(uPointerForce.greaterThan(0.0), () => {
+        const tangent = normalize(vec3(
+          toPointer.y.negate(),
+          toPointer.x,
+          sin(uTime.mul(3.0).add(seed.mul(6.28))).mul(0.35)
+        ));
+        vel.addAssign(tangent.mul(f2).mul(float(1.15).add(uChaos.mul(0.75))));
+      });
+    });
+
+    // Ignition: radial burst from center.
+    If(uImpulse.greaterThan(0.001), () => {
+      const dir = normalize(pos.add(vec3(0.0001)));
+      vel.addAssign(dir.mul(uImpulse).mul(float(0.4).add(seed.mul(1.2))));
+    });
+
+    // Damping.
+    vel.mulAssign(mix(0.945, 0.86, m));
+
+    // Soft containment of the chaos volume.
+    If(m.lessThan(0.5), () => {
+      const over = max(abs(pos).sub(uBounds), 0.0).mul(sign(pos));
+      vel.subAssign(over.mul(0.9));
+    });
+
+    velocityBuffer.element(instanceIndex).assign(vec4(vel, 0.0));
+  })().compute(total);
+
+  /* ---------- GPU Compute: Position ---------- */
+  const computePosition = Fn(() => {
+    const posData = positionBuffer.element(instanceIndex);
+    const vel = velocityBuffer.element(instanceIndex).xyz;
+    const nextPos = posData.xyz.add(vel.mul(uDt));
+    positionBuffer.element(instanceIndex).assign(vec4(nextPos, posData.w));
+  })().compute(total);
+
+  /* ---------- Render Material (PointsNodeMaterial on instanced Sprite) ---------- */
+  const posNode = positionBuffer.element(instanceIndex).xyz;
+  const metaNode = metaBuffer.element(instanceIndex);
+  const aRandom = metaNode.x;
+  const aSeed = metaNode.z;
+  const aColor = colorBuffer.element(instanceIndex);
+
+  const hotFactor = Fn(([pos]) => {
+    const hot = float(0.0).toVar();
+    If(uPress.z.greaterThan(0.001), () => {
+      hot.assign(
+        uPress.z.mul(float(1.0).sub(smoothstep(uPressRadius.mul(0.2), uPressRadius.mul(1.1), distance(pos, uPress))))
+      );
+    });
+    return hot;
+  });
+
+  const particleSize = Fn(() => {
+    const pos = posNode;
+    const hot = hotFactor(pos);
+    const base = uSize
+      .mul(float(0.65).add(aRandom.mul(0.7)))
+      .mul(mix(1.0, 0.58, uMorph))
+      .mul(float(1.0).add(uIgnite.mul(0.65)))
+      .mul(float(1.0).add(hot.mul(0.3)));
+    // PointsNodeMaterial multiplies sizeNode by screenDPR * (0.5 * height / -mv.z).
+    return base.mul(0.02);
+  })();
+
+  const spriteDist = length(uv().sub(0.5)).mul(2.0);
+
+  const particleColor = Fn(() => {
+    If(spriteDist.greaterThan(1.0), () => {
+      Discard();
+    });
+
+    const pos = posNode;
+    const mixT = clamp(uMorph.mul(1.2), 0.0, 1.0);
+    const col = mix(uIdleColor, aColor, mixT).toVar();
+
+    If(mixT.greaterThan(0.08), () => {
+      const wave = sin(pos.x.mul(2.2).add(pos.y.mul(2.8)).sub(uTime.mul(3.4)).add(aSeed.mul(3.1415)));
+      const pulse = smoothstep(0.68, 1.0, wave);
+      const energyColor = mix(vec3(0.91, 0.34, 0.23), vec3(1.0, 0.88, 0.72), aRandom);
+      col.assign(mix(col, energyColor, pulse.mul(0.58).mul(mixT)));
+    });
+
+    col.assign(mix(col, vec3(1.0, 0.95, 0.90), uIgnite.mul(0.85)));
+
+    const hot = hotFactor(pos);
+    col.assign(mix(col, vec3(1.0, 0.93, 0.86), hot.mul(0.45)));
+
+    const tw = float(0.85).add(float(0.15).mul(sin(uTime.mul(2.0).add(aSeed.mul(40.0)))));
+    const chaosT = float(1.0).sub(clamp(uMorph, 0.0, 1.0));
+    col.mulAssign(mix(1.0, tw, chaosT.mul(0.6)));
+
+    const body = float(1.0).sub(smoothstep(0.12, 1.0, spriteDist));
+    const core = float(1.0).sub(smoothstep(0.0, 0.28, spriteDist));
+    const spark = float(1.0).sub(smoothstep(0.0, 0.09, spriteDist));
+    const vCore = float(0.5).add(aRandom.mul(0.5));
+
+    const outCol = col.mul(body.mul(0.78).add(core.mul(0.95).mul(vCore))).toVar();
+    outCol.addAssign(vec3(1.0, 0.98, 0.95).mul(spark).mul(0.65));
+    return outCol;
+  })();
+
+  const particleAlpha = Fn(() => {
+    const pos = posNode;
+    const mixT = clamp(uMorph.mul(1.2), 0.0, 1.0);
+    const hot = hotFactor(pos);
+    const vAlpha = mix(0.62, 1.0, mixT).add(hot.mul(0.12));
+    const body = float(1.0).sub(smoothstep(0.12, 1.0, spriteDist));
+    return vAlpha.mul(body);
+  })();
+
+  const material = new THREE.PointsNodeMaterial({
     transparent: true,
     depthWrite: false,
     depthTest: false,
+    fog: false,
     blending: THREE.AdditiveBlending,
+    sizeAttenuation: true,
+    toneMapped: false,
   });
+  material.positionNode = posNode;
+  material.sizeNode = particleSize;
+  material.colorNode = particleColor;
+  material.opacityNode = particleAlpha;
 
-  const points = new THREE.Points(geometry, material);
-  // Nothing else shares the frame any more — the press highlight and the mark
-  // are the only things on screen — but keeping an explicit order documents
-  // that the contact glow is meant to sit over the particles.
+  const points = new THREE.Sprite(material);
+  points.count = total;
   points.renderOrder = 2;
   points.frustumCulled = false;
 
   function setState(s) {
-    if (s.morph !== undefined) shared.uMorph.value = s.morph;
-    if (s.chaos !== undefined) shared.uChaos.value = s.chaos;
-    if (s.impulse !== undefined) shared.uImpulse.value = s.impulse;
-    if (s.pointerForce !== undefined) shared.uPointerForce.value = s.pointerForce;
-    if (s.revealed !== undefined) shared.uRevealed.value = s.revealed ? 1 : 0;
-    if (s.squeeze !== undefined) shared.uSqueeze.value = s.squeeze;
+    if (s.morph !== undefined) uMorph.value = s.morph;
+    if (s.chaos !== undefined) uChaos.value = s.chaos;
+    if (s.impulse !== undefined) uImpulse.value = s.impulse;
+    if (s.pointerForce !== undefined) uPointerForce.value = s.pointerForce;
+    if (s.revealed !== undefined) uRevealed.value = s.revealed ? 1 : 0;
+    if (s.squeeze !== undefined) uSqueeze.value = s.squeeze;
     if (s.press) {
-      shared.uPress.value.set(s.press.x, s.press.y, s.press.strength);
+      uPress.value.set(s.press.x, s.press.y, s.press.strength);
     }
-    if (s.pressRadius !== undefined) shared.uPressRadius.value = s.pressRadius;
-    if (s.ignite !== undefined) material.uniforms.uIgnite.value = s.ignite;
-    if (s.pointer) shared.uPointer.value.copy(s.pointer);
+    if (s.pressRadius !== undefined) uPressRadius.value = s.pressRadius;
+    if (s.ignite !== undefined) uIgnite.value = s.ignite;
+    if (s.pointer) uPointer.value.copy(s.pointer);
   }
 
   function update(dt, time) {
-    shared.dt.value = dt;
-    shared.time.value = time;
-    gpu.compute();
-    material.uniforms.uPositions.value = gpu.getCurrentRenderTarget(posVar).texture;
+    uDt.value = dt;
+    uTime.value = time;
+    renderer.compute([computeVelocity, computePosition]);
   }
 
-  function setPixelRatio(pr) { material.uniforms.uPixelRatio.value = pr; }
-  function setHeight(h) { material.uniforms.uHeight.value = h; }
-  // Targets are baked in normalized space; the shader scales them, so the logo
-  // can be re-fitted to a new viewport on resize without rebuilding textures.
-  function setWorldScale(v) { shared.uWorldScale.value = v; }
+  function setPixelRatio() {
+    // Handled natively by PointsNodeMaterial screenDPR node.
+  }
+
+  function setHeight() {
+    // Handled natively by PointsNodeMaterial viewport height node.
+  }
+
+  function setWorldScale(v) {
+    uWorldScale.value = v;
+  }
 
   function dispose() {
-    geometry.dispose();
     material.dispose();
-    targetTex.dispose();
-    metaTex.dispose();
-    posTex.dispose();
-    velTex.dispose();
-    gpu.dispose();
+    computeVelocity.dispose();
+    computePosition.dispose();
   }
 
-  return { points, setState, update, setPixelRatio, setHeight, setWorldScale, dispose, gpu, total, size };
+  return { points, setState, update, setPixelRatio, setHeight, setWorldScale, dispose, total, size };
 }
 
-function buildParticles(size, targets, worldScale, bounds) {
+function buildParticles(size, targets, bounds) {
   const total = size * size;
   const frameCount = targets.frame.count;
   const letterCount = targets.letters.count;
@@ -436,10 +324,7 @@ function buildParticles(size, targets, worldScale, bounds) {
   const velocity = new Float32Array(total * 4);
   const targetData = new Float32Array(total * 4);
   const metaData = new Float32Array(total * 4);
-  const aRef = new Float32Array(total * 2);
   const aColor = new Float32Array(total * 3);
-  const aRandom = new Float32Array(total);
-  const aSeed = new Float32Array(total);
   const tmp = new THREE.Color();
 
   let fCursor = 0;
@@ -470,10 +355,6 @@ function buildParticles(size, targets, worldScale, bounds) {
     const seed = Math.random();
     const stagger = Math.random();
 
-    // Store the target NORMALIZED (targets.js space). The velocity shader
-    // scales it by uWorldScale — that single application is what lets
-    // setWorldScale re-fit the mark to a new viewport without rebuilding this
-    // texture. Do not pre-multiply here, or the scale is applied twice.
     targetData[i * 4] = tx;
     targetData[i * 4 + 1] = ty;
     targetData[i * 4 + 2] = (Math.random() - 0.5) * 0.12;
@@ -494,14 +375,6 @@ function buildParticles(size, targets, worldScale, bounds) {
     velocity[i * 4 + 2] = (Math.random() - 0.5) * 0.4;
     velocity[i * 4 + 3] = 0;
 
-    // Texel-center UVs. The compute shader derives its uv from
-    // gl_FragCoord/resolution, which lands on texel centers; matching that
-    // here keeps the render-side lookup on exactly the same texel.
-    aRef[i * 2] = ((i % size) + 0.5) / size;
-    aRef[i * 2 + 1] = (Math.floor(i / size) + 0.5) / size;
-    aRandom[i] = rnd;
-    aSeed[i] = seed;
-
     const col = rnd > 0.985 ? PALETTE.coral : (letterIdx >= 0 ? LETTER_COLORS[letterIdx % LETTER_COLORS.length] : PALETTE.dim);
     tmp.setHex(col);
     aColor[i * 3] = tmp.r;
@@ -509,5 +382,5 @@ function buildParticles(size, targets, worldScale, bounds) {
     aColor[i * 3 + 2] = tmp.b;
   }
 
-  return { position, velocity, targetData, metaData, aRef, aColor, aRandom, aSeed, total };
+  return { position, velocity, targetData, metaData, aColor, total };
 }

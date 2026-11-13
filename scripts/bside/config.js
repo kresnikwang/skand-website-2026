@@ -1,16 +1,17 @@
 /**
  * SKAND B-Side — shared configuration.
  *
- * All three.js imports in this folder are absolute esm.sh URLs pinned to the
- * same three@0.170.0 the hero (explode.js) and the easter egg (egg/scene.js)
- * already load. Pinning matters: a bare esm.sh spec for any package that has
- * `three` as a peer dep resolves to the LATEST three and hands you a second,
- * incompatible three instance. examples/jsm modules import three relatively
- * (`../../../three.mjs`), so esm.sh dedupes them onto our pin with no query.
+ * All three.js imports in this folder are absolute esm.sh URLs pinned to
+ * three@0.187.0 (WebGPURenderer + TSL, with automatic WebGL2 backend fallback).
+ * Pinning matters: a bare esm.sh spec for any package that has `three` as a
+ * peer dep can resolve a mismatched instance.
  */
 
-export const THREE_URL = 'https://esm.sh/three@0.170.0';
-export const JSM = (p) => `https://esm.sh/three@0.170.0/examples/jsm/${p}`;
+export const THREE_VERSION = '0.187.0';
+export const THREE_URL = `https://esm.sh/three@${THREE_VERSION}`;
+export const THREE_WEBGPU_URL = `https://esm.sh/three@${THREE_VERSION}/webgpu`;
+export const THREE_TSL_URL = `https://esm.sh/three@${THREE_VERSION}/tsl`;
+export const JSM = (p) => `https://esm.sh/three@${THREE_VERSION}/examples/jsm/${p}`;
 
 // Brand palette — kept byte-identical to the CSS custom properties in
 // b-side.html and index.html so the particle colors read as the same brand.
@@ -32,17 +33,17 @@ export const LETTERS = ['S', 'K', 'A', 'N', 'D'];
 export const PHASE_NOTES = { chaos: 110, attract: 165, converge: 262, ignite: 440 };
 
 /* Quality tiers.
-   `count` is the compute-texture edge length; particles = count^2.
-   Desktop 256^2 = 65,536 particles. Mobile 128^2 = 16,384. The floor is 96^2
-   for low-core machines, which still reads as a dense cloud. */
+   `count` is the grid edge length; particles = count^2.
+   Desktop: 256^2 = 65,536 on WebGL fallback, boosted to 360^2 = 129,600 when
+   native WebGPU compute is active. Mobile/low-core: 128^2 = 16,384. */
 export function detectTier() {
   const coarse = window.matchMedia('(pointer: coarse)').matches;
   const narrow = window.matchMedia('(max-width: 768px)').matches;
   const cores = navigator.hardwareConcurrency || 8;
   const touch = coarse || narrow;
-  if (touch) return { name: 'mobile', count: 128, bloom: true, maxPixelRatio: 1.5, frameShare: 0.22 };
-  if (cores <= 4) return { name: 'low', count: 128, bloom: true, maxPixelRatio: 1.25, frameShare: 0.22 };
-  return { name: 'desktop', count: 256, bloom: true, maxPixelRatio: 1.75, frameShare: 0.22 };
+  if (touch) return { name: 'mobile', count: 128, webgpuCount: 160, bloom: true, maxPixelRatio: 1.5, frameShare: 0.22 };
+  if (cores <= 4) return { name: 'low', count: 128, webgpuCount: 192, bloom: true, maxPixelRatio: 1.25, frameShare: 0.22 };
+  return { name: 'desktop', count: 256, webgpuCount: 360, bloom: true, maxPixelRatio: 1.75, frameShare: 0.22 };
 }
 
 export const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

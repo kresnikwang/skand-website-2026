@@ -15,13 +15,13 @@
  * down any GPU resources.
  */
 
-import * as THREE from 'https://esm.sh/three@0.170.0';
-import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER, PALETTE } from './config.js?v=20261112b';
-import { createScene } from './scene.js?v=20261112b';
-import { createParticleSystem } from './particles.js?v=20261112b';
+import * as THREE from 'https://esm.sh/three@0.187.0/webgpu';
+import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER } from './config.js?v=20261113';
+import { createScene } from './scene.js?v=20261113';
+import { createParticleSystem } from './particles.js?v=20261113';
 import { buildTargets } from './targets.js';
-import { createPhases } from './phases.js?v=20261112b';
-import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20261112b';
+import { createPhases } from './phases.js?v=20261113';
+import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20261113';
 import { createAudio } from './audio.js';
 
 /* ---------- language ---------- */
@@ -191,7 +191,7 @@ function updateSqueezeHud() {
 
   // The "It gave" line wins for two seconds after a pop, then hands back to
   // whichever stage the player is back at.
-  if (clock && clock.elapsedTime - poppedAt < 2) {
+  if (clock && clock.getElapsed() - poppedAt < 2) {
     hintEl.textContent = t('popped');
     hintEl.classList.add('is-revealed');
   } else if (s.phase === 'burst') {
@@ -273,22 +273,23 @@ function mountFallback(message) {
 }
 
 /* ---------- init ---------- */
-function init() {
+async function init() {
   localizeHud();
 
-  scene = createScene({ canvas, tier, reduced: reducedMotion });
+  scene = await createScene({ canvas, tier, reduced: reducedMotion });
   if (!scene) {
     mountFallback(t('fail'));
     return;
   }
 
-  const total = tier.count * tier.count;
+  const gridSize = scene.isWebGPU ? (tier.webgpuCount || tier.count) : tier.count;
+  const total = gridSize * gridSize;
   const targets = buildTargets(total, tier.frameShare);
   const worldScale = computeWorldScale();
   const bounds = 6.5; // half-extent of the initial chaos cloud
 
   particles = createParticleSystem(scene.renderer, {
-    size: tier.count,
+    size: gridSize,
     targets,
     worldScale,
     bounds,
@@ -331,7 +332,7 @@ function init() {
     },
   });
 
-  clock = new THREE.Clock();
+  clock = new THREE.Timer();
   startBtn.classList.add('ready');
 
   // First resize pass to sync pixel ratio / world scale with the real viewport,
@@ -342,15 +343,16 @@ function init() {
   requestAnimationFrame(loop);
 }
 
-function loop() {
+function loop(timestamp) {
   // Re-schedule first so the loop is self-sustaining: the scene runs behind
   // the intro overlay from boot, and simply idles (no render) until started.
   requestAnimationFrame(loop);
   if (!running) return;
   if (document.hidden) return;
 
+  clock.update(timestamp);
   const dt = Math.min(clock.getDelta(), 0.05);
-  const time = clock.elapsedTime;
+  const time = clock.getElapsed();
 
   // Pointer speed, normalized for the charge curve.
   const ddx = px - lastPx;
