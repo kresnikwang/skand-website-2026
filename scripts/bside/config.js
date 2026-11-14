@@ -62,33 +62,95 @@ export const PHASE_LABEL = {
 };
 
 export const I18N = {
-  kicker: { en: 'B-Side — Form the Mark', zh: 'B-Side — 聚成形' },
-  kickerSqueeze: { en: 'B-Side — Squeeze the Mark', zh: 'B-Side — 捏碎标志' },
+  kicker: { en: 'End of the Page · B-Side', zh: '恭喜滑到尽头 · B-Side' },
+  kickerSqueeze: { en: 'B-Side · Stress Test', zh: 'B-Side · 解压现场' },
+  kickerSquish: { en: 'B-Side · Soft Toy', zh: 'B-Side · 捏捏乐' },
+  introSub: {
+    en: 'Serious work stays upstairs. Down here, consider this digital bubble wrap.',
+    zh: '认真作品留在上面。滑到这里，当个电子捏捏乐。',
+  },
   modeGather: { en: 'Gather', zh: '聚形' },
   modeSqueeze: { en: 'Squeeze', zh: '捏碎' },
-  start: { en: 'Start', zh: '开始' },
+  modeSquish: { en: 'Squish', zh: '捏捏' },
+  start: { en: 'Break In', zh: '溜进来' },
   back: { en: 'Back', zh: '返回' },
-  charge: { en: 'Charge', zh: '充能' },
+  charge: { en: 'Charge', zh: '聚力' },
   hint: {
-    en: 'Click and drag to gather the particles',
-    zh: '点击并拖拽，把粒子聚起来',
+    en: 'Swirl the shards. Strangely soothing.',
+    zh: '划两下把碎玻璃聚起来，莫名解压。',
+  },
+  hintAttract: {
+    en: 'Pulling right into place…',
+    zh: '一块块吸回去了……',
   },
   hintReady: {
-    en: 'Keep going — the mark is forming',
-    zh: '继续 — 标志正在成形',
+    en: 'Almost snapped shut.',
+    zh: '就差最后一下对齐。',
   },
-  revealed: { en: 'The mark is yours', zh: '标志已成形' },
+  revealed: {
+    en: 'Satisfying. Try Squeeze or Squish ↑',
+    zh: '齐活。试试上面「捏碎」或「捏捏」↑',
+  },
   tension: { en: 'Pressure', zh: '压力' },
   hintSqueeze: {
-    en: 'Press and hold on the mark — squeeze until it gives',
-    zh: '按住标志 — 一直捏到它炸开',
+    en: 'Pinch it hard. Like bubble wrap.',
+    zh: '按住使劲捏，当气泡膜踩。',
+  },
+  hintSqueezeStrain: {
+    en: 'Hear that crunch? Keep going.',
+    zh: '咯吱响了，继续加把劲。',
   },
   hintSqueezeTight: {
-    en: 'Keep squeezing — it is about to give',
-    zh: '继续捏 — 快撑不住了',
+    en: 'Careful…',
+    zh: '快撑不住了……',
   },
-  popped: { en: 'It gave. Again.', zh: '炸开了。再来。' },
-  pops: { en: 'Pops', zh: '爆开' },
+  popped: { en: 'Satisfying, isn’t it?', zh: '是不是还挺爽？' },
+  poppedList: {
+    en: [
+      'Satisfying, isn’t it?',
+      'Built to break.',
+      'Better than bubble wrap.',
+      'One more?',
+    ],
+    zh: [
+      '是不是还挺爽？',
+      '本来就是做给你捏爆的。',
+      '比捏气泡膜还得劲。',
+      '再来一发？',
+    ],
+  },
+  squishLabel: { en: 'Squish', zh: 'Q弹度' },
+  poke: { en: 'Poke', zh: '按捏' },
+  bulge: { en: 'Bulge', zh: '挤出' },
+  boing: { en: 'Boing', zh: '回弹' },
+  hintSquish: {
+    en: 'Poke & drag. Soft silicone, zero glass.',
+    zh: '戳一戳、揉一揉，这次是软软的捏捏乐。',
+  },
+  hintSquishBulge: {
+    en: 'Feel it ooze sideways? Keep kneading.',
+    zh: '挤出来了——多揉几下还挺 Q 弹。',
+  },
+  hintSquishBoing: {
+    en: 'Let go to watch it boing—or push till it splats.',
+    zh: '松手看它回弹——或者干脆压到底！',
+  },
+  squishPoppedList: {
+    en: [
+      'Pure silicone bliss.',
+      '100% bounce back.',
+      'Squishy level: mochi.',
+      'Okay, one more poke.',
+    ],
+    zh: [
+      '软乎乎，真解压。',
+      '弹回去那一下最爽。',
+      '手感堪比刚出炉的麻薯。',
+      '再戳最后一下？',
+    ],
+  },
+  pops: { en: 'Pops', zh: '捏爆' },
+  boings: { en: 'Boings', zh: '回弹' },
   press: { en: 'Press', zh: '按压' },
   strain: { en: 'Strain', zh: '形变' },
   burst: { en: 'Burst', zh: '爆裂' },
@@ -96,6 +158,6 @@ export const I18N = {
   sound: { en: 'Sound', zh: '音效' },
   muted: { en: 'Unmute', zh: '开启音效' },
   reset: { en: 'Reset', zh: '重置' },
-  loading: { en: 'Gathering particles…', zh: '粒子聚集中…' },
+  loading: { en: 'Gathering shards…', zh: '碎玻璃集结中…' },
   fail: { en: 'Could not start 3D on this device', zh: '此设备无法启动 3D 效果' },
 };

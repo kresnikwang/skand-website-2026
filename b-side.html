@@ -71,10 +71,14 @@ html.custom-cursor-enabled .cursor-ring { opacity: 1; }
 }
 .cursor-ring {
   width: 42px; height: 42px; border: 1.5px solid var(--white); border-radius: 50%;
-  transition: width 0.25s ease, height 0.25s ease, border-color 0.25s ease;
+  transition: width 0.22s ease, height 0.22s ease, border-color 0.22s ease, background 0.22s ease;
 }
 .cursor-ring.hovering {
   width: 58px; height: 58px; border-color: var(--coral);
+}
+.cursor-ring.is-pressing {
+  width: 26px; height: 26px; border-color: var(--coral);
+  background: rgba(232, 86, 58, 0.18);
 }
 
 /* The shell fades/settles in on load, same as before. */
@@ -146,7 +150,7 @@ nav {
   transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .intro.is-hidden { opacity: 0; pointer-events: none; }
-.intro-inner { display: grid; justify-items: center; gap: 18px; padding: 24px; }
+.intro-inner { display: grid; justify-items: center; gap: 16px; padding: 24px; text-align: center; }
 .intro-title {
   font-size: clamp(48px, 10vw, 136px); font-weight: 800; line-height: 0.86;
   letter-spacing: clamp(8px, 1.8vw, 24px);
@@ -156,8 +160,17 @@ nav {
   filter: drop-shadow(0 0 35px rgba(232, 86, 58, 0.38));
 }
 .intro-kicker {
-  color: var(--muted); font-size: 11px; letter-spacing: 5px; text-transform: uppercase;
-  text-shadow: 0 0 16px rgba(240, 237, 232, 0.25);
+  color: #ff9b84; font-size: 11px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase;
+  text-shadow: 0 0 16px rgba(232, 86, 58, 0.32);
+}
+.intro-sub {
+  max-width: min(540px, calc(100vw - 48px));
+  color: rgba(240, 237, 232, 0.78);
+  font-size: 14px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
 }
 .start-btn {
   min-height: 42px; margin-top: 16px; padding: 0 24px;
@@ -189,24 +202,32 @@ nav {
   bottom: 144px;
   z-index: 22;
   transform: translateX(-50%);
-  max-width: calc(100vw - 44px);
+  width: max-content;
+  max-width: min(620px, calc(100vw - 44px));
   text-align: center;
-  color: var(--muted);
-  font-size: 11px;
-  letter-spacing: 3.5px;
+  color: rgba(240, 237, 232, 0.72);
+  font-size: 11.5px;
+  line-height: 1.5;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  white-space: nowrap;
+  white-space: normal;
   opacity: 0;
   pointer-events: none;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
   transition: opacity 0.6s ease, bottom 0.55s cubic-bezier(0.22, 1, 0.36, 1), color 0.4s ease, letter-spacing 0.6s ease;
+}
+html[lang="zh"] .hint {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: none;
 }
 .hud.visible ~ .hint { opacity: 1; }
 .b-side-shell.is-revealed .hint { bottom: 48px; }
 .hint.is-revealed {
-  color: #ff9b84; letter-spacing: 6px;
+  color: #ff9b84; letter-spacing: 2.5px;
   text-shadow: 0 0 20px rgba(232, 86, 58, 0.75);
 }
+html[lang="zh"] .hint.is-revealed { letter-spacing: 0.12em; }
 .hint.is-error { color: var(--coral); }
 
 /* ---- HUD ---- */
@@ -427,7 +448,7 @@ nav {
   }
   .phase-step span { display: none; }
   .mode-switch { top: 20px; }
-  .mode-btn { padding: 0 13px; letter-spacing: 1.5px; }
+  .mode-btn { padding: 0 11px; font-size: 9.5px; letter-spacing: 1.2px; }
   .pops-block { top: 64px; }
   .utility { top: 72px; right: 18px; }
 }
@@ -467,11 +488,12 @@ nav {
     <div class="phase-row" id="phaseRow"></div>
   </div>
 
-  <!-- Mode switch. Two games on one mark: gather assembles it, squeeze takes it
-       apart. Sits above the HUD so it never competes with the charge bar. -->
+  <!-- Mode switch. Three games on one mark: gather assembles shards, squeeze shatters them,
+       squish turns the mark into a soft silicone mochi toy. -->
   <div class="mode-switch" id="modeSwitch" role="group" aria-label="Game">
     <button class="mode-btn is-active" id="modeGatherBtn" aria-pressed="true">Gather</button>
     <button class="mode-btn" id="modeSqueezeBtn" aria-pressed="false">Squeeze</button>
+    <button class="mode-btn" id="modeSquishBtn" aria-pressed="false">Squish</button>
   </div>
 
   <div class="pops-block" id="popsBlock" hidden>
@@ -490,11 +512,12 @@ nav {
 <div class="intro" id="intro">
   <div class="intro-inner">
     <div class="intro-title">SKAND</div>
-    <div class="intro-kicker" id="introKicker">B-Side — Form the Mark</div>
-    <button class="start-btn" id="startBtn">Start</button>
+    <div class="intro-kicker" id="introKicker">End of the Page</div>
+    <p class="intro-sub" id="introSub"></p>
+    <button class="start-btn" id="startBtn">Break In</button>
   </div>
 </div>
 
-<script type="module" src="scripts/bside/main.js?v=20261115b"></script>
+<script type="module" src="scripts/bside/main.js?v=20261115e"></script>
 </body>
 </html>

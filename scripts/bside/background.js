@@ -60,10 +60,12 @@ export function createBackground(scene, tier, reduced) {
   const uIgnite = uniform(0);
   const uTension = uniform(0);
   const uPop = uniform(0);
-  const uModeMix = uniform(0); // 0 = Gather (Aurora Silk), 1 = Squeeze (Abyssal Opal)
+  const uModeMix = uniform(0);   // 0 = Gather (Aurora Silk), 1 = Squeeze (Abyssal Opal)
+  const uSquishMix = uniform(0); // 1 = Squish (Pastel Mochi Studio)
   const uPointer = uniform(new THREE.Vector2(0, 0));
 
   let targetModeMix = 0;
+  let targetSquishMix = 0;
 
   /* --- Procedural Noise Helpers (TSL) --- */
   const fbm = Fn(([p_in]) => {
@@ -103,7 +105,7 @@ export function createBackground(scene, tier, reduced) {
   });
 
   /* --- Shared Sky Shader Builder (parameterized by mode mix node) --- */
-  function buildSkyColorNode(modeMixNode) {
+  function buildSkyColorNode(modeMixNode, squishMixNode) {
     return Fn(() => {
       const dir = normalize(positionWorld.sub(cameraPosition));
 
@@ -182,22 +184,40 @@ export function createBackground(scene, tier, reduced) {
       sSky.addAssign(mix(sOpalCyan, sMolten, clamp(uTension.mul(1.2), 0.0, 1.0)).mul(sCore));
       sSky.addAssign(mix(sMolten, sGold, 0.45).mul(uPop.mul(0.09)));
 
+      /* === REALM 2: SQUISH — Pastel Mochi & Velvet Sorbet Studio === */
+      const qZenith = sRGBTransferEOTF(vec3(0.065, 0.036, 0.088));
+      const qMid = sRGBTransferEOTF(vec3(0.115, 0.056, 0.118));
+      const qHoriz = sRGBTransferEOTF(vec3(0.185, 0.082, 0.125));
+      const qPeach = sRGBTransferEOTF(vec3(1.0, 0.64, 0.56));
+      const qLilac = sRGBTransferEOTF(vec3(0.76, 0.62, 1.0));
+      const qCream = sRGBTransferEOTF(vec3(1.0, 0.88, 0.78));
+
+      const qSky = mix(qHoriz, mix(qMid, qZenith, smoothstep(0.32, 0.9, vGrad)), smoothstep(0.0, 0.55, vGrad)).toVar();
+      const qCloud1 = smoothstep(-0.2, 0.65, q1.mul(0.7).add(q2.mul(0.45)));
+      const qCloud2 = smoothstep(0.0, 0.75, q2);
+      qSky.addAssign(mix(qLilac, qPeach, qCloud2).mul(qCloud1).mul(0.14));
+      qSky.addAssign(qCream.mul(centerProx.mul(centerProx)).mul(float(0.08).add(uTension.mul(0.14))));
+      qSky.addAssign(qPeach.mul(uPop.mul(0.10)));
+
       /* === Blend Realms + Shared Starlight, Pointer Aura & Vignette === */
-      const sky = mix(gSky, sSky, modeMixNode).toVar();
+      const gsSky = mix(gSky, sSky, modeMixNode);
+      const sky = mix(gsSky, qSky, squishMixNode).toVar();
 
       const starsFine = starField(rotDir, 46.0, 0.935);
       const starsBright = starField(rotDir.add(vec3(11.7, 5.3, 19.1)), 22.0, 0.985);
-      const starCol = mix(
+      const gsStarCol = mix(
         mix(vec3(0.82, 0.94, 1.0), gChampagne, q2.mul(0.6)),
         mix(sOpalCyan, sGold, q1.mul(0.7)),
         modeMixNode
       );
+      const starCol = mix(gsStarCol, mix(qCream, qPeach, 0.35), squishMixNode);
       sky.addAssign(starsFine.mul(0.7).add(starsBright.mul(1.75)).mul(starCol));
 
       // Interactive pointer light bloom in the sky behind the cursor.
       const ptrDist = length(dir.xy.sub(uPointer.mul(0.38)));
       const ptrAura = smoothstep(0.95, 0.0, ptrDist);
-      const ptrTint = mix(mix(gAqua, gRoseCoral, uEnergy), mix(sOpalCyan, sMolten, uTension), modeMixNode);
+      const gsPtrTint = mix(mix(gAqua, gRoseCoral, uEnergy), mix(sOpalCyan, sMolten, uTension), modeMixNode);
+      const ptrTint = mix(gsPtrTint, qPeach, squishMixNode);
       sky.addAssign(ptrTint.mul(ptrAura).mul(0.14).mul(float(1.0).add(uEnergy.mul(0.5))));
 
       // Gentle optical vignette so the mark holds center stage.
@@ -216,7 +236,7 @@ export function createBackground(scene, tier, reduced) {
     depthTest: false,
     fog: false,
   });
-  skyMat.colorNode = buildSkyColorNode(uModeMix);
+  skyMat.colorNode = buildSkyColorNode(uModeMix, uSquishMix);
   const skyMesh = new THREE.Mesh(skyGeo, skyMat);
   skyMesh.renderOrder = -100;
   skyMesh.frustumCulled = false;
@@ -224,12 +244,16 @@ export function createBackground(scene, tier, reduced) {
 
   // Pure static-mode sky materials for baking crisp PMREM environment maps.
   const envGatherMat = new THREE.MeshBasicNodeMaterial({ side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false });
-  envGatherMat.colorNode = buildSkyColorNode(float(0.0));
+  envGatherMat.colorNode = buildSkyColorNode(float(0.0), float(0.0));
   const envSqueezeMat = new THREE.MeshBasicNodeMaterial({ side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false });
-  envSqueezeMat.colorNode = buildSkyColorNode(float(1.0));
+  envSqueezeMat.colorNode = buildSkyColorNode(float(1.0), float(0.0));
+  const envSquishMat = new THREE.MeshBasicNodeMaterial({ side: THREE.BackSide, depthWrite: false, depthTest: false, fog: false });
+  envSquishMat.colorNode = buildSkyColorNode(float(0.0), float(1.0));
 
   function getEnvSkyMaterial(mode = 'gather') {
-    return mode === 'squeeze' ? envSqueezeMat : envGatherMat;
+    if (mode === 'squeeze') return envSqueezeMat;
+    if (mode === 'squish') return envSquishMat;
+    return envGatherMat;
   }
 
   /* --- 2. 3D Volumetric Aurora Silk Veils (Parallax Depth Layers) --- */
@@ -615,15 +639,19 @@ export function createBackground(scene, tier, reduced) {
     const falloff = float(1.0).sub(d).mul(float(1.0).sub(d));
     const gPrism = mix(vec3(0.45, 0.92, 0.88), vec3(1.0, 0.62, 0.52), w2);
     const sPrism = mix(vec3(0.40, 0.88, 1.0), vec3(1.0, 0.36, 0.24), w1);
-    const col = mix(gPrism, sPrism, uModeMix);
-    return col.mul(w1.mul(0.65).add(w2.mul(0.45))).mul(falloff).mul(uRippleStrength).mul(1.35);
+    const qPrism = mix(vec3(0.99, 0.86, 0.80), vec3(0.95, 0.68, 0.82), w1);
+    const baseCol = mix(gPrism, sPrism, uModeMix);
+    const col = mix(baseCol, qPrism, uSquishMix);
+    const strengthMul = mix(float(1.35), float(0.28), uSquishMix);
+    return col.mul(w1.mul(0.65).add(w2.mul(0.45))).mul(falloff).mul(uRippleStrength).mul(strengthMul);
   })();
 
   rippleMat.opacityNode = Fn(() => {
     const d = length(uv().sub(0.5)).mul(2.0);
     const w1 = sin(d.mul(16.0).sub(uTime.mul(6.0))).mul(0.5).add(0.5);
     const falloff = float(1.0).sub(d).mul(float(1.0).sub(d));
-    return w1.mul(falloff).mul(uRippleStrength).mul(0.65);
+    const opMul = mix(float(0.65), float(0.18), uSquishMix);
+    return w1.mul(falloff).mul(uRippleStrength).mul(opMul);
   })();
 
   const rippleMesh = new THREE.Mesh(rippleGeo, rippleMat);
@@ -646,8 +674,10 @@ export function createBackground(scene, tier, reduced) {
 
   function setMode(modeName, instant = false) {
     targetModeMix = modeName === 'squeeze' ? 1 : 0;
+    targetSquishMix = modeName === 'squish' ? 1 : 0;
     if (instant || reduced) {
       uModeMix.value = targetModeMix;
+      uSquishMix.value = targetSquishMix;
     }
   }
 
@@ -673,9 +703,10 @@ export function createBackground(scene, tier, reduced) {
       });
     }
 
-    // Smoothly crossfade between Gather & Squeeze realms.
+    // Smoothly crossfade between Gather, Squeeze & Squish realms.
     const mixStep = 1 - Math.exp(-3.2 * dt);
     uModeMix.value += (targetModeMix - uModeMix.value) * mixStep;
+    uSquishMix.value += (targetSquishMix - uSquishMix.value) * mixStep;
 
     if (shockwaveActive) {
       shockwaveTimer += dt;
@@ -701,6 +732,7 @@ export function createBackground(scene, tier, reduced) {
     skyMat.dispose();
     envGatherMat.dispose();
     envSqueezeMat.dispose();
+    envSquishMat.dispose();
     veilMeshes.forEach((m) => {
       m.geometry.dispose();
       m.material.dispose();

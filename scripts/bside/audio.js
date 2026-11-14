@@ -96,6 +96,71 @@ export function createAudio() {
       tone(96, { duration: 0.7, type: 'sine', volume: 0.09 });
       tone(1400, { duration: 0.16, type: 'square', volume: 0.03, delay: 0.01 });
     },
+
+    /* ---- Squish mode (rubbery mochi bloop, squeak & boing wobble) ---- */
+    onSquishPress() {
+      const ac = ensure();
+      if (!ac) return;
+      try {
+        const t0 = ac.currentTime;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(215, t0);
+        osc.frequency.exponentialRampToValueAtTime(98, t0 + 0.11);
+        gain.gain.setValueAtTime(0.06, t0);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.13);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.14);
+      } catch (e) {}
+    },
+    onSquishKnead(speed = 0.5) {
+      const ac = ensure();
+      if (!ac) return;
+      try {
+        const t0 = ac.currentTime;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = 'triangle';
+        const f = 145 + Math.min(1.5, speed) * 115;
+        osc.frequency.setValueAtTime(f, t0);
+        osc.frequency.exponentialRampToValueAtTime(f * 1.18, t0 + 0.055);
+        gain.gain.setValueAtTime(0.014, t0);
+        gain.gain.exponentialRampToValueAtTime(0.0008, t0 + 0.065);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.075);
+      } catch (e) {}
+    },
+    onSquishRelease(energy = 0.5) {
+      const ac = ensure();
+      if (!ac) return;
+      try {
+        const t0 = ac.currentTime;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = 'triangle';
+        const baseF = 155 + Math.min(1.4, energy) * 80;
+        osc.frequency.setValueAtTime(baseF, t0);
+        osc.frequency.exponentialRampToValueAtTime(baseF * 1.85, t0 + 0.08);
+        osc.frequency.exponentialRampToValueAtTime(baseF * 1.28, t0 + 0.17);
+        osc.frequency.exponentialRampToValueAtTime(baseF * 1.52, t0 + 0.25);
+        gain.gain.setValueAtTime(0.05, t0);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.29);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.31);
+      } catch (e) {}
+    },
+    onSquishPop() {
+      tone(210, { duration: 0.18, type: 'sine', volume: 0.07 });
+      tone(420, { duration: 0.22, type: 'triangle', volume: 0.05, delay: 0.04 });
+      tone(315, { duration: 0.26, type: 'sine', volume: 0.04, delay: 0.11 });
+    },
     toggle() {
       this.setEnabled(!enabled);
       if (enabled) tone(330, { duration: 0.1 });

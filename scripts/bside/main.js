@@ -16,14 +16,15 @@
  */
 
 import * as THREE from 'https://esm.sh/three@0.187.0/webgpu';
-import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER } from './config.js?v=20261115';
-import { createScene } from './scene.js?v=20261115';
+import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER } from './config.js?v=20261115e';
+import { createScene } from './scene.js?v=20261115e';
 import { createParticleSystem } from './particles.js?v=20261115b';
 import { createGlassShards } from './shards.js?v=20261115';
 import { buildTargets } from './targets.js?v=20261115';
 import { createPhases } from './phases.js?v=20261115b';
 import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20261115b';
-import { createAudio } from './audio.js';
+import { createSquish, SQUISH_ORDER } from './squish.js?v=20261115e';
+import { createAudio } from './audio.js?v=20261115e';
 
 /* ---------- language ---------- */
 const urlParams = new URLSearchParams(window.location.search);
@@ -38,6 +39,7 @@ const canvas = document.getElementById('glCanvas');
 const intro = document.getElementById('intro');
 const startBtn = document.getElementById('startBtn');
 const introKicker = document.getElementById('introKicker');
+const introSub = document.getElementById('introSub');
 const hud = document.getElementById('hud');
 const chargeFill = document.getElementById('chargeFill');
 const chargePct = document.getElementById('chargePct');
@@ -48,6 +50,7 @@ const soundBtn = document.getElementById('soundBtn');
 const resetBtn = document.getElementById('resetBtn');
 const modeGatherBtn = document.getElementById('modeGatherBtn');
 const modeSqueezeBtn = document.getElementById('modeSqueezeBtn');
+const modeSquishBtn = document.getElementById('modeSquishBtn');
 const popsBlock = document.getElementById('popsBlock');
 const popsLabel = document.getElementById('popsLabel');
 const popsCount = document.getElementById('popsCount');
@@ -60,6 +63,7 @@ let particles = null;
 let shards = null;
 let phases = null;
 let squeeze = null;
+let squishToy = null;
 let clock = null;
 let running = false;
 let started = false;
@@ -67,8 +71,9 @@ let started = false;
 // 'gather' assembles the mark, 'squeeze' tries to take it apart. One mark, two
 // games; see the file header.
 let mode = 'gather';
-// Throttles the squeeze tension tick so the riser reads as a line, not a buzz.
+// Throttles the squeeze tension tick & squish knead murmur so audio stays smooth.
 let tensionTick = 0;
+let squishKneadTick = 0;
 // Timestamp of the last pop, for the "It gave" hint flash.
 let poppedAt = -10;
 
@@ -101,7 +106,7 @@ if (dot && ring) {
     rx += (mx - rx) * 0.14;
     ry += (my - ry) * 0.14;
     dot.style.transform = `translate(${mx - 3.5}px, ${my - 3.5}px)`;
-    ring.style.transform = `translate(${rx - 21}px, ${ry - 21}px)`;
+    ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%, -50%)`;
     requestAnimationFrame(follow);
   };
   follow();
@@ -115,40 +120,51 @@ if (dot && ring) {
 function buildPhaseSteps() {
   if (!phaseRow) return;
   phaseRow.innerHTML = '';
-  const order = mode === 'squeeze' ? SQUEEZE_ORDER : PHASE_ORDER;
+  const order = mode === 'squeeze'
+    ? SQUEEZE_ORDER
+    : mode === 'squish' ? SQUISH_ORDER : PHASE_ORDER;
   order.forEach((key, i) => {
     const step = document.createElement('span');
     step.className = 'phase-step';
     step.dataset.phase = key;
-    const label = mode === 'squeeze' ? I18N[key][lang] : PHASE_LABEL[key][lang];
+    const label = (mode === 'squeeze' || mode === 'squish') ? I18N[key][lang] : PHASE_LABEL[key][lang];
     step.innerHTML = `<b>${i + 1}</b><span>${label}</span>`;
     phaseRow.appendChild(step);
   });
 }
 
 function localizeHud() {
-  chargeLabel.textContent = mode === 'squeeze' ? t('tension') : t('charge');
-  hintEl.textContent = t('hint');
+  chargeLabel.textContent = mode === 'squeeze'
+    ? t('tension')
+    : mode === 'squish' ? t('squishLabel') : t('charge');
+  hintEl.textContent = mode === 'squeeze'
+    ? t('hintSqueeze')
+    : mode === 'squish' ? t('hintSquish') : t('hint');
   document.getElementById('backBtn').textContent = t('back');
   startBtn.textContent = t('start');
-  introKicker.textContent = mode === 'squeeze' ? t('kickerSqueeze') : t('kicker');
+  introKicker.textContent = mode === 'squeeze'
+    ? t('kickerSqueeze')
+    : mode === 'squish' ? t('kickerSquish') : t('kicker');
+  if (introSub) introSub.textContent = t('introSub');
   soundBtn.setAttribute('aria-label', t('sound'));
   soundBtn.title = t('sound');
   resetBtn.setAttribute('aria-label', t('reset'));
   resetBtn.title = t('reset');
   if (modeGatherBtn) modeGatherBtn.textContent = t('modeGather');
   if (modeSqueezeBtn) modeSqueezeBtn.textContent = t('modeSqueeze');
+  if (modeSquishBtn) modeSquishBtn.textContent = t('modeSquish');
   // The label, not the container: writing textContent on the wrapper would
   // delete the counter node inside it.
-  if (popsLabel) popsLabel.textContent = t('pops');
+  if (popsLabel) popsLabel.textContent = mode === 'squish' ? t('boings') : t('pops');
   buildPhaseSteps();
 }
 
 function updateHud() {
   // Called from setMode() and from the frame loop, and the first of those can
   // run before either state machine exists. Nothing to show yet.
-  if (!phases && !squeeze) return;
+  if (!phases && !squeeze && !squishToy) return;
   if (mode === 'squeeze') return updateSqueezeHud();
+  if (mode === 'squish') return updateSquishToyHud();
 
   const pct = Math.round(phases.charge * 100);
   chargeFill.style.transform = `scaleX(${Math.min(1, phases.charge)})`;
@@ -162,9 +178,12 @@ function updateHud() {
   if (phases.ignited) {
     hintEl.textContent = t('revealed');
     hintEl.classList.add('is-revealed');
-  } else if (phases.phase === 'attract' || phases.phase === 'converge') {
+  } else if (phases.phase === 'converge') {
     hintEl.classList.remove('is-revealed');
     hintEl.textContent = t('hintReady');
+  } else if (phases.phase === 'attract') {
+    hintEl.classList.remove('is-revealed');
+    hintEl.textContent = t('hintAttract');
   } else {
     hintEl.classList.remove('is-revealed');
     hintEl.textContent = t('hint');
@@ -191,17 +210,50 @@ function updateSqueezeHud() {
     el.classList.toggle('is-done', idx < cur);
   });
 
-  // The "It gave" line wins for two seconds after a pop, then hands back to
-  // whichever stage the player is back at.
-  if (clock && clock.getElapsed() - poppedAt < 2) {
-    hintEl.textContent = t('popped');
+  // Rotating tactile punchlines for two seconds after a pop, then hands back.
+  if (clock && clock.getElapsed() - poppedAt < 2.2) {
+    const lines = I18N.poppedList?.[lang] || I18N.poppedList?.en;
+    hintEl.textContent = lines ? lines[(Math.max(1, s.pops) - 1) % lines.length] : t('popped');
     hintEl.classList.add('is-revealed');
   } else if (s.phase === 'burst') {
     hintEl.classList.remove('is-revealed');
     hintEl.textContent = t('hintSqueezeTight');
+  } else if (s.phase === 'strain') {
+    hintEl.classList.remove('is-revealed');
+    hintEl.textContent = t('hintSqueezeStrain');
   } else {
     hintEl.classList.remove('is-revealed');
     hintEl.textContent = t('hintSqueeze');
+  }
+}
+
+function updateSquishToyHud() {
+  if (!squishToy) return;
+  const s = squishToy.hud;
+  const pct = Math.round(s.pressure * 100);
+  chargeFill.style.transform = `scaleX(${Math.min(1, s.pressure)})`;
+  chargePct.textContent = `${pct}%`;
+  if (popsCount) popsCount.textContent = String(s.pops).padStart(2, '0');
+  document.querySelectorAll('.phase-step').forEach((el) => {
+    const idx = SQUISH_ORDER.indexOf(el.dataset.phase);
+    const cur = SQUISH_ORDER.indexOf(s.phase);
+    el.classList.toggle('is-active', idx === cur);
+    el.classList.toggle('is-done', idx < cur);
+  });
+
+  if (clock && clock.getElapsed() - poppedAt < 2.2) {
+    const lines = I18N.squishPoppedList?.[lang] || I18N.squishPoppedList?.en;
+    hintEl.textContent = lines ? lines[(Math.max(1, s.pops) - 1) % lines.length] : t('popped');
+    hintEl.classList.add('is-revealed');
+  } else if (s.phase === 'boing') {
+    hintEl.classList.remove('is-revealed');
+    hintEl.textContent = t('hintSquishBoing');
+  } else if (s.phase === 'bulge') {
+    hintEl.classList.remove('is-revealed');
+    hintEl.textContent = t('hintSquishBulge');
+  } else {
+    hintEl.classList.remove('is-revealed');
+    hintEl.textContent = t('hintSquish');
   }
 }
 
@@ -324,6 +376,11 @@ async function init() {
   squeeze.scene.visible = false;
   scene.scene.add(squeeze.scene);
 
+  squishToy = createSquish({ reduced: reducedMotion });
+  squishToy.setWorldScale(squeeze.worldScale * 0.98);
+  squishToy.group.visible = false;
+  scene.scene.add(squishToy.group);
+
   phases = createPhases({
     onPhaseChange: (phase) => {
       audio.onPhase(phase);
@@ -407,7 +464,39 @@ function loop(timestamp) {
       tensionTick = 0;
       audio.onTension(u.tension);
     }
+  } else if (mode === 'squish') {
+    const sq = squishToy.update(
+      dt,
+      time,
+      {
+        pointer: pointerWorld,
+        dragging: started && pointerDown,
+        speed: pointerSpeed,
+      },
+      {
+        onPress: () => audio.onSquishPress(),
+        onRelease: (energy) => audio.onSquishRelease(energy),
+        onPop: () => {
+          poppedAt = time;
+          audio.onSquishPop();
+          flashImpact();
+        },
+      },
+    );
+    if (ring) ring.classList.toggle('is-pressing', Boolean(sq.pressing));
+    squishKneadTick += dt;
+    if (sq.pressing && sq.kneadSpeed > 0.25 && squishKneadTick > 0.16) {
+      squishKneadTick = 0;
+      audio.onSquishKnead(sq.kneadSpeed);
+    }
+    u = {
+      ignite: sq.splat * 0.65,
+      shake: sq.splat * 0.14,
+      tension: sq.pressure,
+      impulse: sq.splat,
+    };
   } else {
+    if (ring && ring.classList.contains('is-pressing')) ring.classList.remove('is-pressing');
     // State machine → uniforms.
     if (started && !phases.ignited) {
       phases.update(dt, pointerDown, pointerSpeed);
@@ -418,23 +507,26 @@ function loop(timestamp) {
     if (!pointerInside || !started) u.pointerForce = 0;
   }
 
-  particles.setState(u);
-  if (shards) {
-    shards.setState({
-      ...u,
-      squeezeMode: mode === 'squeeze',
-      modeMix: scene.background ? scene.background.getModeMix() : (mode === 'squeeze' ? 1 : 0),
-    });
-    shards.update(dt, time);
+  if (mode !== 'squish') {
+    particles.setState(u);
+    if (shards) {
+      shards.setState({
+        ...u,
+        squeezeMode: mode === 'squeeze',
+        modeMix: scene.background ? scene.background.getModeMix() : (mode === 'squeeze' ? 1 : 0),
+      });
+      shards.update(dt, time);
+    }
+    particles.update(dt, time);
   }
-  scene.setIgnite(u.ignite);
+  scene.setIgnite(u.ignite || 0);
   scene.setShake(u.shake || 0);
   scene.setParallaxTarget(pointerInside ? ndc.x : 0, pointerInside ? ndc.y : 0);
 
   scene.updateCamera(dt);
 
   if (scene && scene.background) {
-    if (mode === 'squeeze') {
+    if (mode === 'squeeze' || mode === 'squish') {
       scene.background.update(dt, time, {
         camera: scene.camera,
         energy: 1.0,
@@ -457,7 +549,6 @@ function loop(timestamp) {
     }
   }
 
-  particles.update(dt, time);
   scene.render();
 
   // HUD, throttled to every other frame to avoid layout thrash.
@@ -480,9 +571,10 @@ function handleResize() {
   if (squeeze) squeeze.resize(visibleWidth(), visibleHeight());
   // Squeeze mode fits the mark to its own framing, so each mode owns the
   // scale its own layout expects.
-  const activeScale = mode === 'squeeze' ? squeeze.worldScale : computeWorldScale();
+  const activeScale = (mode === 'squeeze' || mode === 'squish') ? squeeze.worldScale : computeWorldScale();
   particles.setWorldScale(activeScale);
   if (shards) shards.setWorldScale(activeScale);
+  if (squishToy) squishToy.setWorldScale(squeeze.worldScale * 0.98);
 }
 
 /* ---------- input ---------- */
@@ -535,14 +627,23 @@ function setMode(next) {
   shell.classList.remove('is-popped');
   if (hintEl) hintEl.classList.remove('is-revealed');
 
+  const isSquish = mode === 'squish';
   squeeze.scene.visible = mode === 'squeeze';
+  if (particles) particles.points.visible = !isSquish;
+  if (shards) shards.mesh.visible = !isSquish;
+  if (squishToy) squishToy.group.visible = isSquish;
+
   scene.setMode(mode);
   if (mode === 'squeeze') {
     squeeze.reset();
-    // The mark belongs assembled in this mode; hand it straight there rather
-    // than making the player sit through a charge bar first.
     particles.setWorldScale(squeeze.worldScale);
     if (shards) shards.setWorldScale(squeeze.worldScale);
+  } else if (isSquish) {
+    if (squishToy) {
+      squishToy.reset();
+      squishToy.setWorldScale(squeeze.worldScale * 0.98);
+    }
+    scene.setShake(0);
   } else {
     const gatherScale = computeWorldScale();
     particles.setWorldScale(gatherScale);
@@ -565,7 +666,11 @@ function setMode(next) {
     modeSqueezeBtn.classList.toggle('is-active', mode === 'squeeze');
     modeSqueezeBtn.setAttribute('aria-pressed', String(mode === 'squeeze'));
   }
-  if (popsBlock) popsBlock.hidden = mode !== 'squeeze';
+  if (modeSquishBtn) {
+    modeSquishBtn.classList.toggle('is-active', isSquish);
+    modeSquishBtn.setAttribute('aria-pressed', String(isSquish));
+  }
+  if (popsBlock) popsBlock.hidden = mode === 'gather';
 
   audio.onReset();
   localizeHud();
@@ -577,6 +682,9 @@ if (modeGatherBtn) {
 }
 if (modeSqueezeBtn) {
   modeSqueezeBtn.addEventListener('click', () => setMode('squeeze'));
+}
+if (modeSquishBtn) {
+  modeSquishBtn.addEventListener('click', () => setMode('squish'));
 }
 
 startBtn.addEventListener('click', () => {
@@ -598,6 +706,13 @@ resetBtn.addEventListener('click', () => {
   if (scene && scene.background) scene.background.reset();
   if (mode === 'squeeze') {
     squeeze.reset(true);
+    syncRevealState();
+    audio.onReset();
+    updateHud();
+    return;
+  }
+  if (mode === 'squish') {
+    if (squishToy) squishToy.reset(true);
     syncRevealState();
     audio.onReset();
     updateHud();

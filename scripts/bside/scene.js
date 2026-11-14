@@ -11,7 +11,7 @@ import * as THREE from 'https://esm.sh/three@0.187.0/webgpu';
 import { pass, uniform } from 'https://esm.sh/three@0.187.0/tsl';
 import { bloom } from 'https://esm.sh/three@0.187.0/examples/jsm/tsl/display/BloomNode.js';
 import { afterImage } from 'https://esm.sh/three@0.187.0/examples/jsm/tsl/display/AfterImageNode.js';
-import { createBackground } from './background.js?v=20261115';
+import { createBackground } from './background.js?v=20261115e';
 
 export async function createScene({ canvas, tier, reduced }) {
   let renderer;
@@ -71,6 +71,7 @@ export async function createScene({ canvas, tier, reduced }) {
   // catch real aurora & opalescent reflections.
   let envGatherRT = null;
   let envSqueezeRT = null;
+  let envSquishRT = null;
   try {
     const pmrem = new THREE.PMREMGenerator(renderer);
     const envGeo = new THREE.SphereGeometry(50, 32, 20);
@@ -82,6 +83,8 @@ export async function createScene({ canvas, tier, reduced }) {
     envGatherRT = pmrem.fromScene(envScene, 0, 0.1, 100);
     envMesh.material = background.getEnvSkyMaterial('squeeze');
     envSqueezeRT = pmrem.fromScene(envScene, 0, 0.1, 100);
+    envMesh.material = background.getEnvSkyMaterial('squish');
+    envSquishRT = pmrem.fromScene(envScene, 0, 0.1, 100);
 
     scene.environment = envGatherRT.texture;
     envGeo.dispose();
@@ -124,15 +127,25 @@ export async function createScene({ canvas, tier, reduced }) {
   let currentMode = 'gather';
 
   function setMode(modeName) {
-    currentMode = modeName === 'squeeze' ? 'squeeze' : 'gather';
+    currentMode = modeName === 'squeeze' ? 'squeeze' : modeName === 'squish' ? 'squish' : 'gather';
     background.setMode(currentMode);
     if (currentMode === 'squeeze') {
       if (envSqueezeRT) scene.environment = envSqueezeRT.texture;
+      ambientLight.intensity = 0.28;
       fillLight.color.setHex(0x4be8ff);
+      fillLight.intensity = 1.25;
       rimLight.color.setHex(0xff5a36);
+    } else if (currentMode === 'squish') {
+      if (envSquishRT) scene.environment = envSquishRT.texture;
+      ambientLight.intensity = 0.45;
+      fillLight.color.setHex(0xdcb8ff);
+      fillLight.intensity = 1.35;
+      rimLight.color.setHex(0xff9c84);
     } else {
       if (envGatherRT) scene.environment = envGatherRT.texture;
+      ambientLight.intensity = 0.28;
       fillLight.color.setHex(0x7ab4ff);
+      fillLight.intensity = 1.25;
       rimLight.color.setHex(0xff8e7a);
     }
   }
@@ -172,6 +185,12 @@ export async function createScene({ canvas, tier, reduced }) {
   }
 
   function setIgnite(heat) {
+    if (currentMode === 'squish') {
+      bloomStrength.value = 0.18 + heat * 0.22;
+      rimLight.intensity = 1.8 + heat * 1.4;
+      if (!reduced) afterImageDamp.value = 0.0;
+      return;
+    }
     bloomStrength.value = 0.28 + heat * 0.44;
     rimLight.intensity = 2.4 + heat * 3.2;
     if (!reduced) {
