@@ -123,58 +123,64 @@ export function createBackground(scene, tier, reduced) {
 
       const vGrad = clamp(dir.y.mul(0.5).add(0.5), 0.0, 1.0);
 
-      /* === REALM 0: GATHER — Celestial Aurora Silk === */
-      const gZenith = sRGBTransferEOTF(vec3(0.012, 0.016, 0.048));
-      const gMid = sRGBTransferEOTF(vec3(0.036, 0.032, 0.115));
-      const gHoriz = sRGBTransferEOTF(vec3(0.082, 0.038, 0.125));
-      const gAqua = sRGBTransferEOTF(vec3(0.20, 0.85, 0.74));
-      const gLavender = sRGBTransferEOTF(vec3(0.42, 0.48, 0.98));
-      const gRoseCoral = sRGBTransferEOTF(vec3(0.92, 0.38, 0.32));
-      const gChampagne = sRGBTransferEOTF(vec3(1.0, 0.84, 0.56));
+      /* === REALM 0: GATHER — Celestial Aurora Silk & Dreamy Twilight === */
+      const gZenith = sRGBTransferEOTF(vec3(0.010, 0.014, 0.044));
+      const gMid = sRGBTransferEOTF(vec3(0.028, 0.026, 0.098));
+      const gHoriz = sRGBTransferEOTF(vec3(0.068, 0.028, 0.112));
+      const gAqua = sRGBTransferEOTF(vec3(0.18, 0.88, 0.78));
+      const gLavender = sRGBTransferEOTF(vec3(0.46, 0.44, 1.0));
+      const gRoseCoral = sRGBTransferEOTF(vec3(0.95, 0.36, 0.42));
+      const gChampagne = sRGBTransferEOTF(vec3(1.0, 0.82, 0.56));
 
       const gSky = mix(gHoriz, mix(gMid, gZenith, smoothstep(0.35, 0.9, vGrad)), smoothstep(0.0, 0.55, vGrad)).toVar();
 
-      // Flowing aurora silk ribbons across upper and middle hemisphere.
-      const ribbonCoord1 = dir.y.mul(2.6).add(q1.mul(2.2)).sub(uTime.mul(0.06));
-      const ribbon1 = exp(abs(sin(ribbonCoord1)).negate().mul(5.8));
-      const ribbonCoord2 = dir.x.mul(1.8).add(dir.y.mul(1.9)).add(q2.mul(2.4)).add(uTime.mul(0.045));
-      const ribbon2 = exp(abs(sin(ribbonCoord2)).negate().mul(6.6));
+      // Volumetric aurora silk curtains with soft vertical shimmer rays.
+      const curtain1 = exp(abs(sin(dir.x.mul(1.9).add(q1.mul(2.4)).sub(uTime.mul(0.05)))).negate().mul(4.2))
+        .mul(smoothstep(-0.35, 0.55, dir.y.add(q2.mul(0.35))));
+      const curtain2 = exp(abs(sin(dir.x.mul(1.35).sub(dir.y.mul(1.6)).add(q2.mul(2.6)).add(uTime.mul(0.04)))).negate().mul(5.0))
+        .mul(smoothstep(-0.55, 0.65, dir.y));
+      const shimmerRays = float(0.65).add(float(0.35).mul(sin(dir.x.mul(16.0).add(q1.mul(8.0)).add(uTime.mul(0.35)))));
 
-      const auroraCol1 = mix(gLavender, gAqua, smoothstep(-0.3, 0.5, q2));
-      const auroraCol2 = mix(gRoseCoral, gChampagne, smoothstep(0.0, 0.7, q1));
+      const auroraCol1 = mix(gLavender, gAqua, smoothstep(-0.25, 0.55, q2));
+      const auroraCol2 = mix(gRoseCoral, gChampagne, smoothstep(0.0, 0.75, q1));
 
-      const energyBoost = float(0.48).add(uEnergy.mul(0.42));
-      gSky.addAssign(auroraCol1.mul(ribbon1).mul(0.22).mul(energyBoost));
-      gSky.addAssign(auroraCol2.mul(ribbon2).mul(0.16).mul(energyBoost));
+      const energyBoost = float(0.55).add(uEnergy.mul(0.45));
+      gSky.addAssign(auroraCol1.mul(curtain1).mul(shimmerRays).mul(0.24).mul(energyBoost));
+      gSky.addAssign(auroraCol2.mul(curtain2).mul(0.18).mul(energyBoost));
 
-      // Dreamy center halo behind the assembling mark (kept rich so glass refracts crisply).
-      const centerProx = float(1.0).sub(smoothstep(0.0, 1.15, length(dir.xy)));
-      const gHalo = centerProx.mul(centerProx).mul(float(0.06).add(uEnergy.mul(0.14)));
+      // Dreamy nebula mist & subtle core aura behind the assembling crystal mark.
+      const nebMist = smoothstep(-0.1, 0.7, q1.mul(0.6).add(q2.mul(0.4)));
+      gSky.addAssign(mix(gLavender, gRoseCoral, q2.mul(0.5).add(0.5)).mul(nebMist).mul(0.08));
+
+      const centerProx = float(1.0).sub(smoothstep(0.0, 1.05, length(dir.xy)));
+      const gHalo = centerProx.mul(centerProx).mul(float(0.05).add(uEnergy.mul(0.13)));
       gSky.addAssign(mix(gLavender, gChampagne, uEnergy).mul(gHalo));
-      gSky.addAssign(mix(gRoseCoral, gChampagne, 0.55).mul(uIgnite.mul(0.14)));
+      gSky.addAssign(mix(gRoseCoral, gChampagne, 0.5).mul(uIgnite.mul(0.10)));
 
-      /* === REALM 1: SQUEEZE — Abyssal Opal & Molten Prism === */
-      const sZenith = sRGBTransferEOTF(vec3(0.010, 0.008, 0.032));
-      const sMid = sRGBTransferEOTF(vec3(0.025, 0.036, 0.095));
-      const sHoriz = sRGBTransferEOTF(vec3(0.088, 0.020, 0.085));
-      const sOpalCyan = sRGBTransferEOTF(vec3(0.16, 0.80, 0.95));
-      const sOrchid = sRGBTransferEOTF(vec3(0.68, 0.24, 0.88));
-      const sMolten = sRGBTransferEOTF(vec3(0.94, 0.30, 0.20));
-      const sGold = sRGBTransferEOTF(vec3(1.0, 0.76, 0.40));
+      /* === REALM 1: SQUEEZE — Abyssal Opal & Caustic Prism Void === */
+      const sZenith = sRGBTransferEOTF(vec3(0.008, 0.006, 0.026));
+      const sMid = sRGBTransferEOTF(vec3(0.022, 0.018, 0.068));
+      const sHoriz = sRGBTransferEOTF(vec3(0.065, 0.014, 0.072));
+      const sOpalCyan = sRGBTransferEOTF(vec3(0.14, 0.84, 0.96));
+      const sOrchid = sRGBTransferEOTF(vec3(0.72, 0.22, 0.94));
+      const sMolten = sRGBTransferEOTF(vec3(0.96, 0.30, 0.22));
+      const sGold = sRGBTransferEOTF(vec3(1.0, 0.74, 0.38));
 
       const sSky = mix(sHoriz, mix(sMid, sZenith, smoothstep(0.3, 0.9, vGrad)), smoothstep(0.0, 0.52, vGrad)).toVar();
 
-      // Liquid opal veins & molten prism ribbons.
-      const vein1 = exp(abs(q1.sub(0.15)).negate().mul(9.0));
-      const vein2 = exp(abs(q2.sub(0.22)).negate().mul(10.0));
-      sSky.addAssign(mix(sOpalCyan, sOrchid, smoothstep(-0.2, 0.6, dir.x)).mul(vein1).mul(0.18));
-      sSky.addAssign(mix(sOrchid, sMolten, uTension).mul(vein2).mul(float(0.14).add(uTension.mul(0.28))));
+      // Iridescent opal caustic ribbons & deep plasma veins.
+      const vein1 = exp(abs(q1.sub(0.12)).negate().mul(9.5));
+      const vein2 = exp(abs(q2.sub(0.20)).negate().mul(11.0));
+      const caustic = pow(clamp(float(1.0).sub(abs(sin(q1.mul(6.0).add(q2.mul(5.0)).add(uTime.mul(0.25))))), 0.0, 1.0), 4.0);
+      sSky.addAssign(mix(sOpalCyan, sOrchid, smoothstep(-0.3, 0.5, dir.x)).mul(vein1).mul(0.20));
+      sSky.addAssign(mix(sOrchid, sMolten, uTension).mul(vein2).mul(float(0.15).add(uTension.mul(0.26))));
+      sSky.addAssign(mix(sOpalCyan, sGold, uTension).mul(caustic).mul(0.075));
 
-      // Reactive pressure furnace behind the mark.
+      // Reactive pressure furnace behind the crystal mark.
       const pulseWave = float(0.85).add(float(0.15).mul(sin(uTime.mul(float(3.0).add(uTension.mul(9.0))).sub(length(dir.xy).mul(8.0)))));
-      const sCore = centerProx.mul(centerProx).mul(float(0.06).add(uTension.mul(0.24))).mul(pulseWave);
+      const sCore = centerProx.mul(centerProx).mul(float(0.05).add(uTension.mul(0.22))).mul(pulseWave);
       sSky.addAssign(mix(sOpalCyan, sMolten, clamp(uTension.mul(1.2), 0.0, 1.0)).mul(sCore));
-      sSky.addAssign(mix(sMolten, sGold, 0.45).mul(uPop.mul(0.16)));
+      sSky.addAssign(mix(sMolten, sGold, 0.45).mul(uPop.mul(0.09)));
 
       /* === Blend Realms + Shared Starlight, Pointer Aura & Vignette === */
       const sky = mix(gSky, sSky, modeMixNode).toVar();
@@ -470,10 +476,11 @@ export function createBackground(scene, tier, reduced) {
       const core = float(1.0).sub(smoothstep(0.0, 0.35, starDist));
       s.assign(clamp(crossFlare.mul(0.75).add(core.mul(0.85)), 0.0, 1.0));
     }).ElseIf(starKind.greaterThan(0.5), () => {
-      // Soft out-of-focus bokeh orb with luminous chromatic rim
-      const disc = float(1.0).sub(smoothstep(0.68, 1.0, starDist));
-      const rim = smoothstep(0.45, 0.88, starDist).mul(float(1.0).sub(smoothstep(0.88, 1.0, starDist)));
-      s.assign(disc.mul(0.26).add(rim.mul(0.58)));
+      // Soft creamy optical camera-lens bokeh orb (gentle luminous disc, subtle outer glow)
+      const disc = float(1.0).sub(smoothstep(0.0, 0.95, starDist));
+      const softOrb = pow(disc, 1.5);
+      const subtleRim = smoothstep(0.5, 0.82, starDist).mul(float(1.0).sub(smoothstep(0.82, 1.0, starDist))).mul(0.22);
+      s.assign(softOrb.mul(0.48).add(subtleRim));
     }).Else(() => {
       // Fine stardust mote
       const halo = float(1.0).sub(smoothstep(0.0, 1.0, starDist));
@@ -530,10 +537,10 @@ export function createBackground(scene, tier, reduced) {
   function shockSignal() {
     const d = length(uv().sub(0.5)).mul(2.0);
     const ringR = clamp(uShockProgress.mul(1.12), 0.0, 1.2);
-    const thick = mix(0.09, 0.032, uShockProgress);
+    const thick = mix(0.048, 0.016, uShockProgress);
     const rBand = smoothstep(thick, 0.0, abs(d.sub(ringR)));
-    const gBand = smoothstep(thick, 0.0, abs(d.sub(ringR.sub(0.025))));
-    const bBand = smoothstep(thick, 0.0, abs(d.sub(ringR.sub(0.05))));
+    const gBand = smoothstep(thick, 0.0, abs(d.sub(ringR.sub(0.022))));
+    const bBand = smoothstep(thick, 0.0, abs(d.sub(ringR.sub(0.044))));
     const fade = float(1.0).sub(uShockProgress).mul(float(1.0).sub(uShockProgress));
     return { rBand, gBand, bBand, fade };
   }
@@ -548,12 +555,12 @@ export function createBackground(scene, tier, reduced) {
     const prism = vec3(1.0, 0.42, 0.32).mul(sig.rBand)
       .add(vec3(1.0, 0.88, 0.56).mul(sig.gBand))
       .add(vec3(0.40, 0.85, 1.0).mul(sig.bBand));
-    return mix(prism, uShockColor, 0.35).mul(sig.fade).mul(uShockIntensity).mul(0.52);
+    return mix(prism, uShockColor, 0.3).mul(sig.fade).mul(uShockIntensity).mul(0.32);
   })();
 
   shockMat.opacityNode = Fn(() => {
     const sig = shockSignal();
-    return sig.rBand.add(sig.gBand.mul(0.75)).add(sig.bBand.mul(0.65)).mul(sig.fade).mul(uShockIntensity).mul(0.55);
+    return sig.rBand.add(sig.gBand.mul(0.75)).add(sig.bBand.mul(0.65)).mul(sig.fade).mul(uShockIntensity).mul(0.36);
   })();
 
   const shockMesh = new THREE.Mesh(shockGeo, shockMat);

@@ -172,10 +172,10 @@ export async function createScene({ canvas, tier, reduced }) {
   }
 
   function setIgnite(heat) {
-    bloomStrength.value = 0.30 + heat * 0.62;
-    rimLight.intensity = 2.4 + heat * 3.5;
+    bloomStrength.value = 0.28 + heat * 0.44;
+    rimLight.intensity = 2.4 + heat * 3.2;
     if (!reduced) {
-      afterImageDamp.value = heat * 0.52;
+      afterImageDamp.value = heat * 0.34;
     }
   }
 

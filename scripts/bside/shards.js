@@ -204,9 +204,9 @@ export function createGlassShards({ shardCount = 520, worldScale = 2.8, bounds =
     const shatterRot = burst.mul(float(4.5).add(seed.mul(8.5))).mul(motionScale);
     const angle = scatterRot.add(hoverTilt).add(squeezeTilt).add(shatterRot);
 
-    // Shard scale: slightly smaller in distant scatter, full interlocking size when locked.
+    // Shard scale: slightly larger jewel presence while drifting/shattering, exact lock when assembled.
     const shardScale = uWorldScale
-      .mul(mix(0.84, 1.0, m))
+      .mul(mix(1.24, 1.0, m))
       .mul(float(1.0).sub(uSqueeze.mul(0.05).mul(m)))
       .mul(float(1.0).add(uIgnite.mul(0.04)));
 
@@ -274,12 +274,19 @@ export function createGlassShards({ shardCount = 520, worldScale = 2.8, bounds =
     const N = normalize(normalView);
     const fresnel = pow(float(1.0).sub(clamp(abs(dot(N, V)), 0.0, 1.0)), 2.8);
 
-    // Gather iridescent rim + traveling wave across assembled crystal facets.
-    const rimGather = mix(vec3(0.32, 0.65, 1.0), vec3(1.0, 0.56, 0.45), seed);
-    const rimSqueeze = mix(vec3(0.35, 0.92, 0.88), vec3(1.0, 0.42, 0.32), seed);
-    const rimCol = mix(rimGather, rimSqueeze, uModeMix);
+    // Rainbow thin-film prism dispersion across crystal bevels + mode accent rim.
+    const specPhase = fresnel.mul(5.2).add(seed.mul(6.2831)).add(uTime.mul(0.45));
+    const prismSpectrum = vec3(
+      cos(specPhase).mul(0.5).add(0.5),
+      cos(specPhase.add(2.0944)).mul(0.5).add(0.5),
+      cos(specPhase.add(4.1888)).mul(0.5).add(0.5)
+    );
+    const rimGather = mix(vec3(0.32, 0.72, 1.0), vec3(1.0, 0.56, 0.45), seed);
+    const rimSqueeze = mix(vec3(0.28, 0.94, 0.92), vec3(1.0, 0.38, 0.32), seed);
+    const rimCol = mix(mix(rimGather, rimSqueeze, uModeMix), prismSpectrum, 0.48);
 
-    const out = rimCol.mul(fresnel).mul(float(0.52).add(motion.m.mul(0.28))).toVar();
+    const scatterGlint = float(1.0).sub(motion.m).mul(0.38);
+    const out = rimCol.mul(fresnel).mul(float(0.62).add(motion.m.mul(0.24)).add(scatterGlint)).toVar();
 
     // Traveling light pulse sweeping across the glass mark as it converges.
     const sweep = sin(aHome.x.mul(4.5).sub(uTime.mul(2.8)).add(aHome.y.mul(2.0)));
@@ -358,26 +365,26 @@ export function createGlassShards({ shardCount = 520, worldScale = 2.8, bounds =
 /* ================================================================== */
 
 function buildVoronoiShardGeometry(totalTargetShards, bounds) {
-  const maskW = 640;
-  const maskH = 256;
+  const maskW = 960;
+  const maskH = 384;
   const { letterAlpha, letterIndexMap, normToPx, pxToNorm } = rasterizeMarkMasks(maskW, maskH);
 
   // Sample seeds for frame and Outfit 800 letters.
-  const frameTarget = Math.max(48, Math.round(totalTargetShards * 0.22));
-  const letterTarget = Math.max(100, totalTargetShards - frameTarget);
+  const frameTarget = Math.max(44, Math.round(totalTargetShards * 0.20));
+  const letterTarget = Math.max(120, totalTargetShards - frameTarget);
 
   const shards = [];
 
-  // 1. Frame: seamless interlocking faceted glass prism bars along the rounded rect.
+  // 1. Frame: irregular organically-fractured glass prism bars along the rounded rect.
   buildFrameShards(frameTarget, shards);
 
-  // 2. Letters: exact Voronoi crystal cells inside the Outfit 800 wordmark.
+  // 2. Letters: crisp high-res Voronoi crystal cells inside the Outfit 800 wordmark.
   const letterSeeds = sampleMaskSeeds(letterAlpha, letterIndexMap, maskW, maskH, pxToNorm, letterTarget);
   buildCellsForGroup({
     seeds: letterSeeds,
     group: 1,
-    maxR: 0.072,
-    seamGap: 0.0005,
+    maxR: 0.064,
+    seamGap: 0.00045,
     isInMask: (nx, ny) => sampleAlpha(letterAlpha, maskW, maskH, normToPx(nx, ny)) > 110,
     out: shards,
   });
@@ -536,7 +543,7 @@ function rasterizeMarkMasks(w, h) {
   lc.height = h;
   const lctx = lc.getContext('2d', { willReadFrequently: true });
 
-  const fontPx = 220;
+  const fontPx = 280;
   const tracking = fontPx * 0.1;
   const font = `800 ${fontPx}px Outfit, "Helvetica Neue", sans-serif`;
 
@@ -694,17 +701,35 @@ function buildFrameShards(count, out) {
     return { x, y, nx, ny };
   }
 
-  const segLen = perim / count;
+  // Irregular cut lengths along perimeter for authentic shattered-glass variation.
+  const weights = [];
+  let weightSum = 0;
+  for (let i = 0; i < count; i++) {
+    const w = 0.65 + 0.85 * Math.abs(Math.sin(i * 19.37 + 0.7));
+    weights.push(w);
+    weightSum += w;
+  }
+  const cuts = [0];
+  let acc = 0;
+  for (let i = 0; i < count; i++) {
+    acc += (weights[i] / weightSum) * perim;
+    cuts.push(acc);
+  }
+  cuts[count] = perim;
+
+  const avgSeg = perim / count;
   const gap = 0.0011;
   const skewAt = (idx) => {
     if (idx <= 0 || idx >= count) return 0;
-    return (idx % 2 === 0 ? 1 : -1) * 0.22 * segLen;
+    const sign = idx % 2 === 0 ? 1 : -1;
+    const mag = 0.20 + 0.16 * Math.abs(Math.cos(idx * 7.13));
+    return sign * mag * avgSeg;
   };
   for (let i = 0; i < count; i++) {
     const skew0 = skewAt(i);
     const skew1 = skewAt(i + 1);
-    const d0 = i * segLen + gap;
-    const d1 = (i + 1) * segLen - gap;
+    const d0 = cuts[i] + gap;
+    const d1 = cuts[i + 1] - gap;
 
     const pOut0 = sampleEdge(d0 + skew0 * 0.5);
     const pOut1 = sampleEdge(d1 + skew1 * 0.5);
@@ -735,7 +760,7 @@ function buildFrameShards(count, out) {
 
 function sampleMaskSeeds(alpha, letterIndexMap, w, h, pxToNorm, targetCount) {
   const candidates = [];
-  const step = 4;
+  const step = 3;
   for (let py = 2; py < h - 2; py += step) {
     for (let px = 2; px < w - 2; px += step) {
       const idx = py * w + px;
