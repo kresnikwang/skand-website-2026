@@ -1,15 +1,17 @@
 /**
- * SKAND B-Side — Three.js r187 WebGPURenderer scene, camera & TSL RenderPipeline.
+ * SKAND B-Side — Three.js r187 WebGPURenderer scene, IBL lighting & TSL RenderPipeline.
  *
- * Uses WebGPURenderer (with automatic WebGL2 backend fallback), TSL RenderPipeline
- * with HDR BloomNode + AfterImageNode, and camera parallax drift.
+ * Uses WebGPURenderer (with automatic WebGL2 backend fallback), live PMREM
+ * environment cubemaps from the active dreamy realm for 3D glass refraction,
+ * 3-point + reactive rim lighting, TSL RenderPipeline with HDR BloomNode +
+ * AfterImageNode, and smooth camera parallax.
  */
 
 import * as THREE from 'https://esm.sh/three@0.187.0/webgpu';
 import { pass, uniform } from 'https://esm.sh/three@0.187.0/tsl';
 import { bloom } from 'https://esm.sh/three@0.187.0/examples/jsm/tsl/display/BloomNode.js';
 import { afterImage } from 'https://esm.sh/three@0.187.0/examples/jsm/tsl/display/AfterImageNode.js';
-import { createBackground } from './background.js?v=20261113';
+import { createBackground } from './background.js?v=20261115';
 
 export async function createScene({ canvas, tier, reduced }) {
   let renderer;
@@ -32,12 +34,12 @@ export async function createScene({ canvas, tier, reduced }) {
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.08;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x060810, tier.name === 'desktop' ? 0.016 : 0.022);
+  scene.fog = new THREE.FogExp2(0x060714, tier.name === 'desktop' ? 0.014 : 0.020);
 
-  // Ethereal cosmic nebula dome, ambient stardust bokeh & shockwaves.
+  // Dreamy twin-realm backgrounds (Gather Aurora Silk & Squeeze Abyssal Opal).
   const background = createBackground(scene, tier, reduced);
 
   const camera = new THREE.PerspectiveCamera(
@@ -49,11 +51,50 @@ export async function createScene({ canvas, tier, reduced }) {
   const camBaseZ = tier.name === 'mobile' ? 13.5 : 11;
   camera.position.set(0, 0, camBaseZ);
 
-  // TSL RenderPipeline: HDR pass + BloomNode + AfterImageNode (unless reduced motion).
+  // 3-Point + Reactive Rim Lighting for 3D Voronoi glass shards.
+  const ambientLight = new THREE.AmbientLight(0xdbe8ff, 0.28);
+  scene.add(ambientLight);
+
+  const keyLight = new THREE.DirectionalLight(0xfff1e0, 2.3);
+  keyLight.position.set(-6, 8, 9);
+  scene.add(keyLight);
+
+  const fillLight = new THREE.DirectionalLight(0x7ab4ff, 1.25);
+  fillLight.position.set(7, -4, 6);
+  scene.add(fillLight);
+
+  const rimLight = new THREE.PointLight(0xff785a, 2.4, 30, 1.6);
+  rimLight.position.set(0, 0.6, 4.2);
+  scene.add(rimLight);
+
+  // Bake PMREM environment cubemaps from both dreamy realms so glass shards
+  // catch real aurora & opalescent reflections.
+  let envGatherRT = null;
+  let envSqueezeRT = null;
+  try {
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const envGeo = new THREE.SphereGeometry(50, 32, 20);
+    const envScene = new THREE.Scene();
+    const envMesh = new THREE.Mesh(envGeo, background.getEnvSkyMaterial('gather'));
+    envMesh.frustumCulled = false;
+    envScene.add(envMesh);
+
+    envGatherRT = pmrem.fromScene(envScene, 0, 0.1, 100);
+    envMesh.material = background.getEnvSkyMaterial('squeeze');
+    envSqueezeRT = pmrem.fromScene(envScene, 0, 0.1, 100);
+
+    scene.environment = envGatherRT.texture;
+    envGeo.dispose();
+    pmrem.dispose();
+  } catch (e) {
+    console.warn('[bside] PMREM environment bake skipped', e);
+  }
+
+  // TSL RenderPipeline: HDR pass + BloomNode + AfterImageNode.
   let renderPipeline = null;
-  const bloomStrength = uniform(0.36);
-  const bloomRadius = uniform(0.42);
-  const bloomThreshold = uniform(0.65);
+  const bloomStrength = uniform(0.32);
+  const bloomRadius = uniform(0.48);
+  const bloomThreshold = uniform(0.78);
   const afterImageDamp = uniform(0.0);
 
   if (tier.bloom) {
@@ -73,13 +114,28 @@ export async function createScene({ canvas, tier, reduced }) {
     }
   }
 
-  // Camera parallax state.
+  // Camera parallax & shake state.
   let parallaxX = 0;
   let parallaxY = 0;
   let targetPX = 0;
   let targetPY = 0;
   let shakeAmt = 0;
   let shakeT = 0;
+  let currentMode = 'gather';
+
+  function setMode(modeName) {
+    currentMode = modeName === 'squeeze' ? 'squeeze' : 'gather';
+    background.setMode(currentMode);
+    if (currentMode === 'squeeze') {
+      if (envSqueezeRT) scene.environment = envSqueezeRT.texture;
+      fillLight.color.setHex(0x4be8ff);
+      rimLight.color.setHex(0xff5a36);
+    } else {
+      if (envGatherRT) scene.environment = envGatherRT.texture;
+      fillLight.color.setHex(0x7ab4ff);
+      rimLight.color.setHex(0xff8e7a);
+    }
+  }
 
   function setShake(v) {
     shakeAmt = Math.max(0, Math.min(1, v || 0));
@@ -94,10 +150,15 @@ export async function createScene({ canvas, tier, reduced }) {
     const k = reduced ? 1 : 1 - Math.pow(0.001, dt);
     parallaxX += (targetPX - parallaxX) * k;
     parallaxY += (targetPY - parallaxY) * k;
-    camera.position.x = parallaxX * 0.9;
-    camera.position.y = -parallaxY * 0.6;
+    camera.position.x = parallaxX * 0.95;
+    camera.position.y = -parallaxY * 0.65;
     const t = performance.now() * 0.001;
     camera.position.z = camBaseZ + (reduced ? 0 : Math.sin(t * 0.25) * 0.25);
+
+    // Subtle rim light breathing.
+    rimLight.position.x = parallaxX * 2.2 + Math.sin(t * 0.6) * 1.4;
+    rimLight.position.y = -parallaxY * 1.4 + Math.cos(t * 0.5) * 0.8;
+
     if (shakeAmt > 0.0001) {
       shakeT += dt;
       const s = shakeAmt * shakeAmt * 0.5;
@@ -111,9 +172,10 @@ export async function createScene({ canvas, tier, reduced }) {
   }
 
   function setIgnite(heat) {
-    bloomStrength.value = 0.36 + heat * 1.35;
+    bloomStrength.value = 0.30 + heat * 0.62;
+    rimLight.intensity = 2.4 + heat * 3.5;
     if (!reduced) {
-      afterImageDamp.value = heat * 0.88;
+      afterImageDamp.value = heat * 0.52;
     }
   }
 
@@ -146,6 +208,7 @@ export async function createScene({ canvas, tier, reduced }) {
     renderPipeline,
     isWebGPU,
     background,
+    setMode,
     setParallaxTarget,
     setIgnite,
     setShake,

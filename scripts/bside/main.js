@@ -16,12 +16,13 @@
  */
 
 import * as THREE from 'https://esm.sh/three@0.187.0/webgpu';
-import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER } from './config.js?v=20261113';
-import { createScene } from './scene.js?v=20261113';
-import { createParticleSystem } from './particles.js?v=20261113';
-import { buildTargets } from './targets.js';
-import { createPhases } from './phases.js?v=20261113';
-import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20261113';
+import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER } from './config.js?v=20261115';
+import { createScene } from './scene.js?v=20261115';
+import { createParticleSystem } from './particles.js?v=20261115';
+import { createGlassShards } from './shards.js?v=20261115';
+import { buildTargets } from './targets.js?v=20261115';
+import { createPhases } from './phases.js?v=20261115';
+import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20261115';
 import { createAudio } from './audio.js';
 
 /* ---------- language ---------- */
@@ -56,6 +57,7 @@ const tier = detectTier();
 const audio = createAudio();
 let scene = null;
 let particles = null;
+let shards = null;
 let phases = null;
 let squeeze = null;
 let clock = null;
@@ -303,6 +305,15 @@ async function init() {
 
   scene.scene.add(particles.points);
 
+  shards = createGlassShards({
+    shardCount: tier.shardCount || 480,
+    worldScale,
+    bounds,
+    reduced: reducedMotion,
+  });
+  scene.scene.add(shards.mesh);
+  scene.setMode(mode);
+
   // Squeeze lives in its own scene so the mode switch is a single `.visible`
   // toggle rather than an add/remove — nothing is rebuilt, nothing is
   // reallocated, and switching modes mid-pop is safe.
@@ -409,6 +420,14 @@ function loop(timestamp) {
   }
 
   particles.setState(u);
+  if (shards) {
+    shards.setState({
+      ...u,
+      squeezeMode: mode === 'squeeze',
+      modeMix: scene.background ? scene.background.getModeMix() : (mode === 'squeeze' ? 1 : 0),
+    });
+    shards.update(dt, time);
+  }
   scene.setIgnite(u.ignite);
   scene.setShake(u.shake || 0);
   scene.setParallaxTarget(pointerInside ? ndc.x : 0, pointerInside ? ndc.y : 0);
@@ -459,7 +478,9 @@ function handleResize() {
   if (squeeze) squeeze.resize(visibleWidth(), visibleHeight());
   // Squeeze mode fits the mark to its own framing, so each mode owns the
   // scale its own layout expects.
-  particles.setWorldScale(mode === 'squeeze' ? squeeze.worldScale : computeWorldScale());
+  const activeScale = mode === 'squeeze' ? squeeze.worldScale : computeWorldScale();
+  particles.setWorldScale(activeScale);
+  if (shards) shards.setWorldScale(activeScale);
 }
 
 /* ---------- input ---------- */
@@ -500,13 +521,17 @@ function setMode(next) {
   mode = next;
 
   squeeze.scene.visible = mode === 'squeeze';
+  scene.setMode(mode);
   if (mode === 'squeeze') {
     squeeze.reset();
     // The mark belongs assembled in this mode; hand it straight there rather
     // than making the player sit through a charge bar first.
     particles.setWorldScale(squeeze.worldScale);
+    if (shards) shards.setWorldScale(squeeze.worldScale);
   } else {
-    particles.setWorldScale(computeWorldScale());
+    const gatherScale = computeWorldScale();
+    particles.setWorldScale(gatherScale);
+    if (shards) shards.setWorldScale(gatherScale);
     scene.setShake(0);
   }
 

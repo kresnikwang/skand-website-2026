@@ -33,17 +33,16 @@ export const LETTERS = ['S', 'K', 'A', 'N', 'D'];
 export const PHASE_NOTES = { chaos: 110, attract: 165, converge: 262, ignite: 440 };
 
 /* Quality tiers.
-   `count` is the grid edge length; particles = count^2.
-   Desktop: 256^2 = 65,536 on WebGL fallback, boosted to 360^2 = 129,600 when
-   native WebGPU compute is active. Mobile/low-core: 128^2 = 16,384. */
+   `count` is the particle grid edge length; particles = count^2.
+   `shardCount` is the number of 3D Voronoi glass shards forming the mark. */
 export function detectTier() {
   const coarse = window.matchMedia('(pointer: coarse)').matches;
   const narrow = window.matchMedia('(max-width: 768px)').matches;
   const cores = navigator.hardwareConcurrency || 8;
   const touch = coarse || narrow;
-  if (touch) return { name: 'mobile', count: 128, webgpuCount: 160, bloom: true, maxPixelRatio: 1.5, frameShare: 0.22 };
-  if (cores <= 4) return { name: 'low', count: 128, webgpuCount: 192, bloom: true, maxPixelRatio: 1.25, frameShare: 0.22 };
-  return { name: 'desktop', count: 256, webgpuCount: 360, bloom: true, maxPixelRatio: 1.75, frameShare: 0.22 };
+  if (touch) return { name: 'mobile', count: 96, webgpuCount: 128, shardCount: 240, bloom: true, maxPixelRatio: 1.5, frameShare: 0.24 };
+  if (cores <= 4) return { name: 'low', count: 128, webgpuCount: 160, shardCount: 360, bloom: true, maxPixelRatio: 1.25, frameShare: 0.24 };
+  return { name: 'desktop', count: 192, webgpuCount: 256, shardCount: 540, bloom: true, maxPixelRatio: 1.75, frameShare: 0.24 };
 }
 
 export const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

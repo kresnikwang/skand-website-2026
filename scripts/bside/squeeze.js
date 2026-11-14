@@ -45,7 +45,7 @@ import {
   mix,
   smoothstep,
 } from 'https://esm.sh/three@0.187.0/tsl';
-import { PALETTE } from './config.js?v=20261113';
+import { PALETTE } from './config.js?v=20261115';
 
 /* ------------------------------------------------------------------ */
 /* tuning                                                              */
@@ -299,6 +299,7 @@ export function createSqueeze({ reduced }) {
    */
   function update(dt, input, hooks) {
     let squeeze = 0;
+    let shatter = 0;
     let pressOut = null;
     const pressRadius = PRESS.radius * worldScale;
 
@@ -308,11 +309,13 @@ export function createSqueeze({ reduced }) {
         // The burst.
         const e = 1 - Math.pow(1 - popT / POP.out, 3);
         morph = 1 - 0.82 * e;
+        shatter = e;
         heat = e;
         shake = reduced ? 0 : e;
       } else if (popT < POP.out + POP.hold) {
         // Hanging apart.
         morph = 0.18;
+        shatter = 1;
         heat = 1 - (popT - POP.out) / POP.hold;
         shake *= 0.9;
       } else if (popT < POP_LEN) {
@@ -321,11 +324,13 @@ export function createSqueeze({ reduced }) {
         const t = (popT - POP.out - POP.hold) / POP.reform;
         const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
         morph = 0.18 + 0.82 * e;
+        shatter = 1 - e;
         heat = Math.max(0, 1 - t * 1.6);
         shake *= 0.86;
       } else {
         popT = -1;
         morph = 1;
+        shatter = 0;
       }
       // Nothing is being held while the mark is coming apart, and the hand
       // lifts off fast so a held pointer does not re-grip mid-burst.
@@ -407,6 +412,7 @@ export function createSqueeze({ reduced }) {
       pointerForce: 0,
       revealed: 1,
       squeeze,
+      shatter,
       press: pressOut,
       pressRadius,
       shake,

@@ -33,7 +33,7 @@ import {
   instancedArray,
   instanceIndex,
 } from 'https://esm.sh/three@0.187.0/tsl';
-import { PALETTE, LETTER_COLORS } from './config.js?v=20261113';
+import { PALETTE, LETTER_COLORS } from './config.js?v=20261115';
 
 /**
  * @param {WebGPURenderer} renderer
@@ -68,8 +68,8 @@ export function createParticleSystem(renderer, opts) {
   const uPress = uniform(new THREE.Vector3(0, 0, 0));
   const uPressRadius = uniform(1);
   const uIgnite = uniform(0);
-  const uSize = uniform(size >= 256 ? 3.8 : 5.0);
-  const uIdleColor = uniform(new THREE.Color(PALETTE.white).lerp(new THREE.Color(PALETTE.dim), 0.35));
+  const uSize = uniform(size >= 256 ? 2.5 : 3.4);
+  const uIdleColor = uniform(new THREE.Color(0x98b4ff).lerp(new THREE.Color(PALETTE.white), 0.45));
 
   /* ---------- GPU Compute: Velocity ---------- */
   const computeVelocity = Fn(() => {
@@ -249,7 +249,8 @@ export function createParticleSystem(renderer, opts) {
     const pos = posNode;
     const mixT = clamp(uMorph.mul(1.2), 0.0, 1.0);
     const hot = hotFactor(pos);
-    const vAlpha = mix(0.62, 1.0, mixT).add(hot.mul(0.12));
+    // Keep stardust delicate when assembled so the 3D crystal glass facets stay razor-sharp.
+    const vAlpha = mix(0.26, 0.16, mixT).add(hot.mul(0.22)).add(uIgnite.mul(0.24));
     const body = float(1.0).sub(smoothstep(0.12, 1.0, spriteDist));
     return vAlpha.mul(body);
   })();
@@ -270,7 +271,7 @@ export function createParticleSystem(renderer, opts) {
 
   const points = new THREE.Sprite(material);
   points.count = total;
-  points.renderOrder = 2;
+  points.renderOrder = 4;
   points.frustumCulled = false;
 
   function setState(s) {
