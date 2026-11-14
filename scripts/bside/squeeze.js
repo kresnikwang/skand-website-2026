@@ -254,9 +254,10 @@ export function createSqueeze({ reduced }) {
     worldScale = scale;
   }
 
-  function reset() {
+  function reset(clearPops = false) {
     tension = 0;
     popT = -1;
+    if (clearPops) pops = 0;
     morph = 1;
     heat = 0;
     shake = 0;
@@ -264,6 +265,11 @@ export function createSqueeze({ reduced }) {
     grip = 0;
     hasPointer = false;
     phase = 'press';
+    hud.tension = 0;
+    hud.phase = 'press';
+    hud.pops = pops;
+    hud.pressing = false;
+    patch.setVisible(false);
   }
 
   /**

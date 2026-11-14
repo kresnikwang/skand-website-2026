@@ -283,6 +283,8 @@ export function createParticleSystem(renderer, opts) {
     if (s.squeeze !== undefined) uSqueeze.value = s.squeeze;
     if (s.press) {
       uPress.value.set(s.press.x, s.press.y, s.press.strength);
+    } else {
+      uPress.value.set(0, 0, 0);
     }
     if (s.pressRadius !== undefined) uPressRadius.value = s.pressRadius;
     if (s.ignite !== undefined) uIgnite.value = s.ignite;

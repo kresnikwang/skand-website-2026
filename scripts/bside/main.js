@@ -18,11 +18,11 @@
 import * as THREE from 'https://esm.sh/three@0.187.0/webgpu';
 import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER } from './config.js?v=20261115';
 import { createScene } from './scene.js?v=20261115';
-import { createParticleSystem } from './particles.js?v=20261115';
+import { createParticleSystem } from './particles.js?v=20261115b';
 import { createGlassShards } from './shards.js?v=20261115';
 import { buildTargets } from './targets.js?v=20261115';
-import { createPhases } from './phases.js?v=20261115';
-import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20261115';
+import { createPhases } from './phases.js?v=20261115b';
+import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20261115b';
 import { createAudio } from './audio.js';
 
 /* ---------- language ---------- */
@@ -331,8 +331,7 @@ async function init() {
     },
     onIgnite: () => {
       audio.onIgnite();
-      shell.classList.add('is-revealed');
-      hud.setAttribute('aria-hidden', 'true');
+      syncRevealState();
       if (scene && scene.background) {
         scene.background.triggerShockwave(0xffd166, 1.8);
         setTimeout(() => {
@@ -439,6 +438,7 @@ function loop(timestamp) {
       scene.background.update(dt, time, {
         camera: scene.camera,
         energy: 1.0,
+        ignite: 0,
         tension: u.tension || 0,
         pop: u.impulse || 0,
         ndc: pointerInside ? ndc : { x: 0, y: 0 },
@@ -449,6 +449,8 @@ function loop(timestamp) {
         camera: scene.camera,
         energy: phases ? phases.charge : 0,
         ignite: u.ignite || 0,
+        tension: 0,
+        pop: 0,
         ndc: pointerInside ? ndc : { x: 0, y: 0 },
       });
       scene.background.setPointerRipple(pointerWorld, started && pointerDown, pointerSpeed);
@@ -507,6 +509,16 @@ document.addEventListener('mouseleave', () => { pointerInside = false; });
 
 /* ---------- controls ---------- */
 
+function syncRevealState() {
+  const revealed = mode === 'gather' && Boolean(phases && phases.ignited);
+  shell.classList.toggle('is-revealed', revealed);
+  if (revealed) {
+    hud.setAttribute('aria-hidden', 'true');
+  } else {
+    hud.removeAttribute('aria-hidden');
+  }
+}
+
 /**
  * Switch between the two games.
  *
@@ -519,6 +531,9 @@ document.addEventListener('mouseleave', () => { pointerInside = false; });
 function setMode(next) {
   if (next === mode || !squeeze) return;
   mode = next;
+  poppedAt = -10;
+  shell.classList.remove('is-popped');
+  if (hintEl) hintEl.classList.remove('is-revealed');
 
   squeeze.scene.visible = mode === 'squeeze';
   scene.setMode(mode);
@@ -533,7 +548,14 @@ function setMode(next) {
     particles.setWorldScale(gatherScale);
     if (shards) shards.setWorldScale(gatherScale);
     scene.setShake(0);
+    if (phases) {
+      const u = phases.uniforms(pointerWorld, false);
+      particles.setState(u);
+      if (shards) shards.setState({ ...u, squeezeMode: false });
+    }
   }
+
+  syncRevealState();
 
   if (modeGatherBtn) {
     modeGatherBtn.classList.toggle('is-active', mode === 'gather');
@@ -547,6 +569,7 @@ function setMode(next) {
 
   audio.onReset();
   localizeHud();
+  updateHud();
 }
 
 if (modeGatherBtn) {
@@ -570,16 +593,18 @@ startBtn.addEventListener('click', () => {
 });
 
 resetBtn.addEventListener('click', () => {
+  poppedAt = -10;
+  shell.classList.remove('is-popped');
   if (scene && scene.background) scene.background.reset();
   if (mode === 'squeeze') {
-    squeeze.reset();
+    squeeze.reset(true);
+    syncRevealState();
     audio.onReset();
     updateHud();
     return;
   }
   phases.reset();
-  shell.classList.remove('is-revealed');
-  hud.removeAttribute('aria-hidden');
+  syncRevealState();
   audio.onReset();
   updateHud();
 });

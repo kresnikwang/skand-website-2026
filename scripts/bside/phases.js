@@ -106,6 +106,9 @@ export function createPhases({ onPhaseChange, onIgnite } = {}) {
         ignite: igniteHeat,
         pointerForce,
         revealed: ignited,
+        squeeze: 0,
+        shatter: 0,
+        press: null,
         pointer,
       };
     },
