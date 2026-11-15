@@ -176,16 +176,18 @@ export function createAudio() {
     },
 
     /* ---- Squish mode (quirky wet-silicone squelches, bubbles & cartoon LFO boings) ---- */
-    onSquishPress() {
+    onSquishPress(combo = 1) {
       const ac = ensure();
       if (!ac) return;
       try {
         const t0 = ac.currentTime;
+        // Rapid taps climb a semitone each, so a combo audibly "runs up the scale".
+        const m = Math.pow(1.0595, Math.min(Math.max(0, combo - 1), 14));
         // 1. Heavy silicone meat thud.
         const sub = ac.createOscillator();
         const subG = ac.createGain();
         sub.type = 'sine';
-        sub.frequency.setValueAtTime(235, t0);
+        sub.frequency.setValueAtTime(235 * Math.sqrt(m), t0);
         sub.frequency.exponentialRampToValueAtTime(58, t0 + 0.14);
         subG.gain.setValueAtTime(0.09, t0);
         subG.gain.exponentialRampToValueAtTime(0.001, t0 + 0.16);
@@ -199,14 +201,14 @@ export function createAudio() {
         const filt = ac.createBiquadFilter();
         const blipG = ac.createGain();
         blip.type = 'triangle';
-        blip.frequency.setValueAtTime(190, t0);
-        blip.frequency.exponentialRampToValueAtTime(510, t0 + 0.045);
-        blip.frequency.exponentialRampToValueAtTime(295, t0 + 0.11);
+        blip.frequency.setValueAtTime(190 * m, t0);
+        blip.frequency.exponentialRampToValueAtTime(510 * m, t0 + 0.045);
+        blip.frequency.exponentialRampToValueAtTime(295 * m, t0 + 0.11);
         filt.type = 'bandpass';
         filt.Q.setValueAtTime(4.8, t0);
-        filt.frequency.setValueAtTime(340, t0);
-        filt.frequency.exponentialRampToValueAtTime(780, t0 + 0.055);
-        filt.frequency.exponentialRampToValueAtTime(420, t0 + 0.12);
+        filt.frequency.setValueAtTime(340 * m, t0);
+        filt.frequency.exponentialRampToValueAtTime(780 * m, t0 + 0.055);
+        filt.frequency.exponentialRampToValueAtTime(420 * m, t0 + 0.12);
         blipG.gain.setValueAtTime(0.065, t0);
         blipG.gain.exponentialRampToValueAtTime(0.001, t0 + 0.13);
         blip.connect(filt);
@@ -217,6 +219,16 @@ export function createAudio() {
 
         // 3. Soft suction air-pocket puff.
         squelchPuff(ac, t0, { startFreq: 1100, endFreq: 340, q: 3.4, duration: 0.055, volume: 0.028 });
+
+        // 4. Combo sparkle: a bright ting from the 3rd tap on, plus a little arpeggio every 5.
+        if (combo >= 3) {
+          tone(880 * m, { duration: 0.09, type: 'sine', volume: 0.022, delay: 0.02 });
+        }
+        if (combo >= 5 && combo % 5 === 0) {
+          [1, 1.26, 1.5, 2].forEach((r, i) => {
+            tone(660 * r * Math.min(m, 2), { duration: 0.14, type: 'triangle', volume: 0.03, delay: 0.04 + i * 0.05 });
+          });
+        }
       } catch (e) {}
     },
     onSquishKnead(speed = 0.5) {
@@ -263,6 +275,27 @@ export function createAudio() {
           bub.start(t0 + 0.015);
           bub.stop(t0 + 0.075);
         }
+      } catch (e) {}
+    },
+    onSquishHoldPulse(pressure = 0.5) {
+      const ac = ensure();
+      if (!ac) return;
+      try {
+        const t0 = ac.currentTime;
+        const p = Math.max(0, Math.min(1, pressure));
+        const f0 = 180 + p * 380;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f0, t0);
+        osc.frequency.exponentialRampToValueAtTime(f0 * 1.42, t0 + 0.048);
+        osc.frequency.exponentialRampToValueAtTime(f0 * 0.96, t0 + 0.095);
+        gain.gain.setValueAtTime(0.018 + p * 0.024, t0);
+        gain.gain.exponentialRampToValueAtTime(0.0008, t0 + 0.10);
+        osc.connect(gain);
+        gain.connect(ac.destination);
+        osc.start(t0);
+        osc.stop(t0 + 0.11);
       } catch (e) {}
     },
     onSquishPhase(phaseName) {

@@ -63,6 +63,7 @@ export function createSquish({ reduced = false } = {}) {
   const uDrag = uniform(new THREE.Vector2(0, 0));                   // directional ooze flow & shear
   const uGlobal = uniform(new THREE.Vector4(0, 0, 0, 0));           // x squashAmt, y idleBreath, z splatAmt, w boingGlobal
   const uRipple = uniform(new THREE.Vector4(0, 0, 0, 0));           // xy origin, z amp, w phase
+  const uFx = uniform(new THREE.Vector4(0, 0, 0, 0));               // x heat (held pressure), y tap flash, z throb 0..1
 
   const aRelief = attribute('aRelief', 'float');
   const aShellS = attribute('aShellS', 'float');
@@ -159,6 +160,22 @@ export function createSquish({ reduced = false } = {}) {
     const nearGain = float(1.0).sub(smoothstep(0.15, 1.28, d));
     p.xy.addAssign(dir.mul(edgeBelly).mul(dent).mul(nearGain.mul(0.13).add(farWeight.mul(0.07))).mul(clamp(float(1.0).add(dragPush.mul(0.65)), 0.7, 1.72)));
     p.z.addAssign(zSign.mul(farWeight).mul(dent).mul(0.048).mul(rimMask));
+
+    // Continuous peristaltic mochi churn while holding down: concentric waves keep radiating
+    // outward from the thumb and speed up as pressure approaches 100%, so holding never feels static.
+    const holdHeat = clamp(uFx.x, 0.0, 1.0);
+    const holdWave = sin(uTime.mul(float(12.0).add(holdHeat.mul(15.0))).sub(d.mul(10.5)))
+      .mul(smoothstep(0.10, 0.52, d))
+      .mul(float(1.0).sub(smoothstep(0.85, 1.55, d)));
+    const holdPulse = dent.mul(float(0.32).add(holdHeat.mul(0.88)));
+    p.z.addAssign(zSign.mul(holdWave).mul(holdPulse).mul(0.034).mul(rimMask));
+    p.xy.addAssign(dir.mul(holdWave).mul(holdPulse).mul(0.028));
+
+    // 3D pudding bell-mode harmonic wobble: bottom flares while top narrows (and reverses on rebound).
+    const jellyMode = uFx.w;
+    const bellY = clamp(pIn.y.div(BALL_R), -1.0, 1.0);
+    p.x.mulAssign(float(1.0).sub(jellyMode.mul(bellY).mul(0.13)));
+    p.x.addAssign(sin(pIn.y.mul(5.2).add(uTime.mul(18.0))).mul(jellyMode).mul(0.032));
 
     // 4. Release / Splat dual-harmonic jelly wobble wave rippling across the ball.
     const restThickness = smoothstep(0.0, 0.25, abs(pIn.z));
@@ -259,6 +276,13 @@ export function createSquish({ reduced = false } = {}) {
     const t = d.div(max(uHand.w, 0.1));
     const rimRing = smoothstep(0.56, 1.04, t).mul(float(1.0).sub(smoothstep(1.04, 1.98, t)));
     col.assign(mix(col, rimHighlight, rimRing.mul(min(float(1.0), uHand.z)).mul(0.16)));
+
+    // Held pressure flushes the whole ball a juicier strawberry blush that throbs like a heartbeat,
+    // and every tap flashes it creamy-bright for an instant.
+    const heat = clamp(uFx.x, 0.0, 1.0);
+    const blushHot = vec3(1.0, 0.56, 0.52);
+    col.assign(mix(col, blushHot, heat.mul(heat).mul(0.34).mul(float(0.7).add(uFx.z.mul(0.3)))));
+    col.assign(mix(col, vec3(1.0, 0.97, 0.94), clamp(uFx.y, 0.0, 1.0).mul(0.22)));
     return col;
   })();
 
@@ -278,7 +302,11 @@ export function createSquish({ reduced = false } = {}) {
     const rimGlow = smoothstep(0.56, 1.08, t).mul(float(1.0).sub(smoothstep(1.08, 2.2, t))).mul(uHand.z);
     const sssHot = vec3(0.99, 0.54, 0.40).mul(rimGlow.mul(0.24));
     const splatGlow = vec3(0.98, 0.64, 0.52).mul(uGlobal.z.mul(0.18));
-    return sssBase.add(sssHot).add(splatGlow);
+    const heatGlow = vec3(1.0, 0.42, 0.34).mul(
+      uFx.x.mul(uFx.x).mul(float(0.10).add(fresnel.mul(0.30))).mul(float(0.55).add(uFx.z.mul(0.45)))
+    );
+    const tapGlow = vec3(1.0, 0.80, 0.66).mul(uFx.y.mul(float(0.06).add(fresnel.mul(0.42))));
+    return sssBase.add(sssHot).add(splatGlow).add(heatGlow).add(tapGlow);
   })();
 
   const pillowMesh = new THREE.Mesh(geometry, material);
@@ -325,6 +353,17 @@ export function createSquish({ reduced = false } = {}) {
   let ripPhase = 0;
   const ripOrigin = new THREE.Vector2(0, 0);
 
+  // Screen-plane jelly spring (+ = squashed wide & short, - = stretched tall & thin).
+  // The camera looks down Z, so this is the wobble the eye actually reads as "Q弹".
+  let jelly = 0;
+  let jellyVel = 0;
+  // Rapid-tap combo + held-squeeze heartbeat state.
+  let combo = 0;
+  let sinceRelease = 9;
+  let holdT = 0;
+  let holdPulseTick = 0;
+  let flash = 0;
+
   // Soft 3D whole-cushion spring tilt when poking off-center or hovering.
   let tiltX = 0;
   let tiltY = 0;
@@ -361,6 +400,13 @@ export function createSquish({ reduced = false } = {}) {
     popX = popY = popVX = popVY = 0;
     ripAmp = 0;
     ripPhase = 0;
+    jelly = jellyVel = 0;
+    combo = 0;
+    sinceRelease = 9;
+    holdT = 0;
+    holdPulseTick = 0;
+    flash = 0;
+    uFx.value.set(0, 0, 0, 0);
     tiltX = tiltY = tiltZ = tiltVX = tiltVY = tiltVZ = 0;
     group.position.set(0, 0, 0);
     group.rotation.set(0, 0, 0);
@@ -462,11 +508,29 @@ export function createSquish({ reduced = false } = {}) {
         hand.copy(targetHand);
         trailHand.copy(targetHand);
         lastHand.copy(targetHand);
-        // Immediate palm/thumb slam impulse so pressing feels snappy and heavy.
-        dentVel += 5.2 * grip;
-        squashVel += 4.2 * grip;
-        boingVel -= 2.0 * grip;
-        hooks.onPress?.();
+        // Rapid taps chain into a combo: each quick re-press hits harder and wobbles wilder.
+        combo = sinceRelease < 0.55 ? combo + 1 : 1;
+        const c = Math.min(combo, 10);
+        holdT = 0;
+        holdPulseTick = 0;
+        flash = Math.min(1, 0.55 + c * 0.05);
+        // Immediate palm/thumb slam impulse + radial ripple + alternating pudding dance on combo!
+        dentVel += (5.2 + c * 0.38) * grip;
+        squashVel += (4.2 + c * 0.22) * grip;
+        boingVel -= (2.2 + c * 0.25) * grip;
+        jellyVel += (6.2 + c * 0.85) * (combo > 2 && combo % 2 === 0 ? -0.85 : 1);
+        ripOrigin.copy(targetHand);
+        ripAmp = Math.min(1.8, Math.max(ripAmp, 0.72 + c * 0.11));
+        ripPhase = 0;
+        if (!reduced) {
+          const dirSign = combo % 2 === 0 ? 1 : -1;
+          tiltVZ += dirSign * (0.35 + c * 0.20);
+          popVX += dirSign * (0.22 + c * 0.07);
+          popVY += 0.28 + c * 0.06;
+        }
+        // Tapping fast also charges the squish meter, so spamming is a real way to the pop.
+        if (combo > 1) pressure = Math.min(0.995, pressure + 0.07 + c * 0.012);
+        hooks.onPress?.(combo);
       } else {
         hand.lerp(targetHand, 1 - Math.exp(-38.0 * dt));
         // Soft-memory knead groove trails gently behind the dragging thumb.
@@ -486,11 +550,14 @@ export function createSquish({ reduced = false } = {}) {
       if (wasDragging && flightT < 0) {
         // Charged mid-squish release REBOUND! Springs outward, hops opposite pinch, & jiggles back.
         const releaseEnergy = Math.max(0.14, dent * 0.72 + pressure * 0.90);
+        const comboBoost = 1 + Math.min(combo, 10) * 0.09;
         boingVel += releaseEnergy * 9.6;
         dentVel -= releaseEnergy * 4.4;
         squashVel -= releaseEnergy * 2.2;
+        // Snap from wide-squashed to tall-stretched, then jiggle back and forth like pudding.
+        jellyVel -= (3.2 + releaseEnergy * 7.5) * comboBoost;
         if (!reduced) {
-          popVY += releaseEnergy * 2.1;
+          popVY += releaseEnergy * 2.1 * comboBoost;
           popVX += -hand.x * releaseEnergy * 0.85;
           tiltVX += hand.y * releaseEnergy * 2.4;
           tiltVY += -hand.x * releaseEnergy * 2.0;
@@ -507,6 +574,25 @@ export function createSquish({ reduced = false } = {}) {
       }
     }
     wasDragging = activePress;
+    if (activePress) {
+      sinceRelease = 0;
+      holdT += dt;
+      holdPulseTick += dt * (2.1 + pressure * 3.2);
+      if (holdPulseTick >= 1.0) {
+        holdPulseTick -= 1.0;
+        // Rhythmic heartbeat thump while holding: sends a fresh ripple & pudding pulse!
+        jellyVel += (1.9 + pressure * 2.6) * (Math.random() > 0.5 ? 1 : -0.8);
+        dentVel += 1.4 + pressure * 1.8;
+        ripOrigin.copy(hand);
+        ripAmp = Math.max(ripAmp, 0.48 + pressure * 0.65);
+        ripPhase = 0;
+        flash = Math.max(flash, 0.28 + pressure * 0.35);
+        hooks.onHoldPulse?.(pressure);
+      }
+    } else {
+      sinceRelease += dt;
+      if (sinceRelease > 0.55) combo = 0;
+    }
 
     // Purely visual pancake/glow decay timer; never locks out pressure once catchable.
     if (splatT >= 0) {
@@ -531,6 +617,9 @@ export function createSquish({ reduced = false } = {}) {
         boingVel += 10.2;
         dentVel -= 5.8;
         squashVel -= 3.2;
+        jellyVel -= 14.0;
+        flash = 1;
+        combo = 0;
         if (!reduced) {
           // Squeeze to the limit -> pops right UP below top controls, then drifts gently back!
           popVY = 2.35;
@@ -544,7 +633,8 @@ export function createSquish({ reduced = false } = {}) {
         hooks.onPop?.();
       }
     } else {
-      pressure = Math.max(0, pressure - 0.58 * dt);
+      // Mid-combo the meter barely leaks, so a fast tap streak genuinely climbs toward the pop.
+      pressure = Math.max(0, pressure - (combo > 1 ? 0.12 : 0.58) * dt);
     }
 
     const nextPhase = pressure >= SQUISH_STOPS.bulge
@@ -557,8 +647,15 @@ export function createSquish({ reduced = false } = {}) {
       }
     }
 
+    // Held squeeze heartbeat: the longer & harder you hold, the faster and stronger the ball
+    // throbs against your thumb, so a long press keeps building visibly toward the pop.
+    const throbRate = 6.5 + pressure * 13.0;
+    const throb = activePress && !reduced ? Math.sin(holdT * throbRate) : 0;
+    const throb01 = throb * 0.5 + 0.5;
+    const throbAmp = activePress ? 0.25 + pressure * 0.75 : 0;
+
     // Viscoelastic spring-mass physics: sinks deeply under touch, rebounds slowly like memory mochi then wobbles.
-    const dentTarget = activePress ? (1.12 + pressure * 0.68) * grip : 0;
+    const dentTarget = activePress ? ((1.12 + pressure * 0.68) * grip + throb * 0.11 * throbAmp) : 0;
     const dentK = activePress ? 145 : 92;
     const dentDamp = activePress ? 13.5 : 6.4;
     dentVel += ((dentTarget - dent) * dentK - dentVel * dentDamp) * dt;
@@ -567,7 +664,7 @@ export function createSquish({ reduced = false } = {}) {
     const trailTarget = activePress ? dent * 0.84 : 0;
     trailDent += (trailTarget - trailDent) * (1 - Math.exp((activePress ? -6.5 : -1.55) * dt));
 
-    const sqTarget = activePress ? 0.58 + pressure * 0.88 : 0;
+    const sqTarget = activePress ? 0.58 + pressure * 0.88 + throb * 0.07 * throbAmp : 0;
     squashVel += ((sqTarget - squash) * 165 - squashVel * (activePress ? 10.5 : 8.2)) * dt;
     squash = Math.max(-0.14, squash + squashVel * dt);
 
@@ -575,6 +672,16 @@ export function createSquish({ reduced = false } = {}) {
     const boingK = activePress ? 145 : 205;
     boingVel += (-boingZ * boingK - boingVel * boingDamp) * dt;
     boingZ += boingVel * dt;
+
+    // Jelly: spreads wide under the thumb (more with pressure), then a lightly damped spring
+    // on release so it overshoots tall, wide, tall... several visible wobbles before settling.
+    const jellyTarget = activePress ? 0.22 + pressure * 0.10 + throb * 0.08 * throbAmp : 0;
+    const jellyK = activePress ? 195 : 265;
+    const jellyDamp = activePress ? 9.2 : 2.85;
+    jellyVel += ((jellyTarget - jelly) * jellyK - jellyVel * jellyDamp) * dt;
+    jelly = Math.max(-0.62, Math.min(0.88, jelly + jellyVel * dt));
+
+    flash *= Math.exp(-5.5 * dt);
 
     // Cushion flight & gentle slow return to center after popping out or recoil-hopping.
     if (flightT >= 0) {
@@ -603,9 +710,11 @@ export function createSquish({ reduced = false } = {}) {
     }
     popX += popVX * dt;
     popY += popVY * dt;
+    // Near-pop tremble: past ~55% pressure the ball starts shivering under the thumb.
+    const shiver = activePress && !reduced ? Math.max(0, pressure - 0.55) * 0.030 : 0;
     group.position.set(
-      reduced ? 0 : popX * worldScale,
-      reduced ? 0 : popY * worldScale,
+      reduced ? 0 : (popX + Math.sin(time * 61.0) * shiver) * worldScale,
+      reduced ? 0 : (popY + Math.cos(time * 53.0) * shiver) * worldScale,
       0
     );
 
@@ -642,9 +751,11 @@ export function createSquish({ reduced = false } = {}) {
       const flightStretch = flightT >= 0 && flightT < 0.55 ? Math.max(0, popVY) * 0.032 : 0;
       const stretchZ = Math.max(0.72, Math.min(1.34, 1 + boingZ * 0.22 - splatAmt * 0.20));
       const invXY = 1 / Math.sqrt(stretchZ);
+      const jx = 1 + jelly * 0.21;
+      const jy = 1 - jelly * 0.18;
       group.scale.set(
-        invXY * (1 - flightStretch * 0.42),
-        invXY * (1 + flightStretch + splatAmt * 0.04),
+        invXY * jx * (1 - flightStretch * 0.42),
+        invXY * jy * (1 + flightStretch + splatAmt * 0.04),
         stretchZ
       );
     }
@@ -654,6 +765,7 @@ export function createSquish({ reduced = false } = {}) {
     uDrag.value.copy(dragVec);
     uGlobal.value.set(Math.max(-0.14, squash), idleBreath, splatAmt, reduced ? 0 : boingZ);
     uRipple.value.set(ripOrigin.x, ripOrigin.y, reduced ? 0 : ripAmp, ripPhase);
+    uFx.value.set(activePress ? pressure : pressure * 0.6, flash, throb01, reduced ? 0 : jelly);
 
     hud.pressure = pressure;
     hud.phase = phase;
@@ -669,6 +781,8 @@ export function createSquish({ reduced = false } = {}) {
       boing: Math.abs(boingZ),
       kneadSpeed: dragVec.length(),
       pressing: activePress,
+      combo,
+      throb: activePress ? throb01 * throbAmp : 0,
     };
   }
 

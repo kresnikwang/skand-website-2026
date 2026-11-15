@@ -23,8 +23,8 @@ import { createGlassShards } from './shards.js?v=20261115';
 import { buildTargets } from './targets.js?v=20261115';
 import { createPhases } from './phases.js?v=20261115b';
 import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20261115b';
-import { createSquish, SQUISH_ORDER } from './squish.js?v=20261115k';
-import { createAudio } from './audio.js?v=20261115h';
+import { createSquish, SQUISH_ORDER } from './squish.js?v=20261115m';
+import { createAudio } from './audio.js?v=20261115m';
 
 /* ---------- language ---------- */
 const urlParams = new URLSearchParams(window.location.search);
@@ -84,6 +84,8 @@ let lastPx = px;
 let lastPy = py;
 let pointerSpeed = 0;
 let pointerDown = false;
+// Latches a press so a tap shorter than one frame still registers (fast combo taps).
+let tapPending = false;
 let pointerInside = false;
 
 // World-space pointer on the z=0 plane, consumed by the velocity shader.
@@ -99,6 +101,7 @@ let mx = px;
 let my = py;
 let rx = mx;
 let ry = my;
+let ringPulse = 0;
 const finePointer = window.matchMedia('(pointer: fine)');
 
 if (dot && ring) {
@@ -107,7 +110,7 @@ if (dot && ring) {
     rx += (mx - rx) * k;
     ry += (my - ry) * k;
     dot.style.transform = `translate3d(${mx - 3.5}px, ${my - 3.5}px, 0)`;
-    ring.style.transform = `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%)`;
+    ring.style.transform = `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%) scale(${1 + ringPulse * 0.45})`;
     requestAnimationFrame(follow);
   };
   follow();
@@ -115,6 +118,98 @@ if (dot && ring) {
     el.addEventListener('mouseenter', () => ring.classList.add('hovering'));
     el.addEventListener('mouseleave', () => ring.classList.remove('hovering'));
   });
+}
+
+/* ---------- squish juice FX (DOM particles, combo pops, shock rings) ---------- */
+const FX_COLORS = ['#ff5a3c', '#ffb000', '#ff3f8e', '#ff7a59', '#6fd6c3', '#a57bff'];
+const FX_GLYPHS = ['★', '✦', '♥', '●'];
+const COMBO_WORDS = {
+  en: ['Boing!', 'Squish!', 'Bouncy!', 'Jelly!', 'Mochi!', 'SO SOFT'],
+  zh: ['啵!', 'Q弹!', '噗叽!', '软乎乎!', '好捏!', '停不下来!'],
+};
+const HOLD_WORDS = {
+  en: ['Swelling~', 'Tight!', 'About to Pop!', 'PUFFY!'],
+  zh: ['鼓起来了~', '好涨!', '要蹦了!', '憋不住啦!'],
+};
+let holdWordIdx = 0;
+let fxLayer = null;
+
+function getFxLayer() {
+  if (fxLayer) return fxLayer;
+  fxLayer = document.createElement('div');
+  fxLayer.className = 'squish-fx';
+  fxLayer.setAttribute('aria-hidden', 'true');
+  shell.appendChild(fxLayer);
+  return fxLayer;
+}
+
+function spawnBurst(x, y, count, power = 1) {
+  if (reducedMotion) return;
+  const layer = getFxLayer();
+  if (layer.childElementCount > 160) return;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('span');
+    const glyph = FX_GLYPHS[(Math.random() * FX_GLYPHS.length) | 0];
+    el.className = glyph === '●' ? 'fx-p fx-dot' : 'fx-p';
+    if (glyph !== '●') el.textContent = glyph;
+    const size = (glyph === '●' ? 6 : 13) + Math.random() * 9 * power;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.fontSize = `${size}px`;
+    el.style.width = el.style.height = glyph === '●' ? `${size * 0.7}px` : '';
+    el.style.color = FX_COLORS[(Math.random() * FX_COLORS.length) | 0];
+    layer.appendChild(el);
+
+    const a = Math.random() * Math.PI * 2;
+    const dist = (46 + Math.random() * 70) * power;
+    const dx = Math.cos(a) * dist;
+    const dy = Math.sin(a) * dist - 18 * power;
+    const rot = (Math.random() - 0.5) * 260;
+    const anim = el.animate([
+      { transform: 'translate(-50%, -50%) scale(0.2)', opacity: 1 },
+      { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(1) rotate(${rot * 0.6}deg)`, opacity: 1, offset: 0.45 },
+      { transform: `translate(calc(-50% + ${dx * 1.18}px), calc(-50% + ${dy + 70}px)) scale(0.3) rotate(${rot}deg)`, opacity: 0 },
+    ], { duration: 620 + Math.random() * 320, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' });
+    anim.onfinish = () => el.remove();
+  }
+}
+
+function spawnRing(x, y, size = 1, color = 'rgba(255, 179, 167, 0.85)') {
+  if (reducedMotion) return;
+  const layer = getFxLayer();
+  const el = document.createElement('span');
+  el.className = 'fx-ring';
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+  el.style.borderColor = color;
+  layer.appendChild(el);
+  const anim = el.animate([
+    { transform: 'translate(-50%, -50%) scale(0.25)', opacity: 0.95 },
+    { transform: `translate(-50%, -50%) scale(${2.4 * size})`, opacity: 0 },
+  ], { duration: 520, easing: 'cubic-bezier(0.15, 0.85, 0.3, 1)' });
+  anim.onfinish = () => el.remove();
+}
+
+function spawnComboText(x, y, combo) {
+  if (reducedMotion || combo < 2) return;
+  const layer = getFxLayer();
+  const el = document.createElement('span');
+  el.className = 'fx-combo';
+  const words = COMBO_WORDS[lang] || COMBO_WORDS.en;
+  const milestone = combo % 5 === 0;
+  el.textContent = milestone ? `${words[(combo / 5 - 1) % words.length]} ×${combo}` : `×${combo}`;
+  if (milestone) el.classList.add('is-big');
+  el.style.left = `${x + (Math.random() - 0.5) * 30}px`;
+  el.style.top = `${y - 34}px`;
+  layer.appendChild(el);
+  const tilt = (Math.random() - 0.5) * 18;
+  const anim = el.animate([
+    { transform: `translate(-50%, -50%) scale(0.5) rotate(${tilt}deg)`, opacity: 0 },
+    { transform: `translate(-50%, -80%) scale(${milestone ? 1.3 : 1.12}) rotate(${tilt * 0.4}deg)`, opacity: 1, offset: 0.16 },
+    { transform: 'translate(-50%, -140%) scale(1) rotate(0deg)', opacity: 1, offset: 0.7 },
+    { transform: 'translate(-50%, -200%) scale(0.95)', opacity: 0 },
+  ], { duration: milestone ? 1150 : 820, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+  anim.onfinish = () => el.remove();
 }
 
 /* ---------- HUD build ---------- */
@@ -473,22 +568,66 @@ function loop(timestamp) {
         pointer: pointerWorld,
         ndc,
         camera: scene.camera,
-        dragging: started && pointerDown,
+        dragging: started && (pointerDown || tapPending),
         speed: pointerSpeed,
       },
       {
-        onPress: () => audio.onSquishPress(),
+        onPress: (combo = 1) => {
+          audio.onSquishPress(combo);
+          const c = Math.min(combo, 12);
+          spawnBurst(px, py, 5 + c * 2, 0.75 + c * 0.08);
+          spawnRing(px, py, 0.7 + c * 0.06, c >= 5 ? 'rgba(255, 176, 0, 0.9)' : 'rgba(255, 90, 60, 0.75)');
+          spawnComboText(px, py, combo);
+        },
         onPhase: (phase) => audio.onSquishPhase(phase),
-        onRelease: (energy) => audio.onSquishRelease(energy),
+        onHoldPulse: (pressure) => {
+          audio.onSquishHoldPulse(pressure);
+          const p = Math.max(0, Math.min(1, pressure));
+          spawnBurst(px, py, 3 + Math.round(p * 6), 0.55 + p * 0.65);
+          spawnRing(
+            px,
+            py,
+            0.55 + p * 0.65,
+            p > 0.68 ? 'rgba(255, 176, 0, 0.88)' : 'rgba(255, 90, 60, 0.72)'
+          );
+          if (p > 0.58 && !reducedMotion) {
+            const layer = getFxLayer();
+            const el = document.createElement('span');
+            el.className = p > 0.80 ? 'fx-combo is-big' : 'fx-combo';
+            const words = HOLD_WORDS[lang] || HOLD_WORDS.en;
+            el.textContent = words[holdWordIdx++ % words.length];
+            el.style.left = `${px + (Math.random() - 0.5) * 44}px`;
+            el.style.top = `${py - 32}px`;
+            layer.appendChild(el);
+            const tilt = (Math.random() - 0.5) * 16;
+            const anim = el.animate([
+              { transform: `translate(-50%, -50%) scale(0.45) rotate(${tilt}deg)`, opacity: 0 },
+              { transform: `translate(-50%, -85%) scale(1.1) rotate(${tilt * 0.4}deg)`, opacity: 1, offset: 0.2 },
+              { transform: 'translate(-50%, -155%) scale(0.96)', opacity: 0 },
+            ], { duration: 680, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+            anim.onfinish = () => el.remove();
+          }
+        },
+        onRelease: (energy) => {
+          audio.onSquishRelease(energy);
+          if (energy > 0.55) spawnRing(px, py, 0.9 + energy * 0.5, 'rgba(255, 209, 102, 0.8)');
+        },
         onPop: () => {
           poppedAt = time;
           audio.onSquishPop();
           flashImpact();
+          const cx = window.innerWidth / 2;
+          const cy = window.innerHeight * 0.47;
+          spawnBurst(cx, cy, 34, 2.3);
+          spawnRing(cx, cy, 2.2, 'rgba(255, 140, 117, 0.9)');
+          spawnRing(cx, cy, 1.5, 'rgba(255, 243, 234, 0.85)');
         },
         onLand: () => audio.onSquishLand(),
       },
     );
     if (ring) ring.classList.toggle('is-pressing', Boolean(sq.pressing));
+    ringPulse = sq.throb || 0;
+    tapPending = false;
     squishKneadTick += dt;
     if (sq.pressing && sq.kneadSpeed > 0.25 && squishKneadTick > 0.16) {
       squishKneadTick = 0;
@@ -502,6 +641,8 @@ function loop(timestamp) {
     };
   } else {
     if (ring && ring.classList.contains('is-pressing')) ring.classList.remove('is-pressing');
+    ringPulse = 0;
+    tapPending = false;
     // State machine → uniforms.
     if (started && !phases.ignited) {
       phases.update(dt, pointerDown, pointerSpeed);
@@ -601,6 +742,7 @@ window.addEventListener('pointerdown', (e) => {
   my = e.clientY;
   pointerInside = true;
   pointerDown = true;
+  tapPending = true;
   audio.unlock();
 }, { passive: true });
 

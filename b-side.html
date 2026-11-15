@@ -451,6 +451,56 @@ html[lang="zh"] .hint.is-revealed { letter-spacing: 0.12em; }
   100% { opacity: 0; }
 }
 
+/* ---- Squish juice FX: tap sparkles, shock rings, combo pops ---- */
+.squish-fx {
+  position: fixed;
+  inset: 0;
+  z-index: 16;
+  pointer-events: none;
+  overflow: hidden;
+}
+.fx-p {
+  position: absolute;
+  left: 0; top: 0;
+  line-height: 1;
+  font-family: var(--font-body);
+  will-change: transform, opacity;
+  text-shadow: 0 1px 0 rgba(60, 14, 10, 0.45), 0 0 8px currentColor;
+}
+.fx-dot {
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 1px rgba(60, 14, 10, 0.25), 0 0 8px currentColor;
+}
+.fx-ring {
+  position: absolute;
+  left: 0; top: 0;
+  width: 64px; height: 64px;
+  border: 3px solid rgba(255, 179, 167, 0.85);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(255, 90, 60, 0.35);
+  will-change: transform, opacity;
+}
+.fx-combo {
+  position: absolute;
+  left: 0; top: 0;
+  font-family: var(--font-body);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: #fff6ef;
+  -webkit-text-stroke: 3.5px #8c2314;
+  paint-order: stroke fill;
+  text-shadow: 0 2px 0 #521108, 0 5px 14px rgba(40, 8, 4, 0.55);
+}
+.fx-combo.is-big {
+  font-size: 32px;
+  color: #ffe066;
+  -webkit-text-stroke: 4px #8c2314;
+  text-shadow: 0 3px 0 #521108, 0 7px 18px rgba(40, 8, 4, 0.65);
+}
+
 @media (pointer: coarse), (max-width: 768px) {
   html.custom-cursor-enabled body { cursor: auto; }
   html.custom-cursor-enabled button, html.custom-cursor-enabled a { cursor: pointer; }
@@ -539,6 +589,6 @@ html[lang="zh"] .hint.is-revealed { letter-spacing: 0.12em; }
   </div>
 </div>
 
-<script type="module" src="scripts/bside/main.js?v=20261115k"></script>
+<script type="module" src="scripts/bside/main.js?v=20261115m"></script>
 </body>
 </html>
