@@ -11,7 +11,7 @@ import * as THREE from 'https://esm.sh/three@0.187.0/webgpu';
 import { pass, uniform } from 'https://esm.sh/three@0.187.0/tsl';
 import { bloom } from 'https://esm.sh/three@0.187.0/examples/jsm/tsl/display/BloomNode.js';
 import { afterImage } from 'https://esm.sh/three@0.187.0/examples/jsm/tsl/display/AfterImageNode.js';
-import { createBackground } from './background.js?v=20261115e';
+import { createBackground } from './background.js?v=20261115h';
 
 export async function createScene({ canvas, tier, reduced }) {
   let renderer;

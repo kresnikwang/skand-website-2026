@@ -16,15 +16,15 @@
  */
 
 import * as THREE from 'https://esm.sh/three@0.187.0/webgpu';
-import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER } from './config.js?v=20261115e';
-import { createScene } from './scene.js?v=20261115e';
+import { detectTier, reducedMotion, I18N, PHASE_LABEL, PHASE_ORDER } from './config.js?v=20261115h';
+import { createScene } from './scene.js?v=20261115h';
 import { createParticleSystem } from './particles.js?v=20261115b';
 import { createGlassShards } from './shards.js?v=20261115';
 import { buildTargets } from './targets.js?v=20261115';
 import { createPhases } from './phases.js?v=20261115b';
 import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20261115b';
-import { createSquish, SQUISH_ORDER } from './squish.js?v=20261115e';
-import { createAudio } from './audio.js?v=20261115e';
+import { createSquish, SQUISH_ORDER } from './squish.js?v=20261115h';
+import { createAudio } from './audio.js?v=20261115h';
 
 /* ---------- language ---------- */
 const urlParams = new URLSearchParams(window.location.search);
@@ -377,7 +377,7 @@ async function init() {
   scene.scene.add(squeeze.scene);
 
   squishToy = createSquish({ reduced: reducedMotion });
-  squishToy.setWorldScale(squeeze.worldScale * 0.98);
+  squishToy.setWorldScale(squeeze.worldScale * 0.84);
   squishToy.group.visible = false;
   scene.scene.add(squishToy.group);
 
@@ -475,12 +475,14 @@ function loop(timestamp) {
       },
       {
         onPress: () => audio.onSquishPress(),
+        onPhase: (phase) => audio.onSquishPhase(phase),
         onRelease: (energy) => audio.onSquishRelease(energy),
         onPop: () => {
           poppedAt = time;
           audio.onSquishPop();
           flashImpact();
         },
+        onLand: () => audio.onSquishLand(),
       },
     );
     if (ring) ring.classList.toggle('is-pressing', Boolean(sq.pressing));
@@ -490,8 +492,8 @@ function loop(timestamp) {
       audio.onSquishKnead(sq.kneadSpeed);
     }
     u = {
-      ignite: sq.splat * 0.65,
-      shake: sq.splat * 0.14,
+      ignite: sq.splat * 0.72,
+      shake: (sq.pressing ? sq.squash * 0.055 : 0) + sq.splat * 0.22,
       tension: sq.pressure,
       impulse: sq.splat,
     };
@@ -574,7 +576,7 @@ function handleResize() {
   const activeScale = (mode === 'squeeze' || mode === 'squish') ? squeeze.worldScale : computeWorldScale();
   particles.setWorldScale(activeScale);
   if (shards) shards.setWorldScale(activeScale);
-  if (squishToy) squishToy.setWorldScale(squeeze.worldScale * 0.98);
+  if (squishToy) squishToy.setWorldScale(squeeze.worldScale * 0.84);
 }
 
 /* ---------- input ---------- */
@@ -641,7 +643,7 @@ function setMode(next) {
   } else if (isSquish) {
     if (squishToy) {
       squishToy.reset();
-      squishToy.setWorldScale(squeeze.worldScale * 0.98);
+      squishToy.setWorldScale(squeeze.worldScale * 0.84);
     }
     scene.setShake(0);
   } else {

@@ -39,10 +39,10 @@ import {
   min,
   abs,
 } from 'https://esm.sh/three@0.187.0/tsl';
-import { LETTERS } from './config.js?v=20261115e';
+import { LETTERS } from './config.js?v=20261115h';
 
-const PRESS_RADIUS = 0.50;
-const TRAIL_RADIUS = 0.42;
+const PRESS_RADIUS = 0.56;
+const TRAIL_RADIUS = 0.50;
 const MARK_HALF_W = 1.06;
 const MARK_HALF_H = 0.46;
 const MARK_R = 0.16;
@@ -85,32 +85,39 @@ export function createSquish({ reduced = false } = {}) {
     const p = pIn.toVar();
 
     const sAnalytic = clamp(analyticShellS(pIn.xy), 0.0, 1.0);
-    const restThickness = smoothstep(0.0, 0.14, abs(pIn.z));
-    const rimMask = float(1.0).sub(smoothstep(0.55, 1.0, sAnalytic));
+    const restThickness = smoothstep(0.0, 0.22, abs(pIn.z));
+    const rimMask = float(1.0).sub(smoothstep(0.58, 1.0, sAnalytic));
 
-    // 1. Global Poisson volume-preserving squash + waist belly + splat + idle breath.
+    // 1. Aggressive Poisson volume-preserving pancake squash + waist belly + splat.
+    // Expand wider horizontally (screen has room) while capping vertical swell cleanly.
     const sq = uGlobal.x;
     const breath = uGlobal.y;
     const splat = uGlobal.z;
     const boingZ = uGlobal.w;
 
-    const waist = float(1.0).sub(clamp(abs(p.z).mul(3.0), 0.0, 0.72));
-    const latSpread = float(1.0)
-      .add(sq.mul(0.21).mul(float(0.62).add(waist.mul(0.58))))
-      .add(splat.mul(0.32))
-      .sub(boingZ.mul(0.095))
-      .add(breath.mul(0.010));
-    p.x.mulAssign(latSpread);
-    p.y.mulAssign(latSpread.add(sq.mul(0.055)));
+    const waist = float(1.0).sub(clamp(abs(p.z).mul(2.1), 0.0, 0.72));
+    const latX = float(1.0)
+      .add(sq.mul(0.24).mul(float(0.55).add(waist.mul(0.70))))
+      .add(splat.mul(0.34))
+      .sub(boingZ.mul(0.09))
+      .add(breath.mul(0.012));
+    const latY = float(1.0)
+      .add(sq.mul(0.20).mul(float(0.55).add(waist.mul(0.65))))
+      .add(splat.mul(0.28))
+      .sub(boingZ.mul(0.08))
+      .add(breath.mul(0.012));
+    p.x.mulAssign(latX);
+    p.y.mulAssign(latY);
     p.z.mulAssign(
-      max(float(0.29), float(1.0).sub(sq.mul(0.35)).sub(splat.mul(0.43)).add(boingZ.mul(0.25)).sub(breath.mul(0.015)))
+      max(float(0.28), float(1.0).sub(sq.mul(0.36)).sub(splat.mul(0.46)).add(boingZ.mul(0.28)).sub(breath.mul(0.015)))
     );
 
-    // Subtle elastic shear from dragging across the tacky silicone surface.
-    const frontShear = clamp(pIn.z.div(0.145), -1.0, 1.0);
-    p.xy.addAssign(uDrag.mul(frontShear).mul(0.032));
+    // Taffy-like elastic shear & whole-block drag pull across the silicone cushion.
+    const frontShear = clamp(pIn.z.div(0.24), -1.0, 1.0);
+    p.xy.addAssign(uDrag.mul(frontShear).mul(0.065));
+    p.xy.addAssign(uDrag.mul(float(0.052).mul(float(1.0).sub(sAnalytic.mul(0.35)))));
 
-    // 2. Dual-zone thumbprint crater + extruded donut fat-rim + opposing cheek inflation.
+    // 2. Deep palm/thumbprint abyss + wide fat donut bulge + opposing cheek swell.
     const dent = uHand.z;
     const rad = max(uHand.w, float(0.1));
     const rel = p.xy.sub(uHand.xy);
@@ -118,57 +125,58 @@ export function createSquish({ reduced = false } = {}) {
     const t = d.div(rad);
     const dir = rel.div(max(d, float(0.0005)));
 
-    // Tight fingertip center core + soft outer pillow slope for crisp 3D thumb concavity.
-    const innerBowl = cos(clamp(t.mul(1.45), 0.0, 1.0).mul(3.14159265)).mul(0.5).add(0.5)
-      .mul(float(1.0).sub(smoothstep(0.56, 0.74, t)));
+    const innerBowl = cos(clamp(t.mul(1.42), 0.0, 1.0).mul(3.14159265)).mul(0.5).add(0.5)
+      .mul(float(1.0).sub(smoothstep(0.56, 0.76, t)));
     const outerBowl = cos(clamp(t, 0.0, 1.0).mul(3.14159265)).mul(0.5).add(0.5)
       .mul(float(1.0).sub(smoothstep(0.84, 1.02, t)));
-    const bowl = outerBowl.mul(0.62).add(innerBowl.mul(0.48));
+    const bowl = outerBowl.mul(0.62).add(innerBowl.mul(0.50));
 
-    const frontFactor = smoothstep(-0.04, 0.06, pIn.z);
-    const frontDepth = bowl.mul(dent).mul(0.195).mul(rimMask).mul(float(0.20).add(restThickness.mul(0.80)));
-    const backBow = bowl.mul(dent).mul(0.062).mul(rimMask);
-    p.z.subAssign(mix(backBow, frontDepth, frontFactor));
-
-    // Skin pinch fold pulls nearby lettering slightly inward toward the fingertip trough.
-    const pinchPull = smoothstep(0.04, 0.36, t).mul(float(1.0).sub(smoothstep(0.36, 0.88, t)));
-    p.xy.subAssign(dir.mul(pinchPull).mul(dent).mul(0.058));
-
-    // Extruded donut bulge ("捏挤出来的 Q 弹肉感") outside the fingertip crater.
-    // Smooth wide slope + capped ooze so silicone rolls softly without steep cliffs or self-folds.
-    const rim = smoothstep(0.32, 1.15, t).mul(float(1.0).sub(smoothstep(1.15, 2.85, t)));
-    const dragPush = max(float(0.0), dot(dir, uDrag)).mul(0.82);
-    const dragBack = max(float(0.0), dot(dir, uDrag.negate())).mul(0.26);
-    const ooze = clamp(float(1.0).add(dragPush).sub(dragBack), 0.68, 1.75);
-
-    const zSign = clamp(pIn.z.div(0.055), -1.0, 1.0);
-    p.z.addAssign(zSign.mul(rim).mul(dent).mul(0.115).mul(ooze));
-    p.xy.addAssign(dir.mul(rim).mul(dent).mul(0.105).mul(ooze));
-
-    // Monotonic opposing-cheek & edge herniation: expands outer rim smoothly without folding inside.
-    const farWeight = smoothstep(0.55, 1.55, d);
-    const edgeBelly = smoothstep(0.38, 1.0, sAnalytic);
-    const nearGain = float(1.0).sub(smoothstep(0.12, 1.45, d));
-    p.xy.addAssign(dir.mul(edgeBelly).mul(dent).mul(nearGain.mul(0.165).add(farWeight.mul(0.065))).mul(clamp(float(1.0).add(dragPush.mul(0.65)), 0.7, 1.75)));
-    p.z.addAssign(zSign.mul(farWeight).mul(dent).mul(0.032).mul(rimMask));
-
-    // 3. Viscoelastic slow-rise finger trail ("揉捏慢回弹指印").
+    // Multiplicative thickness crush: front skin collapses deeply toward a thin ~12% floor above z=0,
+    // so it NEVER pierces through the back surface or flips inside-out at any dent depth!
     const trailRel = p.xy.sub(uTrail.xy);
     const trailT = length(trailRel).div(max(uTrail.w, float(0.1)));
     const trailBowl = cos(clamp(trailT, 0.0, 1.0).mul(3.14159265)).mul(0.5).add(0.5)
       .mul(float(1.0).sub(smoothstep(0.84, 1.02, trailT)));
-    p.z.subAssign(trailBowl.mul(uTrail.z).mul(0.092).mul(rimMask).mul(frontFactor));
+
+    const sinkFrac = clamp(bowl.mul(dent).mul(0.56), 0.0, 0.86);
+    const trailFrac = clamp(trailBowl.mul(uTrail.z).mul(0.42), 0.0, 0.72);
+    const crush = max(sinkFrac, trailFrac).mul(rimMask);
+    const frontFactor = smoothstep(-0.02, 0.04, pIn.z);
+    p.z.assign(mix(p.z, p.z.mul(0.12), frontFactor.mul(crush)));
+    // Back face yields softly upward under massive crush without inverting sign.
+    p.z.assign(mix(p.z, p.z.mul(float(1.0).sub(crush.mul(0.32))), float(1.0).sub(frontFactor)));
+
+    // Gentle skin pinch tugs nearby cushion toward the thumb trough without folding.
+    const pinchPull = smoothstep(0.06, 0.40, t).mul(float(1.0).sub(smoothstep(0.40, 0.92, t)));
+    p.xy.subAssign(dir.mul(pinchPull).mul(min(dent, float(1.4))).mul(0.045));
+
+    // Wide smooth extruded fat-rim ("狠狠挤出肥厚一圈") without Jacobian fold overhangs.
+    const rim = smoothstep(0.34, 1.18, t).mul(float(1.0).sub(smoothstep(1.18, 3.15, t)));
+    const dragPush = max(float(0.0), dot(dir, uDrag)).mul(0.85);
+    const dragBack = max(float(0.0), dot(dir, uDrag.negate())).mul(0.25);
+    const ooze = clamp(float(1.0).add(dragPush).sub(dragBack), 0.68, 1.72);
+
+    const zSign = clamp(pIn.z.div(0.06), -1.0, 1.0);
+    p.z.addAssign(zSign.mul(rim).mul(dent).mul(0.115).mul(ooze));
+    p.xy.addAssign(dir.mul(rim).mul(dent).mul(0.090).mul(ooze));
+
+    // Monotonic heavy cheek & corner bloat when smashed down hard.
+    const farWeight = smoothstep(0.48, 1.50, d);
+    const edgeBelly = smoothstep(0.35, 1.0, sAnalytic);
+    const nearGain = float(1.0).sub(smoothstep(0.15, 1.48, d));
+    p.xy.addAssign(dir.mul(edgeBelly).mul(dent).mul(nearGain.mul(0.145).add(farWeight.mul(0.075))).mul(clamp(float(1.0).add(dragPush.mul(0.65)), 0.7, 1.72)));
+    p.z.addAssign(zSign.mul(farWeight).mul(dent).mul(0.042).mul(rimMask));
 
     // 4. Release / Splat dual-harmonic jelly wobble wave rippling across cushion.
     const ripRel = p.xy.sub(uRipple.xy);
     const ripD = length(ripRel);
     const ripAmp = uRipple.z;
     const ripPhase = uRipple.w;
-    const wave1 = sin(ripPhase.sub(ripD.mul(8.8))).mul(exp(ripD.negate().mul(1.15)));
-    const wave2 = sin(ripPhase.mul(1.65).sub(ripD.mul(13.5))).mul(exp(ripD.negate().mul(1.85))).mul(0.35);
+    const wave1 = sin(ripPhase.sub(ripD.mul(8.2))).mul(exp(ripD.negate().mul(1.05)));
+    const wave2 = sin(ripPhase.mul(1.65).sub(ripD.mul(13.0))).mul(exp(ripD.negate().mul(1.75))).mul(0.38);
     const wave = wave1.add(wave2);
-    p.z.addAssign(wave.mul(ripAmp).mul(0.078).mul(float(0.25).add(restThickness.mul(0.75))));
-    p.xy.addAssign(ripRel.mul(wave).mul(ripAmp).mul(0.044));
+    p.z.addAssign(wave.mul(ripAmp).mul(0.088).mul(restThickness));
+    p.xy.addAssign(ripRel.mul(wave).mul(ripAmp).mul(0.046));
 
     return p.mul(uWorldScale);
   }
@@ -203,18 +211,18 @@ export function createSquish({ reduced = false } = {}) {
   }
 
   const material = new THREE.MeshPhysicalNodeMaterial({
-    roughness: 0.42,
+    roughness: 0.40,
     metalness: 0.0,
-    clearcoat: 0.28,
-    clearcoatRoughness: 0.34,
+    clearcoat: 0.38,
+    clearcoatRoughness: 0.26,
     sheen: 1.0,
-    sheenRoughness: 0.58,
+    sheenRoughness: 0.55,
     sheenColor: new THREE.Color(0xffe4dc),
     ior: 1.40,
-    transmission: 0.04,
-    thickness: 0.78,
-    attenuationColor: new THREE.Color(0xff967d),
-    attenuationDistance: 1.35,
+    transmission: 0.06,
+    thickness: 0.92,
+    attenuationColor: new THREE.Color(0xff7258),
+    attenuationDistance: 1.15,
     side: THREE.FrontSide,
   });
 
@@ -239,7 +247,7 @@ export function createSquish({ reduced = false } = {}) {
     const cream = vec3(0.99, 0.91, 0.87);
     const blush = vec3(0.98, 0.68, 0.64);
     const juicyCoral = vec3(0.93, 0.39, 0.32);
-    const craterBerry = vec3(0.86, 0.42, 0.39);
+    const craterBerry = vec3(0.81, 0.34, 0.34);
     const rimHighlight = vec3(1.0, 0.96, 0.93);
 
     const baseCol = mix(cream, blush, smoothstep(0.30, 1.0, aShellS).mul(0.54));
@@ -248,9 +256,9 @@ export function createSquish({ reduced = false } = {}) {
     // Concave fingertip bowl + lagging knead groove deepen with soft self-shadowed berry-peach AO.
     const d = length(positionLocal.xy.sub(uHand.xy));
     const dTrail = length(positionLocal.xy.sub(uTrail.xy));
-    const coreCrater = float(1.0).sub(smoothstep(0.0, uHand.w.mul(0.92), d));
-    const trailMask = float(1.0).sub(smoothstep(0.0, uTrail.w.mul(0.95), dTrail));
-    const aoAmt = min(float(1.0), coreCrater.mul(uHand.z).mul(0.54).add(trailMask.mul(uTrail.z).mul(0.28)));
+    const coreCrater = float(1.0).sub(smoothstep(0.0, uHand.w.mul(0.95), d));
+    const trailMask = float(1.0).sub(smoothstep(0.0, uTrail.w.mul(0.98), dTrail));
+    const aoAmt = min(float(1.0), coreCrater.mul(uHand.z).mul(0.56).add(trailMask.mul(uTrail.z).mul(0.30)));
     col.assign(mix(col, craterBerry, aoAmt));
 
     // Plump displaced donut ring catches warm creamy subsurface highlight.
@@ -291,6 +299,8 @@ export function createSquish({ reduced = false } = {}) {
   let phase = 'poke';
   let wasDragging = false;
   let splatT = -1;
+  let flightT = -1;
+  let flightLanded = true;
   let releaseCooldown = 0;
 
   const hand = new THREE.Vector2(0, 0);
@@ -305,6 +315,10 @@ export function createSquish({ reduced = false } = {}) {
   let squashVel = 0;
   let boingZ = 0;
   let boingVel = 0;
+  let popX = 0;
+  let popY = 0;
+  let popVX = 0;
+  let popVY = 0;
   let ripAmp = 0;
   let ripPhase = 0;
   const ripOrigin = new THREE.Vector2(0, 0);
@@ -312,8 +326,10 @@ export function createSquish({ reduced = false } = {}) {
   // Soft 3D whole-cushion spring tilt when poking off-center or hovering.
   let tiltX = 0;
   let tiltY = 0;
+  let tiltZ = 0;
   let tiltVX = 0;
   let tiltVY = 0;
+  let tiltVZ = 0;
 
   const hud = { pressure: 0, phase: 'poke', pops: 0, pressing: false };
 
@@ -333,6 +349,8 @@ export function createSquish({ reduced = false } = {}) {
     phase = 'poke';
     wasDragging = false;
     splatT = -1;
+    flightT = -1;
+    flightLanded = true;
     releaseCooldown = 0;
     dent = 0;
     dentVel = 0;
@@ -341,10 +359,13 @@ export function createSquish({ reduced = false } = {}) {
     squashVel = 0;
     boingZ = 0;
     boingVel = 0;
+    popX = popY = popVX = popVY = 0;
     ripAmp = 0;
     ripPhase = 0;
-    tiltX = tiltY = tiltVX = tiltVY = 0;
+    tiltX = tiltY = tiltZ = tiltVX = tiltVY = tiltVZ = 0;
+    group.position.set(0, 0, 0);
     group.rotation.set(0, 0, 0);
+    group.scale.set(1, 1, 1);
     hand.set(0, 0);
     trailHand.set(0, 0);
     targetHand.set(0, 0);
@@ -370,11 +391,13 @@ export function createSquish({ reduced = false } = {}) {
     uTime.value = time;
     if (releaseCooldown > 0) releaseCooldown = Math.max(0, releaseCooldown - dt);
 
-    const nx = input.pointer.x / Math.max(0.1, worldScale);
-    const ny = input.pointer.y / Math.max(0.1, worldScale);
+    // Track pointer relative to the cushion's live bouncing center so mid-rebound catches work cleanly.
+    const nx = (input.pointer.x - group.position.x) / Math.max(0.1, worldScale);
+    const ny = (input.pointer.y - group.position.y) / Math.max(0.1, worldScale);
     const hoverGrip = insideRatio(nx, ny);
-    const grip = input.dragging ? hoverGrip : 0;
-    const activePress = input.dragging && grip > 0.04;
+    const airborneSlip = flightT >= 0 && flightT < 0.72;
+    const grip = (input.dragging && !airborneSlip) ? hoverGrip : 0;
+    const activePress = input.dragging && !airborneSlip && grip > 0.04;
 
     if (activePress) {
       targetHand.set(
@@ -385,27 +408,40 @@ export function createSquish({ reduced = false } = {}) {
         hand.copy(targetHand);
         trailHand.copy(targetHand);
         lastHand.copy(targetHand);
+        // Immediate palm/thumb slam impulse so pressing feels snappy and heavy.
+        dentVel += 4.6 * grip;
+        squashVel += 3.8 * grip;
+        boingVel -= 3.2 * grip;
         hooks.onPress?.();
       } else {
-        hand.lerp(targetHand, 1 - Math.exp(-16.0 * dt));
-        // Viscoelastic knead trail lags smoothly behind the fingertip.
-        trailHand.lerp(hand, 1 - Math.exp(-3.8 * dt));
+        hand.lerp(targetHand, 1 - Math.exp(-18.0 * dt));
+        // Heavy slow-rise knead groove trails lazily behind the dragging thumb.
+        trailHand.lerp(hand, 1 - Math.exp(-2.8 * dt));
       }
       const dx = (hand.x - lastHand.x) / Math.max(dt, 0.008);
       const dy = (hand.y - lastHand.y) / Math.max(dt, 0.008);
       lastHand.copy(hand);
       dragVec.lerp(new THREE.Vector2(
-        Math.max(-1.6, Math.min(1.6, dx * 0.50)),
-        Math.max(-1.6, Math.min(1.6, dy * 0.50))
-      ), 1 - Math.exp(-12.0 * dt));
+        Math.max(-1.85, Math.min(1.85, dx * 0.62)),
+        Math.max(-1.85, Math.min(1.85, dy * 0.62))
+      ), 1 - Math.exp(-13.0 * dt));
     } else {
-      dragVec.multiplyScalar(Math.exp(-7.5 * dt));
-      if (wasDragging) {
-        // Elastic release BOING! Deep enough pokes also reward a Boing count on release.
-        const releaseEnergy = Math.max(0.28, dent * 0.9 + pressure * 0.45);
-        boingVel += releaseEnergy * 6.0;
+      dragVec.multiplyScalar(Math.exp(-6.5 * dt));
+      if (wasDragging && flightT < 0) {
+        // Charged mid-squish release REBOUND! Springs outward, hops opposite pinch, & jiggles back.
+        const releaseEnergy = Math.max(0.32, dent * 0.75 + pressure * 0.95);
+        boingVel += releaseEnergy * 11.5;
+        dentVel -= releaseEnergy * 4.2;
+        squashVel -= releaseEnergy * 4.8;
+        if (!reduced) {
+          popVY += releaseEnergy * 2.1;
+          popVX += -hand.x * releaseEnergy * 0.85;
+          tiltVX += hand.y * releaseEnergy * 2.4;
+          tiltVY += -hand.x * releaseEnergy * 2.0;
+          tiltVZ += (-hand.x * 1.4 - dragVec.x * 0.45) * releaseEnergy;
+        }
         ripOrigin.copy(hand);
-        ripAmp = Math.min(1.4, ripAmp + releaseEnergy * 1.2);
+        ripAmp = Math.min(1.75, ripAmp + releaseEnergy * 1.45);
         ripPhase = 0;
         if (dent >= 0.42 && splatT < 0 && releaseCooldown <= 0) {
           pops++;
@@ -416,28 +452,39 @@ export function createSquish({ reduced = false } = {}) {
     }
     wasDragging = activePress;
 
-    // Pressure ramp for HUD beats + mega-splat climax.
+    // Pressure ramp for HUD beats + max-pressure "pop upward & drift home" climax.
     if (splatT >= 0) {
       splatT += dt;
-      if (splatT > 1.15) {
+      if (splatT > 1.35) {
         splatT = -1;
       }
     } else if (activePress) {
-      const gain = 0.24 + (input.speed || 0) * 0.34;
+      const gain = 0.26 + (input.speed || 0) * 0.36;
       pressure = Math.min(1, pressure + gain * grip * dt);
       if (pressure >= 1) {
         pressure = 0;
         splatT = 0;
+        flightT = 0;
+        flightLanded = false;
         pops++;
-        releaseCooldown = 0.35;
-        boingVel -= 8.4;
+        releaseCooldown = 0.45;
+        boingVel += 12.0;
+        dentVel -= 5.8;
+        squashVel -= 6.5;
+        if (!reduced) {
+          // Squeeze to the limit -> pops right UP within viewport framing, then drifts gently back!
+          popVY = 3.7;
+          popVX = -hand.x * 0.85;
+          tiltVX += -2.4;
+          tiltVZ += (-hand.x * 2.0 + (Math.random() - 0.5) * 1.4);
+        }
         ripOrigin.copy(hand);
-        ripAmp = 1.65;
+        ripAmp = 1.95;
         ripPhase = 0;
         hooks.onPop?.();
       }
     } else {
-      pressure = Math.max(0, pressure - 0.30 * dt);
+      pressure = Math.max(0, pressure - 0.58 * dt);
     }
 
     const nextPhase = pressure >= SQUISH_STOPS.bulge
@@ -445,49 +492,98 @@ export function createSquish({ reduced = false } = {}) {
       : pressure >= SQUISH_STOPS.poke ? 'bulge' : 'poke';
     if (nextPhase !== phase) {
       phase = nextPhase;
+      if (activePress && (phase === 'bulge' || phase === 'boing')) {
+        hooks.onPhase?.(phase);
+      }
     }
 
-    // Viscoelastic spring-mass physics: sinks deeply under touch, rebounds slowly like memory mochi then ripples.
-    const dentTarget = activePress ? (0.80 + pressure * 0.46) * grip : 0;
-    const dentK = activePress ? 118 : 92;
-    const dentDamp = activePress ? 13.0 : 7.8;
+    // Viscoelastic spring-mass physics: sinks deeply under touch, rebounds slowly like memory mochi then wobbles.
+    const dentTarget = activePress ? (1.12 + pressure * 0.68) * grip : 0;
+    const dentK = activePress ? 135 : 92;
+    const dentDamp = activePress ? 12.5 : 6.4;
     dentVel += ((dentTarget - dent) * dentK - dentVel * dentDamp) * dt;
-    dent = Math.max(-0.22, dent + dentVel * dt);
+    dent = Math.max(-0.34, dent + dentVel * dt);
 
-    const trailTarget = activePress ? dent * 0.76 : 0;
-    trailDent += (trailTarget - trailDent) * (1 - Math.exp((activePress ? -6.0 : -2.3) * dt));
+    const trailTarget = activePress ? dent * 0.84 : 0;
+    trailDent += (trailTarget - trailDent) * (1 - Math.exp((activePress ? -6.5 : -1.55) * dt));
 
-    const sqTarget = activePress ? 0.40 + pressure * 0.64 : 0;
-    squashVel += ((sqTarget - squash) * 145 - squashVel * 8.6) * dt;
-    squash = Math.max(-0.26, squash + squashVel * dt);
+    const sqTarget = activePress ? 0.56 + pressure * 0.88 : 0;
+    squashVel += ((sqTarget - squash) * 155 - squashVel * 7.6) * dt;
+    squash = Math.max(-0.38, squash + squashVel * dt);
 
-    boingVel += (-boingZ * 165 - boingVel * 5.0) * dt;
+    boingVel += (-boingZ * 175 - boingVel * 3.8) * dt;
     boingZ += boingVel * dt;
 
-    // 3D cushion tilt: pressing off-center tips the pillow physically into your desk/hand.
+    // Cushion flight & gentle slow return to center after popping out or recoil-hopping.
+    if (flightT >= 0) {
+      flightT += dt;
+      if (flightT < 0.52) {
+        // Soaring upward pop with gentle hangtime gravity before floating back down.
+        popVY -= 8.4 * dt;
+        popVX *= Math.exp(-2.4 * dt);
+      } else {
+        // Slowly & softly glides home so player is ready for the next squish.
+        popVY += (-popY * 18.0 - popVY * 6.8) * dt;
+        popVX += (-popX * 18.0 - popVX * 6.8) * dt;
+        if (!flightLanded && flightT > 0.92 && Math.abs(popY) < 0.08 && Math.abs(popVY) < 0.45) {
+          flightLanded = true;
+          boingVel -= 4.2;
+          hooks.onLand?.();
+        }
+      }
+      if (flightT > 1.55) {
+        flightT = -1;
+      }
+    } else {
+      // Mid-squish recoil hop & soft spring settle back to (0, 0).
+      popVX += (-popX * 52.0 - popVX * 7.4) * dt;
+      popVY += (-popY * 52.0 - popVY * 7.4) * dt;
+    }
+    popX += popVX * dt;
+    popY += popVY * dt;
+    group.position.set(
+      reduced ? 0 : popX * worldScale,
+      reduced ? 0 : popY * worldScale,
+      0
+    );
+
+    // 3D cushion tilt: pressing off-center tips the pillow physically; popping adds playful tumble.
     const targetTiltX = reduced ? 0 : (activePress
-      ? -hand.y * (0.28 + dent * 0.14)
-      : hoverGrip * -Math.max(-MARK_HALF_H, Math.min(MARK_HALF_H, ny)) * 0.08);
+      ? -hand.y * (0.34 + dent * 0.16)
+      : hoverGrip * -Math.max(-MARK_HALF_H, Math.min(MARK_HALF_H, ny)) * 0.09);
     const targetTiltY = reduced ? 0 : (activePress
-      ? hand.x * (0.18 + dent * 0.10)
-      : hoverGrip * Math.max(-MARK_HALF_W, Math.min(MARK_HALF_W, nx)) * 0.05);
-    tiltVX += ((targetTiltX - tiltX) * 120 - tiltVX * 9.5) * dt;
-    tiltVY += ((targetTiltY - tiltY) * 120 - tiltVY * 9.5) * dt;
+      ? hand.x * (0.24 + dent * 0.12)
+      : hoverGrip * Math.max(-MARK_HALF_W, Math.min(MARK_HALF_W, nx)) * 0.06);
+    const targetTiltZ = reduced ? 0 : (dragVec.x * 0.055 - boingZ * 0.038);
+    tiltVX += ((targetTiltX - tiltX) * 135 - tiltVX * 8.2) * dt;
+    tiltVY += ((targetTiltY - tiltY) * 135 - tiltVY * 8.2) * dt;
+    tiltVZ += ((targetTiltZ - tiltZ) * 115 - tiltVZ * 6.8) * dt;
     tiltX += tiltVX * dt;
     tiltY += tiltVY * dt;
-    group.rotation.x = tiltX;
-    group.rotation.y = tiltY;
-    group.rotation.z = reduced ? 0 : (dragVec.x * 0.038 - boingZ * 0.028);
+    tiltZ += tiltVZ * dt;
+    group.rotation.set(tiltX, tiltY, tiltZ);
 
     if (ripAmp > 0.002) {
-      ripPhase += dt * 24.0;
-      ripAmp *= Math.exp(-3.1 * dt);
+      ripPhase += dt * 26.0;
+      ripAmp *= Math.exp(-2.8 * dt);
     } else {
       ripAmp = 0;
     }
 
-    const splatAmt = splatT >= 0 ? Math.sin(Math.min(1, splatT / 0.55) * Math.PI) * Math.exp(-splatT * 2.4) : 0;
+    const splatAmt = splatT >= 0 ? Math.sin(Math.min(1, splatT / 0.45) * Math.PI) * Math.exp(-splatT * 2.4) : 0;
     const idleBreath = reduced ? 0 : Math.sin(time * 1.9);
+
+    // Whole-body volume-preserving squash & stretch overshoot during boings, pop-flight & mega-splat.
+    if (!reduced) {
+      const flightStretch = flightT >= 0 && flightT < 0.55 ? Math.max(0, popVY) * 0.032 : 0;
+      const stretchZ = Math.max(0.55, Math.min(1.52, 1 + boingZ * 0.25 - splatAmt * 0.22));
+      const invXY = 1 / Math.sqrt(stretchZ);
+      group.scale.set(
+        invXY * (1 - flightStretch * 0.45),
+        invXY * (1 + flightStretch + splatAmt * 0.04),
+        stretchZ
+      );
+    }
 
     uHand.value.set(hand.x, hand.y, Math.max(0, dent), PRESS_RADIUS);
     uTrail.value.set(trailHand.x, trailHand.y, Math.max(0, trailDent), TRAIL_RADIUS);
@@ -584,7 +680,7 @@ function buildSiliconePillowGeometry() {
         const { x, y, s } = mapToRoundedRect(u, v);
         const r = sampleRelief(x, y);
         const rimProfile = Math.pow(Math.max(0, 1 - Math.pow(s, 2.85)), 0.50);
-        const thickness = 0.145 * rimProfile + reliefAmp * r * smoothstepScalar(0.98, 0.84, s);
+        const thickness = 0.24 * rimProfile + reliefAmp * r * smoothstepScalar(0.98, 0.84, s);
         vertices.push(x, y, zSign * thickness);
         uvs.push(u * 0.5 + 0.5, v * 0.5 + 0.5);
         reliefs.push(zSign > 0 ? r : 0);
@@ -593,8 +689,8 @@ function buildSiliconePillowGeometry() {
     }
   }
 
-  pushGridVertices(1, 0.066);
-  pushGridVertices(-1, 0.012);
+  pushGridVertices(1, 0.086);
+  pushGridVertices(-1, 0.016);
 
   function vid(isBack, i, j) {
     const isBoundary = i === 0 || i === nx || j === 0 || j === ny;
