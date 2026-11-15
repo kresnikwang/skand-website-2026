@@ -32,6 +32,7 @@ html, body {
   width: 100%;
   height: 100%;
   background: var(--black);
+  overscroll-behavior: none;
 }
 
 body {
@@ -40,9 +41,17 @@ body {
   font-weight: 300;
   overflow: hidden;
   cursor: auto;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
-button, a { font: inherit; }
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+button, a { font: inherit; touch-action: manipulation; }
 button { cursor: pointer; }
 html.custom-cursor-enabled body,
 html.custom-cursor-enabled button,
@@ -59,26 +68,32 @@ html.custom-cursor-enabled a { cursor: none; }
 
 .cursor-dot, .cursor-ring {
   position: fixed;
+  top: 0;
+  left: 0;
   z-index: 60;
   pointer-events: none;
-  mix-blend-mode: difference;
+  will-change: transform;
   opacity: 0;
 }
 html.custom-cursor-enabled .cursor-dot,
 html.custom-cursor-enabled .cursor-ring { opacity: 1; }
 .cursor-dot {
   width: 7px; height: 7px; border-radius: 50%; background: var(--coral);
+  box-shadow: 0 0 0 1.5px rgba(10, 10, 10, 0.55), 0 0 10px rgba(232, 86, 58, 0.45);
 }
 .cursor-ring {
-  width: 42px; height: 42px; border: 1.5px solid var(--white); border-radius: 50%;
-  transition: width 0.22s ease, height 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+  width: 42px; height: 42px; border: 1.5px solid rgba(240, 237, 232, 0.85); border-radius: 50%;
+  mix-blend-mode: difference;
+  transition: width 0.12s cubic-bezier(0.22, 1, 0.36, 1), height 0.12s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.12s ease, background 0.12s ease;
 }
 .cursor-ring.hovering {
   width: 58px; height: 58px; border-color: var(--coral);
 }
 .cursor-ring.is-pressing {
-  width: 26px; height: 26px; border-color: var(--coral);
+  width: 24px; height: 24px; border-color: var(--coral);
+  mix-blend-mode: normal;
   background: rgba(232, 86, 58, 0.18);
+  box-shadow: 0 0 14px rgba(232, 86, 58, 0.35);
 }
 
 /* The shell fades/settles in on load, same as before. */
@@ -88,9 +103,10 @@ html.custom-cursor-enabled .cursor-ring { opacity: 1; }
   opacity: 0;
   transform: rotateY(12deg) scale(0.985);
   transform-origin: center;
+  touch-action: none;
   transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.b-side-shell.ready { opacity: 1; transform: rotateY(0deg) scale(1); }
+.b-side-shell.ready { opacity: 1; transform: none; }
 html.custom-cursor-enabled .b-side-shell.is-live { cursor: none; }
 
 #glCanvas {
@@ -100,6 +116,7 @@ html.custom-cursor-enabled .b-side-shell.is-live { cursor: none; }
   height: 100vh;
   z-index: 1;
   display: block;
+  touch-action: none;
 }
 
 /* On reveal, ease the whole scene forward a touch. */
@@ -120,10 +137,12 @@ nav {
   justify-content: space-between;
   padding: 24px 40px;
   mix-blend-mode: difference;
+  pointer-events: none;
 }
 .nav-logo {
   display: inline-flex; align-items: center; gap: 14px;
   color: var(--white); text-decoration: none;
+  pointer-events: auto;
 }
 .nav-logo img { height: 28px; filter: invert(1); }
 .page-mark {
@@ -136,6 +155,7 @@ nav {
   border-radius: 4px;
   background: transparent; color: var(--white); text-decoration: none;
   font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  pointer-events: auto;
   transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
 }
 .back-btn:hover { border-color: var(--coral); background: var(--coral); color: var(--black); }
@@ -252,7 +272,7 @@ html[lang="zh"] .hint.is-revealed { letter-spacing: 0.12em; }
   pointer-events: none;
   transition: opacity 0.45s ease, transform 0.45s ease, border-color 0.4s ease;
 }
-.hud.visible { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.hud.visible { opacity: 1; transform: translate(-50%, 0); pointer-events: none; }
 .b-side-shell.is-revealed .hud { opacity: 0; pointer-events: none; }
 
 .charge-block { display: grid; gap: 9px; }
@@ -374,6 +394,7 @@ html[lang="zh"] .hint.is-revealed { letter-spacing: 0.12em; }
   transform: translateX(-50%);
   opacity: 0;
   pointer-events: none;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72);
   transition: opacity 0.4s ease;
 }
 .pops-block[hidden] { display: none; }
@@ -518,6 +539,6 @@ html[lang="zh"] .hint.is-revealed { letter-spacing: 0.12em; }
   </div>
 </div>
 
-<script type="module" src="scripts/bside/main.js?v=20261115h"></script>
+<script type="module" src="scripts/bside/main.js?v=20261115k"></script>
 </body>
 </html>

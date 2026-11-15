@@ -23,7 +23,7 @@ import { createGlassShards } from './shards.js?v=20261115';
 import { buildTargets } from './targets.js?v=20261115';
 import { createPhases } from './phases.js?v=20261115b';
 import { createSqueeze, SQUEEZE_ORDER } from './squeeze.js?v=20261115b';
-import { createSquish, SQUISH_ORDER } from './squish.js?v=20261115h';
+import { createSquish, SQUISH_ORDER } from './squish.js?v=20261115k';
 import { createAudio } from './audio.js?v=20261115h';
 
 /* ---------- language ---------- */
@@ -103,10 +103,11 @@ const finePointer = window.matchMedia('(pointer: fine)');
 
 if (dot && ring) {
   const follow = () => {
-    rx += (mx - rx) * 0.14;
-    ry += (my - ry) * 0.14;
-    dot.style.transform = `translate(${mx - 3.5}px, ${my - 3.5}px)`;
-    ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%, -50%)`;
+    const k = ring.classList.contains('is-pressing') ? 0.52 : 0.28;
+    rx += (mx - rx) * k;
+    ry += (my - ry) * k;
+    dot.style.transform = `translate3d(${mx - 3.5}px, ${my - 3.5}px, 0)`;
+    ring.style.transform = `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%)`;
     requestAnimationFrame(follow);
   };
   follow();
@@ -377,7 +378,7 @@ async function init() {
   scene.scene.add(squeeze.scene);
 
   squishToy = createSquish({ reduced: reducedMotion });
-  squishToy.setWorldScale(squeeze.worldScale * 0.84);
+  squishToy.fitViewport(visibleWidth(), visibleHeight());
   squishToy.group.visible = false;
   scene.scene.add(squishToy.group);
 
@@ -470,6 +471,8 @@ function loop(timestamp) {
       time,
       {
         pointer: pointerWorld,
+        ndc,
+        camera: scene.camera,
         dragging: started && pointerDown,
         speed: pointerSpeed,
       },
@@ -576,7 +579,7 @@ function handleResize() {
   const activeScale = (mode === 'squeeze' || mode === 'squish') ? squeeze.worldScale : computeWorldScale();
   particles.setWorldScale(activeScale);
   if (shards) shards.setWorldScale(activeScale);
-  if (squishToy) squishToy.setWorldScale(squeeze.worldScale * 0.84);
+  if (squishToy) squishToy.fitViewport(visibleWidth(), visibleHeight());
 }
 
 /* ---------- input ---------- */
@@ -590,15 +593,23 @@ window.addEventListener('pointermove', (e) => {
 }, { passive: true });
 
 window.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('a, button')) return;
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  if (e.target.closest('a, button, .mode-switch, .utility')) return;
   px = e.clientX;
   py = e.clientY;
+  mx = e.clientX;
+  my = e.clientY;
+  pointerInside = true;
   pointerDown = true;
   audio.unlock();
 }, { passive: true });
 
 window.addEventListener('pointerup', () => { pointerDown = false; }, { passive: true });
 window.addEventListener('pointercancel', () => { pointerDown = false; }, { passive: true });
+window.addEventListener('blur', () => {
+  pointerDown = false;
+  if (ring) ring.classList.remove('is-pressing');
+});
 document.addEventListener('mouseleave', () => { pointerInside = false; });
 
 /* ---------- controls ---------- */
@@ -643,7 +654,7 @@ function setMode(next) {
   } else if (isSquish) {
     if (squishToy) {
       squishToy.reset();
-      squishToy.setWorldScale(squeeze.worldScale * 0.84);
+      squishToy.fitViewport(visibleWidth(), visibleHeight());
     }
     scene.setShake(0);
   } else {
