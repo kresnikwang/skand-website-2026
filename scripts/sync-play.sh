@@ -17,7 +17,7 @@ cp "$SRC" "$DEST"
 
 # Fonts: Feishu font CSS -> self-hosted subset CSS.
 perl -pi -e 's#https://miaoda\.feishu\.cn/fonts/css2\?[^"]*#/play/vendor/fonts/noto-sc.css#g' "$DEST"
-# three.js: primary import -> self-hosted (cdnjs stays as fallback).
+# three.js: source already points at /play/vendor. Rewrite a leftover CDN import if one returns.
 perl -pi -e 's#https://fastly\.jsdelivr\.net/npm/three\@0\.187\.0/build/three\.module\.js#/play/vendor/three/three.module.min.js#g' "$DEST"
 
 # Add site favicon + description if the source doesn't have them.

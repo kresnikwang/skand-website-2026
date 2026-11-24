@@ -12,9 +12,10 @@
 | Self-hosted Noto Serif/Sans SC fonts | `play/vendor/fonts/` |
 | Source -> page sync script | `scripts/sync-play.sh` (`npm run build:play`) |
 
-`scripts/sync-play.sh` copies the source to `play/index.html` and rewrites the
-external CDNs (jsDelivr three.js, Feishu fonts) to `/play/vendor/...`, then adds
-the site favicon. It warns if a CDN URL could not be rewritten.
+`scripts/sync-play.sh` copies the source to `play/index.html`. three.js is imported
+from `/play/vendor/three/` in the source. The script rewrites the Feishu font CDN to
+`/play/vendor/fonts/`, rewrites a leftover jsDelivr three.js URL if one comes back,
+then adds the site favicon. It warns if a CDN URL could not be rewritten.
 
 ### Workflow
 

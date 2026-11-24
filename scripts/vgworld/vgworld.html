@@ -6,12 +6,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="screen-orientation" content="landscape">
-<meta name="x5-orientation" content="landscape">
+<meta name="x5-orientation" content="portrait">
 <meta name="x5-fullscreen" content="true">
-<meta name="x5-page-mode" content="app">
 <meta name="full-screen" content="yes">
-<meta name="browsermode" content="application">
 <title>梵高世界 · Starry Wanderer</title>
 <link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500&display=swap">
 <style>
@@ -257,12 +254,20 @@
   #rotateGate .phone i{position:absolute;left:50%;top:8px;width:18px;height:3px;margin-left:-9px;border-radius:2px;background:rgba(242,193,78,.7)}
   #rotateGate h2{font-size:22px;color:var(--gold);letter-spacing:.18em;font-weight:700}
   #rotateGate p{max-width:280px;font-size:14px;line-height:1.7;color:#c5d0ea}
+  #rotatePlay{margin-top:6px;cursor:pointer;border:1px solid rgba(242,193,78,.7);background:rgba(242,193,78,.14);
+    color:var(--gold);font-family:inherit;font-size:16px;letter-spacing:.2em;padding:12px 28px;border-radius:999px}
   @keyframes tiltPhone{0%,18%{transform:rotate(0)} 48%,100%{transform:rotate(-90deg)}}
   @media (prefers-reduced-motion:reduce){ #rotateGate .phone{animation:none;transform:rotate(-90deg)} }
 
   #touch{display:none}
   body.mobile #touch{display:block;position:fixed;inset:0;z-index:24;pointer-events:none}
   body.mobile.portrait #touch,body.mobile.portrait #hud{visibility:hidden}
+  /* 微信网页锁在竖屏坐标里。手机横过来时，页面自己转 90 度铺满窗口。 */
+  html.wx-stage{width:100%;height:100%;overflow:hidden;background:#05070f}
+  html.wx-stage body{position:fixed;top:0;left:var(--wx-h);margin:0;
+    width:var(--wx-w);height:var(--wx-h);transform:rotate(90deg);transform-origin:0 0}
+  html.wx-stage body.mobile.portrait #rotateGate{display:none}
+  html.wx-stage body.mobile.portrait #touch,html.wx-stage body.mobile.portrait #hud{visibility:visible}
   #joyZone,#lookZone{position:absolute;top:0;bottom:0;width:42%;pointer-events:auto;touch-action:none}
   #joyZone{left:0} #lookZone{right:0;width:58%}
   #joyBase{position:absolute;width:118px;height:118px;margin:-59px 0 0 -59px;border-radius:50%;
@@ -295,7 +300,13 @@
   if(ua||touch){
     document.body.classList.add('mobile');
     if(/MicroMessenger/i.test(navigator.userAgent)) document.body.classList.add('wechat');
-    if(innerHeight>innerWidth+40) document.body.classList.add('portrait');
+    if(/MicroMessenger/i.test(navigator.userAgent) && innerHeight>innerWidth+40){
+      document.documentElement.classList.add('wx-stage');
+      document.documentElement.style.setProperty('--wx-w', innerHeight+'px');
+      document.documentElement.style.setProperty('--wx-h', innerWidth+'px');
+    } else if(innerHeight>innerWidth+40){
+      document.body.classList.add('portrait');
+    }
   }
 })();
 </script>
@@ -359,6 +370,7 @@
   <div class="phone" aria-hidden="true"><i></i></div>
   <h2 id="rotateTitle">横过来玩</h2>
   <p class="sans" id="rotateCopy">把手机转到横屏，画面会铺满。</p>
+  <button type="button" id="rotatePlay">先这样玩</button>
 </div>
 <div id="touch" aria-hidden="true">
   <div id="joyZone"></div>
@@ -390,7 +402,7 @@
     note.textContent='请横屏 · 开启声音 · 首次需联网';
   } else {
     keys.innerHTML='<b>W A S D</b> 漫步 &nbsp; <b>鼠标</b> 环顾 &nbsp; <b>Shift</b> 疾跑 &nbsp; <b>空格</b> 跳跃 &nbsp; <b>E</b> 观赏 / 取景 / 交谈<br>世界还是一幅未上色的底稿：找回 5 管失落颜料让画境重现色彩，踏上 7 处画家取景地并在黄房子门前的镜中寻回《自画像》，再收集 12 颗灵感星辰，让阿尔勒沉入《星月夜》。';
-    note.textContent='建议桌面端 Chrome / Edge · 请开启声音 · 首次加载需联网获取 three.js r187';
+    note.textContent='建议桌面端 Chrome / Edge · 请开启声音';
   }
 })();
 </script>
@@ -417,13 +429,13 @@ const REGION_NAME={
 };
 
 let THREE;
-try { THREE = await import('https://fastly.jsdelivr.net/npm/three@0.187.0/build/three.module.js'); }
+try { THREE = await import('/play/vendor/three/three.module.min.js'); }
 catch(e1){
   try { THREE = await import('https://cdnjs.cloudflare.com/ajax/libs/three.js/0.187.0/three.module.min.js'); }
   catch(e2){
     const el=document.getElementById('loadErr');
     el.style.display='block';
-    el.textContent=L('three.js 加载失败：请确认网络可访问 jsDelivr / cdnjs 后刷新页面。','Failed to load three.js: please check your connection to jsDelivr / cdnjs and refresh.');
+    el.textContent=L('three.js 加载失败，请刷新页面。','Failed to load three.js. Please refresh.');
     throw e2;
   }
 }
@@ -3669,7 +3681,9 @@ const blurMat=new THREE.ShaderMaterial({
 });
 function disposeRT(){ for(const t of [rt,rtBright,rtBlurA,rtBlurB]){ if(t) t.dispose(); } }
 function resize(){
-  const w=innerWidth,h=innerHeight;
+  const stage=document.documentElement.classList.contains('wx-stage');
+  const long=Math.max(innerWidth,innerHeight), short=Math.min(innerWidth,innerHeight);
+  const w=stage?long:innerWidth, h=stage?short:innerHeight;
   renderer.setPixelRatio(DPR); renderer.setSize(w,h);
   camera.aspect=w/h; camera.updateProjectionMatrix();
   const rw=Math.max(2,Math.floor(w*DPR*renderScale)), rh=Math.max(2,Math.floor(h*DPR*renderScale));
@@ -4556,10 +4570,11 @@ function applyLang(){
     :(IS_MOBILE
       ?'<b>左摇杆</b>漫步 <b>右侧滑动</b>环顾 <b>跑 / 跳</b>，走近后点提示'
       :'<b>W A S D</b> 漫步 &nbsp; <b>鼠标</b> 环顾 &nbsp; <b>Shift</b> 疾跑 &nbsp; <b>空格</b> 跳跃 &nbsp; <b>E</b> 观赏 / 取景 / 交谈<br>世界还是一幅未上色的底稿：找回 5 管失落颜料让画境重现色彩，踏上 7 处画家取景地并在黄房子门前的镜中寻回《自画像》，再收集 12 颗灵感星辰，让阿尔勒沉入《星月夜》。'));
-  set('titleNote', en?'Best on desktop Chrome / Edge · Sound recommended · Loads three.js r187 on first launch':'建议桌面端 Chrome / Edge · 请开启声音 · 首次加载需联网获取 three.js r187');
+  set('titleNote', en?'Best on desktop Chrome / Edge · Sound recommended':'建议桌面端 Chrome / Edge · 请开启声音');
   if(IS_MOBILE) set('titleNote', en?'Landscape · Sound on · Online for first launch':'请横屏 · 开启声音 · 首次需联网');
   set('rotateTitle', en?'Turn sideways':'横过来玩');
   set('rotateCopy', en?'Turn the phone sideways so the canvas can fill the screen.':'把手机转到横屏，画面会铺满。');
+  set('rotatePlay', en?'Play anyway':'先这样玩');
   set('btnRun', en?'Run':'跑');
   set('btnJump', en?'Hop':'跳');
   // HUD
@@ -4789,18 +4804,39 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
 (function mobileTouch(){
   window.joy={x:0,y:0,mag:0};
   window.touchRun=false;
+  const wx=IS_WECHAT;
+  let forceStage=false;
+  const applyStage=()=>{
+    const tall=innerHeight>innerWidth+40;
+    const on=(wx && tall) || forceStage;
+    document.documentElement.classList.toggle('wx-stage', on);
+    if(on){
+      const long=Math.max(innerWidth,innerHeight), short=Math.min(innerWidth,innerHeight);
+      document.documentElement.style.setProperty('--wx-w', long+'px');
+      document.documentElement.style.setProperty('--wx-h', short+'px');
+    }
+    document.body.classList.toggle('portrait', IS_MOBILE && tall && !(wx && tall));
+    resize();
+  };
+  const localPoint=(clientX,clientY)=>{
+    if(!document.documentElement.classList.contains('wx-stage')) return {x:clientX,y:clientY};
+    const short=Math.min(innerWidth,innerHeight);
+    return {x:clientY, y:short-clientX};
+  };
   const syncOrient=()=>{
-    const box=window.visualViewport;
-    const w=box?box.width:innerWidth, h=box?box.height:innerHeight;
-    const portrait=h>w+40;
-    document.body.classList.toggle('portrait', IS_MOBILE && portrait);
+    applyStage();
   };
   syncOrient();
   addEventListener('resize',syncOrient);
   addEventListener('orientationchange',()=>setTimeout(syncOrient,80));
-  if(window.visualViewport) visualViewport.addEventListener('resize',()=>{ syncOrient(); resize(); });
+  if(window.visualViewport) visualViewport.addEventListener('resize',syncOrient);
+  document.getElementById('rotatePlay').onclick=()=>{
+    forceStage=true;
+    applyStage();
+  };
   window.requestLandscape=function(){
     if(!IS_MOBILE) return;
+    if(wx){ applyStage(); return; }
     const el=document.documentElement;
     const req=el.requestFullscreen||el.webkitRequestFullscreen||el.webkitEnterFullscreen;
     try{ const p=req&&req.call(el,{navigationUI:'hide'}); if(p&&p.catch) p.catch(()=>{}); }catch(_){}
@@ -4838,22 +4874,25 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
   zone.addEventListener('pointerdown',e=>{
     if(joyId!=null||state!=='play') return;
     joyId=e.pointerId; zone.setPointerCapture(e.pointerId);
-    origin={x:e.clientX,y:e.clientY};
-    base.style.left=e.clientX+'px'; base.style.top=e.clientY+'px';
-    base.classList.add('on'); setJoy(e.clientX,e.clientY);
+    const p=localPoint(e.clientX,e.clientY);
+    origin={x:p.x,y:p.y};
+    base.style.left=p.x+'px'; base.style.top=p.y+'px';
+    base.classList.add('on'); setJoy(p.x,p.y);
   });
-  zone.addEventListener('pointermove',e=>{ if(e.pointerId===joyId) setJoy(e.clientX,e.clientY); });
+  zone.addEventListener('pointermove',e=>{ if(e.pointerId===joyId){ const p=localPoint(e.clientX,e.clientY); setJoy(p.x,p.y); } });
   zone.addEventListener('pointerup',e=>{ if(e.pointerId===joyId) endJoy(); });
   zone.addEventListener('pointercancel',e=>{ if(e.pointerId===joyId) endJoy(); });
   look.addEventListener('pointerdown',e=>{
     if(e.target.closest('.tbtn')||state!=='play') return;
-    lookId=e.pointerId; lastX=e.clientX; lastY=e.clientY;
+    const p=localPoint(e.clientX,e.clientY);
+    lookId=e.pointerId; lastX=p.x; lastY=p.y;
     look.setPointerCapture(e.pointerId);
   });
   look.addEventListener('pointermove',e=>{
     if(e.pointerId!==lookId||state!=='play') return;
-    const dx=e.clientX-lastX, dy=e.clientY-lastY;
-    lastX=e.clientX; lastY=e.clientY;
+    const p=localPoint(e.clientX,e.clientY);
+    const dx=p.x-lastX, dy=p.y-lastY;
+    lastX=p.x; lastY=p.y;
     player.yaw-=dx*0.0046*sens;
     player.pitch-=dy*0.0036*sens;
     player.pitch=Math.max(-1.15,Math.min(1.15,player.pitch));
