@@ -264,19 +264,18 @@
   body.mobile.portrait #touch,body.mobile.portrait #hud{visibility:hidden}
   /* 微信网页锁在竖屏坐标里。手机横过来时，页面自己转 90 度铺满窗口。 */
   html.wx-stage{width:100%;height:100%;overflow:hidden;background:#05070f}
-  html.wx-stage body{position:fixed;margin:0;
-    top:var(--wx-oy,0px);left:calc(var(--wx-ox, 0px) + var(--wx-h));
+  html.wx-stage body{position:fixed;margin:0;top:0;left:var(--wx-h);
     width:var(--wx-w);height:var(--wx-h);transform:rotate(90deg);transform-origin:0 0}
   html.wx-stage #game,html.wx-stage #title,html.wx-stage #hud,html.wx-stage #touch,
   html.wx-stage #pause,html.wx-stage #finale,html.wx-stage #rotateGate,
   html.wx-stage #vignetteStatic,html.wx-stage #flash,html.wx-stage #letterbox,html.wx-stage #origLightbox{
     position:absolute;inset:0;width:100%;height:100%}
   html.wx-stage #card,html.wx-stage #photoTip,html.wx-stage #frame{position:absolute}
-  html.wx-stage #title{justify-content:center;padding:8px 18px}
-  html.wx-stage #title h1{font-size:34px;margin-bottom:2px}
-  html.wx-stage #title .tag{margin-bottom:8px}
-  html.wx-stage #startBtn{padding:10px 26px}
-  html.wx-stage #title .keys{margin-top:8px}
+  html.wx-stage #title{justify-content:center;padding:12px 20px}
+  html.wx-stage #title h1{font-size:30px;margin-bottom:2px;letter-spacing:.12em;text-indent:.12em}
+  html.wx-stage #title .tag,html.wx-stage #title .keys{display:none}
+  html.wx-stage #startBtn{margin-top:12px;padding:12px 28px}
+  html.wx-stage #title .note{margin-top:10px}
   html.wx-stage body.mobile.portrait #rotateGate{display:none}
   html.wx-stage body.mobile.portrait #touch,html.wx-stage body.mobile.portrait #hud{visibility:visible}
   #joyZone,#lookZone{position:absolute;top:0;bottom:0;width:42%;pointer-events:auto;touch-action:none}
@@ -311,11 +310,13 @@
   if(ua||touch){
     document.body.classList.add('mobile');
     if(/MicroMessenger/i.test(navigator.userAgent)) document.body.classList.add('wechat');
-    if(/MicroMessenger/i.test(navigator.userAgent) && innerHeight>innerWidth+40){
+    var pageW=document.documentElement.clientWidth||innerWidth;
+    var pageH=document.documentElement.clientHeight||innerHeight;
+    if(/MicroMessenger/i.test(navigator.userAgent) && pageH>pageW+40){
       document.documentElement.classList.add('wx-stage');
-      document.documentElement.style.setProperty('--wx-w', innerHeight+'px');
-      document.documentElement.style.setProperty('--wx-h', innerWidth+'px');
-    } else if(innerHeight>innerWidth+40){
+      document.documentElement.style.setProperty('--wx-w', pageH+'px');
+      document.documentElement.style.setProperty('--wx-h', pageW+'px');
+    } else if(pageH>pageW+40){
       document.body.classList.add('portrait');
     }
   }
@@ -3693,10 +3694,9 @@ const blurMat=new THREE.ShaderMaterial({
 function disposeRT(){ for(const t of [rt,rtBright,rtBlurA,rtBlurB]){ if(t) t.dispose(); } }
 function resize(){
   const stage=document.documentElement.classList.contains('wx-stage');
-  const vv=window.visualViewport;
-  const vw=vv?vv.width:innerWidth, vh=vv?vv.height:innerHeight;
-  const long=Math.max(vw,vh), short=Math.min(vw,vh);
-  const w=stage?long:innerWidth, h=stage?short:innerHeight;
+  const rootStyle=getComputedStyle(document.documentElement);
+  const w=stage?(parseFloat(rootStyle.getPropertyValue('--wx-w'))||innerHeight):innerWidth;
+  const h=stage?(parseFloat(rootStyle.getPropertyValue('--wx-h'))||innerWidth):innerHeight;
   renderer.setPixelRatio(DPR); renderer.setSize(w,h);
   camera.aspect=w/h; camera.updateProjectionMatrix();
   const rw=Math.max(2,Math.floor(w*DPR*renderScale)), rh=Math.max(2,Math.floor(h*DPR*renderScale));
@@ -4825,38 +4825,23 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
   window.touchRun=false;
   const wx=IS_WECHAT;
   let forceStage=false;
-  const stageBox=()=>{
-    const vv=window.visualViewport;
-    const width=vv?vv.width:innerWidth, height=vv?vv.height:innerHeight;
-    const left=vv?vv.offsetLeft:0, top=vv?vv.offsetTop:0;
-    return {width,height,left,top,tall:height>width+40};
-  };
   const applyStage=()=>{
-    const box=stageBox();
-    const on=(wx && box.tall) || forceStage;
+    const width=document.documentElement.clientWidth||innerWidth;
+    const height=document.documentElement.clientHeight||innerHeight;
+    const tall=height>width+40;
+    const on=(wx && tall) || forceStage;
     document.documentElement.classList.toggle('wx-stage', on);
     if(on){
       const root=document.documentElement.style;
-      root.setProperty('--wx-w', Math.max(box.width,box.height)+'px');
-      root.setProperty('--wx-h', Math.min(box.width,box.height)+'px');
-      root.setProperty('--wx-ox', box.left+'px');
-      root.setProperty('--wx-oy', box.top+'px');
-      requestAnimationFrame(()=>{
-        const r=document.body.getBoundingClientRect();
-        const dx=Math.max(0,-r.left), dy=Math.max(0,-r.top);
-        if(dx>1||dy>1){
-          root.setProperty('--wx-w', Math.max(120, r.width-dx)+'px');
-          root.setProperty('--wx-h', Math.max(120, r.height-dy)+'px');
-          resize();
-        }
-      });
+      root.setProperty('--wx-w', height+'px');
+      root.setProperty('--wx-h', width+'px');
     }
-    document.body.classList.toggle('portrait', IS_MOBILE && box.tall && !on);
+    document.body.classList.toggle('portrait', IS_MOBILE && tall && !on);
     resize();
   };
   const localPoint=(clientX,clientY)=>{
     if(!document.documentElement.classList.contains('wx-stage')) return {x:clientX,y:clientY};
-    const short=Math.min(innerWidth,innerHeight);
+    const short=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--wx-h'))||innerWidth;
     return {x:clientY, y:short-clientX};
   };
   const syncOrient=()=>{
