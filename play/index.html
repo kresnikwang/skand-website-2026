@@ -227,7 +227,13 @@
   body.mobile #hint{display:none}
   body.mobile #zoneToast{top:14%}
   body.mobile #zoneToast .zh{font-size:22px;letter-spacing:.18em;text-indent:.18em}
-  body.mobile #prompt{top:auto;bottom:max(18px,calc(env(safe-area-inset-bottom) + 12px));padding:7px 16px 7px 10px}
+  body.mobile #hud{z-index:26}
+  body.mobile #prompt{top:auto;bottom:max(88px,calc(env(safe-area-inset-bottom) + 80px));
+    min-height:44px;padding:10px 18px;pointer-events:none;max-width:min(62vw,320px)}
+  body.mobile #prompt.on{pointer-events:auto}
+  body.mobile #prompt.on:active{background:rgba(242,193,78,.34)}
+  body.mobile #prompt b{display:none}
+  body.mobile #promptText{max-width:54vw;overflow:hidden;text-overflow:ellipsis}
   body.mobile #crosshair{opacity:.55}
   body.mobile #title h1{font-size:min(12vh,64px)}
   body.mobile #title{justify-content:center;padding:8px 16px}
@@ -273,13 +279,10 @@
     font-family:"Noto Sans SC","PingFang SC",sans-serif;display:flex;align-items:center;justify-content:center;
     box-shadow:0 8px 18px rgba(0,0,0,.28)}
   .tbtn:active,.tbtn.held{background:rgba(242,193,78,.34);border-color:rgba(242,193,78,.85);color:#fff6d8}
-  #btnAct{right:max(22px,calc(env(safe-area-inset-right) + 16px));bottom:max(22px,calc(env(safe-area-inset-bottom) + 16px));
-    width:62px;height:62px;font-size:15px;letter-spacing:.04em;opacity:.42;transition:opacity .18s,background .12s,transform .12s}
-  body.mobile.can-act #btnAct{opacity:1;transform:scale(1.04);box-shadow:0 0 0 6px rgba(242,193,78,.16),0 8px 18px rgba(0,0,0,.28)}
-  #btnRun{right:max(96px,calc(env(safe-area-inset-right) + 90px));bottom:max(34px,calc(env(safe-area-inset-bottom) + 28px));
-    width:50px;height:50px;font-size:13px}
-  #btnJump{right:max(58px,calc(env(safe-area-inset-right) + 52px));bottom:max(96px,calc(env(safe-area-inset-bottom) + 88px));
-    width:50px;height:50px;font-size:13px}
+  #btnRun{right:max(86px,calc(env(safe-area-inset-right) + 80px));bottom:max(22px,calc(env(safe-area-inset-bottom) + 16px));
+    width:52px;height:52px;font-size:14px}
+  #btnJump{right:max(22px,calc(env(safe-area-inset-right) + 16px));bottom:max(22px,calc(env(safe-area-inset-bottom) + 16px));
+    width:52px;height:52px;font-size:14px}
   #btnMenu{top:max(8px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));
     width:44px;height:44px;font-size:16px;opacity:.72}
   body.mobile #pause .panel .setting:has(#setSens){display:none}
@@ -366,7 +369,6 @@
   <button type="button" class="tbtn" id="btnMenu" aria-label="菜单">☰</button>
   <button type="button" class="tbtn" id="btnRun" aria-label="疾跑">跑</button>
   <button type="button" class="tbtn" id="btnJump" aria-label="跳跃">跳</button>
-  <button type="button" class="tbtn" id="btnAct" aria-label="互动">看</button>
 </div>
 
 <div id="title">
@@ -386,7 +388,7 @@
   var mobile=document.body.classList.contains('mobile');
   var keys=document.getElementById('titleKeys'), note=document.getElementById('titleNote');
   if(mobile){
-    keys.innerHTML='<b>左摇杆</b>漫步 <b>右侧滑动</b>环顾 <b>跑 / 跳 / 看</b>操作';
+    keys.innerHTML='<b>左摇杆</b>漫步 <b>右侧滑动</b>环顾 <b>跑 / 跳</b>，走近后点提示';
     note.textContent='请横屏 · 开启声音 · 首次需联网';
   } else {
     keys.innerHTML='<b>W A S D</b> 漫步 &nbsp; <b>鼠标</b> 环顾 &nbsp; <b>Shift</b> 疾跑 &nbsp; <b>空格</b> 跳跃 &nbsp; <b>E</b> 观赏 / 取景 / 交谈<br>世界还是一幅未上色的底稿：找回 5 管失落颜料让画境重现色彩，踏上 7 处画家取景地并在黄房子门前的镜中寻回《自画像》，再收集 12 颗灵感星辰，让阿尔勒沉入《星月夜》。';
@@ -4426,7 +4428,6 @@ function tick(){
     } else {
       promptEl.classList.remove('on'); crossEl.classList.remove('hot');
     }
-    document.body.classList.toggle('can-act',!!(interactTarget&&!photo&&state==='play'));
     /* ---- 近距星辰低语 ---- */
     bellAcc+=dt;
     if(bellAcc>1.9){
@@ -4552,10 +4553,10 @@ function applyLang(){
   vgRefreshTitle();
   setH('titleKeys', en
     ?(IS_MOBILE
-      ?'<b>Stick</b> walk &nbsp; <b>Drag right</b> look &nbsp; <b>Run / Hop / Look</b>'
+      ?'<b>Stick</b> walk &nbsp; <b>Drag right</b> look &nbsp; <b>Run / Hop</b>. Tap the prompt.'
       :'<b>W A S D</b> Walk &nbsp; <b>Mouse</b> Look &nbsp; <b>Shift</b> Sprint &nbsp; <b>Space</b> Jump &nbsp; <b>E</b> Admire / Frame / Talk<br>The world begins as an unpainted sketch: recover 5 lost pigments to restore color, visit 7 painter’s vantages and gaze into the Yellow House mirror to unlock Self-Portrait, then gather 12 stars of inspiration to immerse Arles in Starry Night.')
     :(IS_MOBILE
-      ?'<b>左摇杆</b>漫步 <b>右侧滑动</b>环顾 <b>跑 / 跳 / 看</b>操作'
+      ?'<b>左摇杆</b>漫步 <b>右侧滑动</b>环顾 <b>跑 / 跳</b>，走近后点提示'
       :'<b>W A S D</b> 漫步 &nbsp; <b>鼠标</b> 环顾 &nbsp; <b>Shift</b> 疾跑 &nbsp; <b>空格</b> 跳跃 &nbsp; <b>E</b> 观赏 / 取景 / 交谈<br>世界还是一幅未上色的底稿：找回 5 管失落颜料让画境重现色彩，踏上 7 处画家取景地并在黄房子门前的镜中寻回《自画像》，再收集 12 颗灵感星辰，让阿尔勒沉入《星月夜》。'));
   set('titleNote', en?'Best on desktop Chrome / Edge · Sound recommended · Loads three.js r187 on first launch':'建议桌面端 Chrome / Edge · 请开启声音 · 首次加载需联网获取 three.js r187');
   if(IS_MOBILE) set('titleNote', en?'Landscape · Sound on · Online for first launch':'请横屏 · 开启声音 · 首次需联网');
@@ -4563,7 +4564,6 @@ function applyLang(){
   set('rotateCopy', en?'Turn the phone sideways so the canvas can fill the screen.':'把手机转到横屏，画面会铺满。');
   set('btnRun', en?'Run':'跑');
   set('btnJump', en?'Hop':'跳');
-  set('btnAct', en?'Look':'看');
   // HUD
   set('lblJourney', en?'Journey':'旅途');
   set('lblStar', en?'Stars':'星辰');
@@ -4870,11 +4870,10 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
   };
   hold(document.getElementById('btnRun'),()=>{ touchRun=true; },()=>{ touchRun=false; });
   hold(document.getElementById('btnJump'),()=>{ keys.Space=true; },()=>{ keys.Space=false; });
-  document.getElementById('btnAct').addEventListener('pointerdown',e=>{
+  promptEl.addEventListener('pointerdown',e=>{
+    if(!promptEl.classList.contains('on')) return;
     e.preventDefault(); e.stopPropagation();
-    if(state==='card') closeCard();
-    else if(state==='vantage'){ if(origOpen) closeOrig(); else closeVantage(); }
-    else if(state==='play') tryInteract();
+    tryInteract();
   });
   document.getElementById('btnMenu').addEventListener('pointerdown',e=>{
     e.preventDefault(); e.stopPropagation();
