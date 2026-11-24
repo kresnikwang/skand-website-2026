@@ -306,26 +306,51 @@
     document.body.classList.add('mobile');
     var wechat=/MicroMessenger/i.test(navigator.userAgent);
     if(wechat) document.body.classList.add('wechat');
+    var tilted=false;
+    var onTilt=function(event){
+      if(!wechat) return;
+      var horizontal=Math.abs(event.gamma)>35;
+      var flat=Math.abs(event.beta)<55;
+      if(horizontal&&flat) tilted=true;
+    };
+    if(wechat&&window.DeviceOrientationEvent){
+      addEventListener('deviceorientation',onTilt);
+      if(typeof DeviceOrientationEvent.requestPermission==='function'){
+        var ask=function(){
+          DeviceOrientationEvent.requestPermission().then(function(result){
+            if(result==='granted') addEventListener('deviceorientation',onTilt);
+          }).catch(function(){});
+          removeEventListener('touchstart',ask);
+          removeEventListener('click',ask);
+        };
+        addEventListener('touchstart',ask,{once:true});
+        addEventListener('click',ask,{once:true});
+      }
+    }
     var sync=function(){
       var viewW=document.documentElement.clientWidth||innerWidth;
       var viewH=document.documentElement.clientHeight||innerHeight;
       var viewPortrait=viewH>viewW+40;
       var angle=screen.orientation&&typeof screen.orientation.angle==='number'
         ?screen.orientation.angle:(typeof orientation==='number'?orientation:0);
-      var physicalLandscape=((angle%180)+180)%180===90 || screen.width>screen.height;
+      var physicalLandscape=((angle%180)+180)%180===90 || tilted || screen.width>screen.height;
       var land=wechat&&viewPortrait&&physicalLandscape;
       document.body.classList.toggle('wechat-landscape',land);
       document.body.classList.toggle('portrait',viewPortrait&&!land);
       if(land){
         var root=document.documentElement.style;
-        root.setProperty('--wx-long',Math.max(viewH,screen.width,screen.height)+'px');
-        root.setProperty('--wx-short',Math.min(viewW,screen.width,screen.height)+'px');
+        var long=Math.max(viewH,viewW,screen.width||0,screen.height||0);
+        var short=Math.min(viewW,screen.width||viewW,screen.height||viewW);
+        if(short<300||short>long) short=Math.min(viewW,long/2);
+        root.setProperty('--wx-long',long+'px');
+        root.setProperty('--wx-short',short+'px');
       }
     };
     sync();
     addEventListener('resize',sync);
     addEventListener('orientationchange',function(){setTimeout(sync,80);});
     if(window.visualViewport) visualViewport.addEventListener('resize',sync);
+    setInterval(function(){ if(wechat) sync(); },350);
   }
 })();
 </script>
@@ -4829,25 +4854,7 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
 (function mobileTouch(){
   window.joy={x:0,y:0,mag:0};
   window.touchRun=false;
-  const orientationAngle=()=>{
-    const angle=screen.orientation&&Number.isFinite(screen.orientation.angle)?screen.orientation.angle
-      :(typeof window.orientation==='number'?window.orientation:0);
-    return ((angle%180)+180)%180;
-  };
   const applyWechatLandscape=()=>{
-    const viewW=document.documentElement.clientWidth||innerWidth;
-    const viewH=document.documentElement.clientHeight||innerHeight;
-    const viewPortrait=viewH>viewW+40;
-    const physicalLandscape=orientationAngle()===90 || (viewPortrait && screen.width>screen.height);
-    const on=IS_WECHAT&&viewPortrait&&physicalLandscape;
-    document.body.classList.toggle('wechat-landscape',on);
-    document.body.classList.toggle('portrait',IS_MOBILE&&viewPortrait&&!on);
-    if(on){
-      const long=Math.max(screen.width,screen.height,viewH);
-      const short=Math.min(screen.width,screen.height,viewW);
-      document.documentElement.style.setProperty('--wx-long',long+'px');
-      document.documentElement.style.setProperty('--wx-short',short+'px');
-    }
     resize();
   };
   const stagePoint=(clientX,clientY)=>{
