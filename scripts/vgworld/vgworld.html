@@ -265,21 +265,18 @@
   /* 微信网页锁在竖屏坐标里。手机横过来时，页面自己转 90 度铺满窗口。 */
   html.wx-stage{width:100%;height:100%;overflow:hidden;background:#05070f}
   html.wx-stage body{margin:0;background:#05070f}
+  html.wx-stage body.mobile{width:var(--wx-w);height:var(--wx-h)}
   #wxRotation{position:fixed;top:0;left:0;width:var(--wx-w);height:var(--wx-h);
     transform:rotate(90deg);transform-origin:0 0;background:#05070f}
-  html.wx-stage #wxRotation{display:block}
-  html.wx-stage body > :not(#wxRotation){position:absolute}
-  html.wx-stage #game,html.wx-stage #title,html.wx-stage #hud,html.wx-stage #touch,
-  html.wx-stage #pause,html.wx-stage #finale,html.wx-stage #rotateGate,
-  html.wx-stage #vignetteStatic,html.wx-stage #flash,html.wx-stage #letterbox,html.wx-stage #origLightbox{
-    position:absolute;inset:0;width:var(--wx-w);height:var(--wx-h)}
-  html.wx-stage #title{justify-content:center;padding:12px 20px}
+  html.wx-stage #wxRotation{display:none}
+  html.wx-stage #title{justify-content:center;padding:12px 20px;transform:translateY(var(--wx-oy,0px))}
   html.wx-stage #title h1{font-size:30px;margin-bottom:2px;letter-spacing:.12em;text-indent:.12em}
   html.wx-stage #title .tag,html.wx-stage #title .keys{display:none}
   html.wx-stage #startBtn{margin-top:12px;padding:12px 28px}
   html.wx-stage #title .note{margin-top:10px}
   html.wx-stage body.mobile.portrait #rotateGate{display:none}
   html.wx-stage body.mobile.portrait #touch,html.wx-stage body.mobile.portrait #hud{visibility:visible}
+  html.wx-stage body.mobile.portrait{transform:rotate(90deg) translateY(calc(-1 * var(--wx-h)));transform-origin:0 0}
   #joyZone,#lookZone{position:absolute;top:0;bottom:0;width:42%;pointer-events:auto;touch-action:none}
   #joyZone{left:0} #lookZone{right:0;width:58%}
   #joyBase{position:absolute;width:118px;height:118px;margin:-59px 0 0 -59px;border-radius:50%;
