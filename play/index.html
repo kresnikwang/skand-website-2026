@@ -260,6 +260,18 @@
   @keyframes tiltPhone{0%,18%{transform:rotate(0)} 48%,100%{transform:rotate(-90deg)}}
   @media (prefers-reduced-motion:reduce){ #rotateGate .phone{animation:none;transform:rotate(-90deg)} }
 
+  #wxView{display:contents}
+  body.wechat-landscape #wxView{position:fixed;left:var(--wx-short);top:0;
+    width:var(--wx-long);height:var(--wx-short);transform:rotate(90deg);transform-origin:0 0;
+    background:#05070f;overflow:hidden}
+  body.wechat-landscape #wxView > *{position:absolute}
+  body.wechat-landscape #game,body.wechat-landscape #vignetteStatic,body.wechat-landscape #flash,
+  body.wechat-landscape #hud,body.wechat-landscape #touch,body.wechat-landscape #title{inset:0;width:100%;height:100%}
+  body.wechat-landscape #wxView #game{inset:0;width:var(--wx-long);height:var(--wx-short)}
+  body.wechat-landscape #rotateGate{display:none!important}
+  body.wechat-landscape #touch,body.wechat-landscape #hud{visibility:visible!important}
+  body.wechat-landscape #title{transform:none}
+
   #touch{display:none}
   body.mobile #touch{display:block;position:fixed;inset:0;z-index:24;pointer-events:none}
   body.mobile.portrait #touch,body.mobile.portrait #hud{visibility:hidden}
@@ -294,15 +306,32 @@
   var touch=navigator.maxTouchPoints>1 && Math.min(screen.width,screen.height)<=932;
   if(ua||touch){
     document.body.classList.add('mobile');
-    if(/MicroMessenger/i.test(navigator.userAgent)) document.body.classList.add('wechat');
-    var pageW=document.documentElement.clientWidth||innerWidth;
-    var pageH=document.documentElement.clientHeight||innerHeight;
-    if(pageH>pageW+40){
-      document.body.classList.add('portrait');
-    }
+    var wechat=/MicroMessenger/i.test(navigator.userAgent);
+    if(wechat) document.body.classList.add('wechat');
+    var sync=function(){
+      var viewW=document.documentElement.clientWidth||innerWidth;
+      var viewH=document.documentElement.clientHeight||innerHeight;
+      var viewPortrait=viewH>viewW+40;
+      var angle=screen.orientation&&typeof screen.orientation.angle==='number'
+        ?screen.orientation.angle:(typeof orientation==='number'?orientation:0);
+      var physicalLandscape=((angle%180)+180)%180===90 || screen.width>screen.height;
+      var land=wechat&&viewPortrait&&physicalLandscape;
+      document.body.classList.toggle('wechat-landscape',land);
+      document.body.classList.toggle('portrait',viewPortrait&&!land);
+      if(land){
+        var root=document.documentElement.style;
+        root.setProperty('--wx-long',Math.max(viewH,screen.width,screen.height)+'px');
+        root.setProperty('--wx-short',Math.min(viewW,screen.width,screen.height)+'px');
+      }
+    };
+    sync();
+    addEventListener('resize',sync);
+    addEventListener('orientationchange',function(){setTimeout(sync,80);});
+    if(window.visualViewport) visualViewport.addEventListener('resize',sync);
   }
 })();
 </script>
+<div id="wxView">
 <canvas id="game"></canvas>
 <div id="vignetteStatic"></div>
 <div id="flash"></div>
@@ -364,15 +393,6 @@
   <h2 id="rotateTitle">横过来玩</h2>
   <p class="sans" id="rotateCopy">把手机转到横屏，画面会铺满。</p>
 </div>
-<div id="touch" aria-hidden="true">
-  <div id="joyZone"></div>
-  <div id="lookZone"></div>
-  <div id="joyBase"><div id="joyKnob"></div></div>
-  <button type="button" class="tbtn" id="btnMenu" aria-label="菜单">☰</button>
-  <button type="button" class="tbtn" id="btnRun" aria-label="疾跑">跑</button>
-  <button type="button" class="tbtn" id="btnJump" aria-label="跳跃">跳</button>
-</div>
-
 <div id="title">
   <div id="langToggle" class="sans" role="button" tabindex="0" aria-label="Switch Language"><span data-l="zh" class="on">中文</span><span data-l="en">EN</span></div>
   <h1 id="titleH1">梵高世界</h1>
@@ -384,6 +404,15 @@
   <div class="keys sans" id="titleKeys"></div>
   <div class="note sans" id="titleNote"></div>
   <div id="loadErr" class="sans"></div>
+</div>
+<div id="touch" aria-hidden="true">
+  <div id="joyZone"></div>
+  <div id="lookZone"></div>
+  <div id="joyBase"><div id="joyKnob"></div></div>
+  <button type="button" class="tbtn" id="btnMenu" aria-label="菜单">☰</button>
+  <button type="button" class="tbtn" id="btnRun" aria-label="疾跑">跑</button>
+  <button type="button" class="tbtn" id="btnJump" aria-label="跳跃">跳</button>
+</div>
 </div>
 <script>
 (function(){
@@ -3673,7 +3702,10 @@ const blurMat=new THREE.ShaderMaterial({
 });
 function disposeRT(){ for(const t of [rt,rtBright,rtBlurA,rtBlurB]){ if(t) t.dispose(); } }
 function resize(){
-  const w=innerWidth, h=innerHeight;
+  const stage=document.body.classList.contains('wechat-landscape');
+  const rootStyle=getComputedStyle(document.documentElement);
+  const w=stage?(parseFloat(rootStyle.getPropertyValue('--wx-long'))||innerHeight):innerWidth;
+  const h=stage?(parseFloat(rootStyle.getPropertyValue('--wx-short'))||innerWidth):innerHeight;
   renderer.setPixelRatio(DPR); renderer.setSize(w,h);
   camera.aspect=w/h; camera.updateProjectionMatrix();
   const rw=Math.max(2,Math.floor(w*DPR*renderScale)), rh=Math.max(2,Math.floor(h*DPR*renderScale));
@@ -4799,9 +4831,34 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
 (function mobileTouch(){
   window.joy={x:0,y:0,mag:0};
   window.touchRun=false;
-  const syncOrient=()=>{
-    document.body.classList.toggle('portrait', IS_MOBILE && innerHeight>innerWidth+40);
+  const orientationAngle=()=>{
+    const angle=screen.orientation&&Number.isFinite(screen.orientation.angle)?screen.orientation.angle
+      :(typeof window.orientation==='number'?window.orientation:0);
+    return ((angle%180)+180)%180;
+  };
+  const applyWechatLandscape=()=>{
+    const viewW=document.documentElement.clientWidth||innerWidth;
+    const viewH=document.documentElement.clientHeight||innerHeight;
+    const viewPortrait=viewH>viewW+40;
+    const physicalLandscape=orientationAngle()===90 || (viewPortrait && screen.width>screen.height);
+    const on=IS_WECHAT&&viewPortrait&&physicalLandscape;
+    document.body.classList.toggle('wechat-landscape',on);
+    document.body.classList.toggle('portrait',IS_MOBILE&&viewPortrait&&!on);
+    if(on){
+      const long=Math.max(screen.width,screen.height,viewH);
+      const short=Math.min(screen.width,screen.height,viewW);
+      document.documentElement.style.setProperty('--wx-long',long+'px');
+      document.documentElement.style.setProperty('--wx-short',short+'px');
+    }
     resize();
+  };
+  const stagePoint=(clientX,clientY)=>{
+    if(!document.body.classList.contains('wechat-landscape')) return {x:clientX,y:clientY};
+    const short=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--wx-short'))||innerWidth;
+    return {x:clientY,y:short-clientX};
+  };
+  const syncOrient=()=>{
+    applyWechatLandscape();
   };
   syncOrient();
   addEventListener('resize',syncOrient);
@@ -4809,6 +4866,7 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
   if(window.visualViewport) visualViewport.addEventListener('resize',syncOrient);
   window.requestLandscape=function(){
     if(!IS_MOBILE) return;
+    applyWechatLandscape();
     const el=document.documentElement;
     const req=el.requestFullscreen||el.webkitRequestFullscreen||el.webkitEnterFullscreen;
     try{ const p=req&&req.call(el,{navigationUI:'hide'}); if(p&&p.catch) p.catch(()=>{}); }catch(_){}
@@ -4846,22 +4904,25 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
   zone.addEventListener('pointerdown',e=>{
     if(joyId!=null||state!=='play') return;
     joyId=e.pointerId; zone.setPointerCapture(e.pointerId);
-    origin={x:e.clientX,y:e.clientY};
-    base.style.left=e.clientX+'px'; base.style.top=e.clientY+'px';
-    base.classList.add('on'); setJoy(e.clientX,e.clientY);
+    const p=stagePoint(e.clientX,e.clientY);
+    origin={x:p.x,y:p.y};
+    base.style.left=p.x+'px'; base.style.top=p.y+'px';
+    base.classList.add('on'); setJoy(p.x,p.y);
   });
-  zone.addEventListener('pointermove',e=>{ if(e.pointerId===joyId) setJoy(e.clientX,e.clientY); });
+  zone.addEventListener('pointermove',e=>{ if(e.pointerId===joyId){ const p=stagePoint(e.clientX,e.clientY); setJoy(p.x,p.y); } });
   zone.addEventListener('pointerup',e=>{ if(e.pointerId===joyId) endJoy(); });
   zone.addEventListener('pointercancel',e=>{ if(e.pointerId===joyId) endJoy(); });
   look.addEventListener('pointerdown',e=>{
     if(e.target.closest('.tbtn')||state!=='play') return;
-    lookId=e.pointerId; lastX=e.clientX; lastY=e.clientY;
+    const p=stagePoint(e.clientX,e.clientY);
+    lookId=e.pointerId; lastX=p.x; lastY=p.y;
     look.setPointerCapture(e.pointerId);
   });
   look.addEventListener('pointermove',e=>{
     if(e.pointerId!==lookId||state!=='play') return;
-    const dx=e.clientX-lastX, dy=e.clientY-lastY;
-    lastX=e.clientX; lastY=e.clientY;
+    const p=stagePoint(e.clientX,e.clientY);
+    const dx=p.x-lastX, dy=p.y-lastY;
+    lastX=p.x; lastY=p.y;
     player.yaw-=dx*0.0046*sens;
     player.pitch-=dy*0.0036*sens;
     player.pitch=Math.max(-1.15,Math.min(1.15,player.pitch));
