@@ -35,6 +35,7 @@ rsync -az --delete --delay-updates \
   --exclude='scripts/portfolio/catalog.json' \
   --exclude='scripts/portfolio/build.js' \
   --exclude='scripts/skand-brawler/' \
+  --exclude='scripts/vgworld/' \
   --exclude='README.md' \
   --exclude='download-fonts.py' \
   --exclude='package.json' \
