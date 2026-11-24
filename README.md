@@ -12,6 +12,11 @@
 | Self-hosted Noto Serif/Sans SC fonts | `play/vendor/fonts/` |
 | Source -> page sync script | `scripts/sync-play.sh` (`npm run build:play`) |
 
+`scripts/sync-play.sh` stamps every build with a timestamp/hash version. It writes
+`play/version.txt`, adds `<meta name="vg-build">` to `play/index.html`, appends `?v=`
+to local fonts/three.js, and updates the homepage `/play/?v=...` link so WeChat does
+not keep serving an old cached page.
+
 `scripts/sync-play.sh` copies the source to `play/index.html`. three.js is imported
 from `/play/vendor/three/` in the source. The script rewrites the Feishu font CDN to
 `/play/vendor/fonts/`, rewrites a leftover jsDelivr three.js URL if one comes back,
