@@ -2,7 +2,16 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="screen-orientation" content="landscape">
+<meta name="x5-orientation" content="landscape">
+<meta name="x5-fullscreen" content="true">
+<meta name="x5-page-mode" content="app">
+<meta name="full-screen" content="yes">
+<meta name="browsermode" content="application">
 <title>梵高世界 · Starry Wanderer</title>
 <link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500&display=swap">
 <style>
@@ -10,9 +19,10 @@
     --gold:#f2c14e; --deep:#0b1026; --ink:#1c2340; --paper:#f4ead2;
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  html,body{width:100%;height:100%;overflow:hidden;background:var(--deep);
+  html,body{width:100%;height:100%;height:100dvh;overflow:hidden;background:var(--deep);
     font-family:"Noto Serif SC","Songti SC","STSong",serif;color:var(--paper);
-    -webkit-user-select:none;user-select:none}
+    -webkit-user-select:none;user-select:none;touch-action:none;-webkit-touch-callout:none;
+    overscroll-behavior:none}
   #game{position:fixed;inset:0;display:block}
   .sans{font-family:"Noto Sans SC","PingFang SC",sans-serif}
 
@@ -199,9 +209,93 @@
     background:linear-gradient(transparent,rgba(6,9,20,.9));color:#e8e2cf;letter-spacing:.04em}
   #journal .jgrid .locked{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
     background:rgba(255,255,255,.05);color:#5c6a92;font-size:16px}
+
+  /* ===== 手机：横屏全屏 + 摇杆（仅 body.mobile） ===== */
+  body.mobile{height:100dvh;min-height:-webkit-fill-available;background:#05070f}
+  body.mobile #game,body.mobile #hud,body.mobile #title,body.mobile #pause,body.mobile #finale,body.mobile #card{
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  body.mobile #counter{top:max(8px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));
+    width:auto;max-width:min(42vw,210px);padding:6px 9px 7px;border-radius:10px}
+  body.mobile #counter .prow,body.mobile #counter .obj br,body.mobile #counter .obj span[style]{display:none}
+  body.mobile #counter .cp{letter-spacing:.18em;font-size:10px}
+  body.mobile #counter .cp-pct{font-size:16px}
+  body.mobile #counter .obj{margin-top:5px;padding-top:5px;font-size:11px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.mobile #compass{top:max(6px,env(safe-area-inset-top));width:min(280px,38vw);height:28px;opacity:.72}
+  body.mobile #minimap{display:none}
+  body.mobile #hint{display:none}
+  body.mobile #zoneToast{top:14%}
+  body.mobile #zoneToast .zh{font-size:22px;letter-spacing:.18em;text-indent:.18em}
+  body.mobile #prompt{top:auto;bottom:max(18px,calc(env(safe-area-inset-bottom) + 12px));padding:7px 16px 7px 10px}
+  body.mobile #crosshair{opacity:.55}
+  body.mobile #title h1{font-size:min(12vh,64px)}
+  body.mobile #title{justify-content:center;padding:8px 16px}
+  body.mobile #title h1{margin-bottom:4px}
+  body.mobile #title .sub{margin-bottom:4px;font-size:13px}
+  body.mobile #title .tag{margin-bottom:14px;font-size:12px}
+  body.mobile #startBtn{font-size:16px;padding:11px 36px}
+  body.mobile #title .keys{margin-top:12px;font-size:12px;line-height:1.55;max-width:620px}
+  body.mobile #title .note{position:static;margin-top:8px;font-size:11px;padding:0 16px}
+  body.mobile #langToggle{top:max(10px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right))}
+  body.mobile #pause .panel{max-height:min(86dvh,520px);padding:16px 22px}
+  body.mobile #card{bottom:max(8%,env(safe-area-inset-bottom));padding:14px 16px;gap:12px}
+  body.mobile #card img{width:78px;height:78px}
+  body.mobile #card .q{font-size:15px;line-height:1.6}
+  body.mobile.lang-en #counter{width:auto;max-width:min(46vw,230px)}
+
+  #rotateGate{display:none;position:fixed;inset:0;z-index:80;flex-direction:column;
+    align-items:center;justify-content:center;gap:16px;text-align:center;padding:28px;
+    background:radial-gradient(ellipse at 50% 80%,#1a2748 0%,#070b18 70%);color:var(--paper)}
+  body.mobile.portrait #rotateGate{display:flex}
+  #rotateGate .phone{width:46px;height:78px;border:2px solid var(--gold);border-radius:8px;position:relative;
+    animation:tiltPhone 1.8s ease-in-out infinite}
+  #rotateGate .phone i{position:absolute;left:50%;top:8px;width:18px;height:3px;margin-left:-9px;border-radius:2px;background:rgba(242,193,78,.7)}
+  #rotateGate h2{font-size:22px;color:var(--gold);letter-spacing:.18em;font-weight:700}
+  #rotateGate p{max-width:280px;font-size:14px;line-height:1.7;color:#c5d0ea}
+  @keyframes tiltPhone{0%,18%{transform:rotate(0)} 48%,100%{transform:rotate(-90deg)}}
+  @media (prefers-reduced-motion:reduce){ #rotateGate .phone{animation:none;transform:rotate(-90deg)} }
+
+  #touch{display:none}
+  body.mobile #touch{display:block;position:fixed;inset:0;z-index:24;pointer-events:none}
+  body.mobile.portrait #touch,body.mobile.portrait #hud{visibility:hidden}
+  #joyZone,#lookZone{position:absolute;top:0;bottom:0;width:42%;pointer-events:auto;touch-action:none}
+  #joyZone{left:0} #lookZone{right:0;width:58%}
+  #joyBase{position:absolute;width:118px;height:118px;margin:-59px 0 0 -59px;border-radius:50%;
+    border:1.5px solid rgba(244,234,210,.28);background:radial-gradient(circle,rgba(244,234,210,.05),rgba(8,12,28,.28));
+    box-shadow:inset 0 0 0 18px rgba(244,234,210,.04);opacity:0;transition:opacity .16s;pointer-events:none}
+  #joyBase.on{opacity:1}
+  #joyKnob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;
+    background:radial-gradient(circle at 38% 34%,rgba(255,244,214,.92),rgba(242,193,78,.55) 46%,rgba(242,193,78,.22));
+    box-shadow:0 6px 16px rgba(0,0,0,.35);transform:translate(0,0)}
+  .tbtn{position:absolute;pointer-events:auto;touch-action:none;border:1px solid rgba(244,234,210,.38);
+    background:rgba(8,12,26,.42);color:#f4ead2;border-radius:50%;backdrop-filter:blur(6px);
+    font-family:"Noto Sans SC","PingFang SC",sans-serif;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 18px rgba(0,0,0,.28)}
+  .tbtn:active,.tbtn.held{background:rgba(242,193,78,.34);border-color:rgba(242,193,78,.85);color:#fff6d8}
+  #btnAct{right:max(22px,calc(env(safe-area-inset-right) + 16px));bottom:max(22px,calc(env(safe-area-inset-bottom) + 16px));
+    width:62px;height:62px;font-size:15px;letter-spacing:.04em;opacity:.42;transition:opacity .18s,background .12s,transform .12s}
+  body.mobile.can-act #btnAct{opacity:1;transform:scale(1.04);box-shadow:0 0 0 6px rgba(242,193,78,.16),0 8px 18px rgba(0,0,0,.28)}
+  #btnRun{right:max(96px,calc(env(safe-area-inset-right) + 90px));bottom:max(34px,calc(env(safe-area-inset-bottom) + 28px));
+    width:50px;height:50px;font-size:13px}
+  #btnJump{right:max(58px,calc(env(safe-area-inset-right) + 52px));bottom:max(96px,calc(env(safe-area-inset-bottom) + 88px));
+    width:50px;height:50px;font-size:13px}
+  #btnMenu{top:max(8px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));
+    width:44px;height:44px;font-size:16px;opacity:.72}
+  body.mobile #pause .panel .setting:has(#setSens){display:none}
 </style>
 </head>
 <body>
+<script>
+/* 进游戏脚本前就标记手机，避免标题页先按桌面排版闪一下 */
+(function(){
+  var ua=/Android|iPhone|iPad|Mobile|MicroMessenger/i.test(navigator.userAgent);
+  var touch=navigator.maxTouchPoints>1 && Math.min(screen.width,screen.height)<=932;
+  if(ua||touch){
+    document.body.classList.add('mobile');
+    if(/MicroMessenger/i.test(navigator.userAgent)) document.body.classList.add('wechat');
+    if(matchMedia('(orientation: portrait)').matches) document.body.classList.add('portrait');
+  }
+})();
+</script>
 <canvas id="game"></canvas>
 <div id="vignetteStatic"></div>
 <div id="flash"></div>
@@ -258,6 +352,21 @@
   <button id="finaleBtn">继续漫步</button>
 </div>
 
+<div id="rotateGate">
+  <div class="phone" aria-hidden="true"><i></i></div>
+  <h2 id="rotateTitle">横过来玩</h2>
+  <p class="sans" id="rotateCopy">把手机转到横屏，画面会铺满。微信里从右上角菜单打开，可以收起顶部栏。</p>
+</div>
+<div id="touch" aria-hidden="true">
+  <div id="joyZone"></div>
+  <div id="lookZone"></div>
+  <div id="joyBase"><div id="joyKnob"></div></div>
+  <button type="button" class="tbtn" id="btnMenu" aria-label="菜单">☰</button>
+  <button type="button" class="tbtn" id="btnRun" aria-label="疾跑">跑</button>
+  <button type="button" class="tbtn" id="btnJump" aria-label="跳跃">跳</button>
+  <button type="button" class="tbtn" id="btnAct" aria-label="互动">看</button>
+</div>
+
 <div id="title">
   <div id="langToggle" class="sans" role="button" tabindex="0" aria-label="Switch Language"><span data-l="zh" class="on">中文</span><span data-l="en">EN</span></div>
   <h1 id="titleH1">梵高世界</h1>
@@ -266,11 +375,23 @@
   <button id="startBtn">进 入 画 布</button>
   <div id="saveInfo" class="sans"></div>
   <button id="newGameBtn">从 头 开 始</button>
-  <div class="keys sans" id="titleKeys"><b>W A S D</b> 漫步 &nbsp; <b>鼠标</b> 环顾 &nbsp; <b>Shift</b> 疾跑 &nbsp; <b>空格</b> 跳跃 &nbsp; <b>E</b> 观赏 / 取景 / 交谈<br>
-  世界还是一幅未上色的底稿：找回 5 管失落颜料让画境重现色彩，踏上 7 处画家取景地并在黄房子门前的镜中寻回《自画像》，再收集 12 颗灵感星辰，让阿尔勒沉入《星月夜》。</div>
-  <div class="note sans" id="titleNote">建议桌面端 Chrome / Edge · 请开启声音 · 首次加载需联网获取 three.js r187</div>
+  <div class="keys sans" id="titleKeys"></div>
+  <div class="note sans" id="titleNote"></div>
   <div id="loadErr" class="sans"></div>
 </div>
+<script>
+(function(){
+  var mobile=document.body.classList.contains('mobile');
+  var keys=document.getElementById('titleKeys'), note=document.getElementById('titleNote');
+  if(mobile){
+    keys.innerHTML='<b>左摇杆</b>漫步 <b>右侧滑动</b>环顾 <b>跑 / 跳 / 看</b>操作';
+    note.textContent='请横屏 · 开启声音 · 首次需联网';
+  } else {
+    keys.innerHTML='<b>W A S D</b> 漫步 &nbsp; <b>鼠标</b> 环顾 &nbsp; <b>Shift</b> 疾跑 &nbsp; <b>空格</b> 跳跃 &nbsp; <b>E</b> 观赏 / 取景 / 交谈<br>世界还是一幅未上色的底稿：找回 5 管失落颜料让画境重现色彩，踏上 7 处画家取景地并在黄房子门前的镜中寻回《自画像》，再收集 12 颗灵感星辰，让阿尔勒沉入《星月夜》。';
+    note.textContent='建议桌面端 Chrome / Edge · 请开启声音 · 首次加载需联网获取 three.js r187';
+  }
+})();
+</script>
 
 <script type="module">
 /* ============================================================
@@ -309,7 +430,14 @@ catch(e1){
 const canvas = document.getElementById('game');
 const renderer = new THREE.WebGLRenderer({canvas, antialias:false, powerPreference:'high-performance'});
 renderer.toneMapping = THREE.NoToneMapping;
-const DPR = Math.min(window.devicePixelRatio||1, 2);
+const uaMobile=/Android|iPhone|iPad|Mobile|MicroMessenger/i.test(navigator.userAgent);
+const IS_MOBILE = uaMobile || (navigator.maxTouchPoints>1 && Math.min(screen.width,screen.height)<=932 && window.matchMedia('(pointer: coarse)').matches);
+const IS_WECHAT = /MicroMessenger/i.test(navigator.userAgent);
+if(IS_MOBILE){
+  document.body.classList.add('mobile');
+  if(IS_WECHAT) document.body.classList.add('wechat');
+}
+const DPR = Math.min(window.devicePixelRatio||1, IS_MOBILE?1.5:2);
 let renderScale = 0.8;
 
 const scene = new THREE.Scene();
@@ -3640,6 +3768,7 @@ let photo=false, brushLevels=[0.7,1.2,1.9], brushIdx=1, baseFov=72;
 let landKick=0, bellAcc=0, camSway=0, objAcc=0, pausedFrom='play';
 const clampN=(v,a,b)=>Math.max(a,Math.min(b,v));
 function lockPointer(){
+  if(IS_MOBILE) return;
   if(dragLook) return;
   try{ const p=canvas.requestPointerLock?.(); if(p&&p.catch) p.catch(()=>{ dragLook=true; }); }
   catch(e){ dragLook=true; }
@@ -3682,15 +3811,18 @@ canvas.addEventListener('click',()=>{
   if(state==='card'){ closeCard(); return; }
   if(state==='vantage'){ if(origOpen) closeOrig(); else closeVantage(); return; }
   if(state!=='play') return;
+  if(IS_MOBILE){ if(interactTarget) tryInteract(); return; }
   if(document.pointerLockElement===canvas || dragLook){
     if(interactTarget) tryInteract();
   } else lockPointer();
 });
 document.addEventListener('pointerlockchange',()=>{
+  if(IS_MOBILE) return;
   if(!document.pointerLockElement && state==='play' && !dragLook) pauseGame();
 });
 document.addEventListener('pointerlockerror',()=>{ dragLook=true; });
 addEventListener('mousemove',e=>{
+  if(IS_MOBILE) return;
   if(state!=='play') return;
   if(document.pointerLockElement===canvas || (dragLook&&dragging)){
     player.yaw-=e.movementX*0.0021*sens;
@@ -3722,6 +3854,7 @@ function resumeGame(){
   document.getElementById('pause').classList.remove('show');
   document.getElementById('journal').classList.remove('show');
   state='play'; lockPointer(); syncHud();
+  requestLandscape();
 }
 function respawn(){
   player.x=0; player.z=52; player.y=getHeight(0,52)+1.7; player.vy=0; player.vx=0; player.vz=0;
@@ -4108,12 +4241,14 @@ document.getElementById('startBtn').onclick=()=>{
   state='play';
   updateProgress(); updateObjective();
   lockPointer();
+  requestLandscape();
   vgSave();
   pluck(523.25,0,0.25); pluck(659.25,0.2,0.2); pluck(783.99,0.4,0.18);
 };
 document.getElementById('finaleBtn').onclick=()=>{
   document.getElementById('finale').classList.remove('show');
   state='play'; lockPointer();
+  requestLandscape();
 };
 function finale(){
   finaleDone=true; vgSave();
@@ -4186,12 +4321,15 @@ function tick(){
 
   if(state==='play'){
     /* ---- 移动（加速度 + 减速惯性） ---- */
-    const sprinting=!!(keys.ShiftLeft||keys.ShiftRight);
+    const sprinting=!!(keys.ShiftLeft||keys.ShiftRight||touchRun);
     let mx=0,mz=0;
     if(keys.KeyW) mz-=1; if(keys.KeyS) mz+=1;
     if(keys.KeyA) mx-=1; if(keys.KeyD) mx+=1;
-    const input=!!(mx||mz);
-    const mLen=Math.hypot(mx,mz)||1;
+    let input=!!(mx||mz);
+    let mLen=Math.hypot(mx,mz)||1;
+    if(!input && joy.mag>0.12){
+      mx=joy.x; mz=joy.y; input=true; mLen=Math.max(joy.mag,0.18);
+    }
     const sinY=Math.sin(player.yaw), cosY=Math.cos(player.yaw);
     const wx=(mx*cosY+mz*sinY)/mLen, wz=(-mx*sinY+mz*cosY)/mLen;
     const rawH=getHeight(player.x,player.z);
@@ -4286,6 +4424,7 @@ function tick(){
     } else {
       promptEl.classList.remove('on'); crossEl.classList.remove('hot');
     }
+    document.body.classList.toggle('can-act',!!(interactTarget&&!photo&&state==='play'));
     /* ---- 近距星辰低语 ---- */
     bellAcc+=dt;
     if(bellAcc>1.9){
@@ -4410,9 +4549,21 @@ function applyLang(){
   set('wipeBtn', en?'Start Over':'重新开始');
   vgRefreshTitle();
   setH('titleKeys', en
-    ?'<b>W A S D</b> Walk &nbsp; <b>Mouse</b> Look &nbsp; <b>Shift</b> Sprint &nbsp; <b>Space</b> Jump &nbsp; <b>E</b> Admire / Frame / Talk<br>The world begins as an unpainted sketch: recover 5 lost pigments to restore color, visit 7 painter’s vantages and gaze into the Yellow House mirror to unlock Self-Portrait, then gather 12 stars of inspiration to immerse Arles in Starry Night.'
-    :'<b>W A S D</b> 漫步 &nbsp; <b>鼠标</b> 环顾 &nbsp; <b>Shift</b> 疾跑 &nbsp; <b>空格</b> 跳跃 &nbsp; <b>E</b> 观赏 / 取景 / 交谈<br>世界还是一幅未上色的底稿：找回 5 管失落颜料让画境重现色彩，踏上 7 处画家取景地并在黄房子门前的镜中寻回《自画像》，再收集 12 颗灵感星辰，让阿尔勒沉入《星月夜》。');
+    ?(IS_MOBILE
+      ?'<b>Stick</b> walk &nbsp; <b>Drag right</b> look &nbsp; <b>Run / Hop / Look</b>'
+      :'<b>W A S D</b> Walk &nbsp; <b>Mouse</b> Look &nbsp; <b>Shift</b> Sprint &nbsp; <b>Space</b> Jump &nbsp; <b>E</b> Admire / Frame / Talk<br>The world begins as an unpainted sketch: recover 5 lost pigments to restore color, visit 7 painter’s vantages and gaze into the Yellow House mirror to unlock Self-Portrait, then gather 12 stars of inspiration to immerse Arles in Starry Night.')
+    :(IS_MOBILE
+      ?'<b>左摇杆</b>漫步 <b>右侧滑动</b>环顾 <b>跑 / 跳 / 看</b>操作'
+      :'<b>W A S D</b> 漫步 &nbsp; <b>鼠标</b> 环顾 &nbsp; <b>Shift</b> 疾跑 &nbsp; <b>空格</b> 跳跃 &nbsp; <b>E</b> 观赏 / 取景 / 交谈<br>世界还是一幅未上色的底稿：找回 5 管失落颜料让画境重现色彩，踏上 7 处画家取景地并在黄房子门前的镜中寻回《自画像》，再收集 12 颗灵感星辰，让阿尔勒沉入《星月夜》。'));
   set('titleNote', en?'Best on desktop Chrome / Edge · Sound recommended · Loads three.js r187 on first launch':'建议桌面端 Chrome / Edge · 请开启声音 · 首次加载需联网获取 three.js r187');
+  if(IS_MOBILE) set('titleNote', en?'Landscape · Sound on · Online for first launch':'请横屏 · 开启声音 · 首次需联网');
+  set('rotateTitle', en?'Turn sideways':'横过来玩');
+  set('rotateCopy', en
+    ?(IS_WECHAT?'Rotate to landscape. In WeChat, open the top-right menu and hide the toolbar for a full canvas.':'Rotate to landscape so the canvas can fill the screen.')
+    :(IS_WECHAT?'把手机转到横屏。微信里点右上角，收起顶部栏后画面才能铺满。':'把手机转到横屏，画面会铺满。'));
+  set('btnRun', en?'Run':'跑');
+  set('btnJump', en?'Hop':'跳');
+  set('btnAct', en?'Look':'看');
   // HUD
   set('lblJourney', en?'Journey':'旅途');
   set('lblStar', en?'Stars':'星辰');
@@ -4434,6 +4585,7 @@ function applyLang(){
   set('optQualHigh', en?'Fine':'细腻');
   set('lblBrush', en?'Brushstrokes':'笔触浓度');
   set('lblSens', en?'Sensitivity':'鼠标灵敏度');
+  if(IS_MOBILE) set('lblSens', en?'Look speed':'环顾速度');
   set('lblFov', en?'Field of View':'视野');
   set('lblVol', en?'Volume':'音量');
   set('journalBtn', en?'Travel Journal':'旅 途 图 鉴');
@@ -4633,6 +4785,104 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
   if(q.has('auto')) updateObjective();
   if(q.get('pause')==='1'&&state==='play') pauseGame(true);
   if(q.get('orig')) openOrig(getOriginal(q.get('orig')), paintTitle(q.get('orig')));
+})();
+
+/* ---------- 手机触控：浮动摇杆 / 右侧环顾 / 三个键 ---------- */
+(function mobileTouch(){
+  window.joy={x:0,y:0,mag:0};
+  window.touchRun=false;
+  const syncOrient=()=>{
+    const portrait=window.matchMedia('(orientation: portrait)').matches && innerHeight>innerWidth;
+    document.body.classList.toggle('portrait', IS_MOBILE && portrait);
+  };
+  syncOrient();
+  addEventListener('resize',syncOrient);
+  addEventListener('orientationchange',()=>setTimeout(syncOrient,80));
+  if(window.visualViewport) visualViewport.addEventListener('resize',()=>{ syncOrient(); resize(); });
+  window.requestLandscape=function(){
+    if(!IS_MOBILE) return;
+    const el=document.documentElement;
+    const req=el.requestFullscreen||el.webkitRequestFullscreen||el.webkitEnterFullscreen;
+    try{ const p=req&&req.call(el,{navigationUI:'hide'}); if(p&&p.catch) p.catch(()=>{}); }catch(_){}
+    try{ const o=screen.orientation; if(o&&o.lock) o.lock('landscape').catch(()=>{}); }catch(_){}
+  };
+  if(!IS_MOBILE) return;
+  if(!localStorage.getItem('vg_save_v1')){
+    const q=document.getElementById('setQuality');
+    if(q && q.value==='0.8'){ q.value='0.55'; setQuality(0.55); }
+  }
+  const zone=document.getElementById('joyZone');
+  const look=document.getElementById('lookZone');
+  const base=document.getElementById('joyBase');
+  const knob=document.getElementById('joyKnob');
+  const R=46, dead=0.16;
+  let joyId=null, lookId=null, lastX=0, lastY=0, origin={x:0,y:0};
+  const setJoy=(clientX,clientY)=>{
+    let dx=clientX-origin.x, dy=clientY-origin.y;
+    const dist=Math.hypot(dx,dy)||1;
+    const clamped=Math.min(dist,R);
+    dx=dx/dist*clamped; dy=dy/dist*clamped;
+    knob.style.transform=`translate(${dx}px,${dy}px)`;
+    let nx=dx/R, ny=dy/R, mag=Math.hypot(nx,ny);
+    if(mag<dead){ joy.x=joy.y=joy.mag=0; return; }
+    mag=(mag-dead)/(1-dead);
+    joy.x=nx/Math.hypot(nx,ny)*mag;
+    joy.y=ny/Math.hypot(nx,ny)*mag;
+    joy.mag=mag;
+  };
+  const endJoy=()=>{
+    joyId=null; joy.x=joy.y=joy.mag=0;
+    knob.style.transform='translate(0,0)';
+    base.classList.remove('on');
+  };
+  zone.addEventListener('pointerdown',e=>{
+    if(joyId!=null||state!=='play') return;
+    joyId=e.pointerId; zone.setPointerCapture(e.pointerId);
+    origin={x:e.clientX,y:e.clientY};
+    base.style.left=e.clientX+'px'; base.style.top=e.clientY+'px';
+    base.classList.add('on'); setJoy(e.clientX,e.clientY);
+  });
+  zone.addEventListener('pointermove',e=>{ if(e.pointerId===joyId) setJoy(e.clientX,e.clientY); });
+  zone.addEventListener('pointerup',e=>{ if(e.pointerId===joyId) endJoy(); });
+  zone.addEventListener('pointercancel',e=>{ if(e.pointerId===joyId) endJoy(); });
+  look.addEventListener('pointerdown',e=>{
+    if(e.target.closest('.tbtn')||state!=='play') return;
+    lookId=e.pointerId; lastX=e.clientX; lastY=e.clientY;
+    look.setPointerCapture(e.pointerId);
+  });
+  look.addEventListener('pointermove',e=>{
+    if(e.pointerId!==lookId||state!=='play') return;
+    const dx=e.clientX-lastX, dy=e.clientY-lastY;
+    lastX=e.clientX; lastY=e.clientY;
+    player.yaw-=dx*0.0046*sens;
+    player.pitch-=dy*0.0036*sens;
+    player.pitch=Math.max(-1.15,Math.min(1.15,player.pitch));
+  });
+  const endLook=e=>{ if(e.pointerId===lookId) lookId=null; };
+  look.addEventListener('pointerup',endLook);
+  look.addEventListener('pointercancel',endLook);
+  const hold=(el,down,up)=>{
+    el.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); el.setPointerCapture(e.pointerId); el.classList.add('held'); down(); });
+    const off=e=>{ el.classList.remove('held'); up(); };
+    el.addEventListener('pointerup',off); el.addEventListener('pointercancel',off);
+  };
+  hold(document.getElementById('btnRun'),()=>{ touchRun=true; },()=>{ touchRun=false; });
+  hold(document.getElementById('btnJump'),()=>{ keys.Space=true; },()=>{ keys.Space=false; });
+  document.getElementById('btnAct').addEventListener('pointerdown',e=>{
+    e.preventDefault(); e.stopPropagation();
+    if(state==='card') closeCard();
+    else if(state==='vantage'){ if(origOpen) closeOrig(); else closeVantage(); }
+    else if(state==='play') tryInteract();
+  });
+  document.getElementById('btnMenu').addEventListener('pointerdown',e=>{
+    e.preventDefault(); e.stopPropagation();
+    if(state==='play') pauseGame();
+    else if(state==='pause') resumeGame();
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='hidden' && state==='play') pauseGame();
+  });
+  document.addEventListener('touchmove',e=>{ if(e.target.closest('#touch,#pause,#title,#card')) e.preventDefault(); },{passive:false});
 })();
 </script>
 </body>
