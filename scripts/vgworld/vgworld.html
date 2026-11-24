@@ -292,7 +292,7 @@
   if(ua||touch){
     document.body.classList.add('mobile');
     if(/MicroMessenger/i.test(navigator.userAgent)) document.body.classList.add('wechat');
-    if(matchMedia('(orientation: portrait)').matches) document.body.classList.add('portrait');
+    if(innerHeight>innerWidth+40) document.body.classList.add('portrait');
   }
 })();
 </script>
@@ -355,7 +355,7 @@
 <div id="rotateGate">
   <div class="phone" aria-hidden="true"><i></i></div>
   <h2 id="rotateTitle">横过来玩</h2>
-  <p class="sans" id="rotateCopy">把手机转到横屏，画面会铺满。微信里从右上角菜单打开，可以收起顶部栏。</p>
+  <p class="sans" id="rotateCopy">把手机转到横屏，画面会铺满。</p>
 </div>
 <div id="touch" aria-hidden="true">
   <div id="joyZone"></div>
@@ -4558,9 +4558,7 @@ function applyLang(){
   set('titleNote', en?'Best on desktop Chrome / Edge · Sound recommended · Loads three.js r187 on first launch':'建议桌面端 Chrome / Edge · 请开启声音 · 首次加载需联网获取 three.js r187');
   if(IS_MOBILE) set('titleNote', en?'Landscape · Sound on · Online for first launch':'请横屏 · 开启声音 · 首次需联网');
   set('rotateTitle', en?'Turn sideways':'横过来玩');
-  set('rotateCopy', en
-    ?(IS_WECHAT?'Rotate to landscape. In WeChat, open the top-right menu and hide the toolbar for a full canvas.':'Rotate to landscape so the canvas can fill the screen.')
-    :(IS_WECHAT?'把手机转到横屏。微信里点右上角，收起顶部栏后画面才能铺满。':'把手机转到横屏，画面会铺满。'));
+  set('rotateCopy', en?'Turn the phone sideways so the canvas can fill the screen.':'把手机转到横屏，画面会铺满。');
   set('btnRun', en?'Run':'跑');
   set('btnJump', en?'Hop':'跳');
   set('btnAct', en?'Look':'看');
@@ -4792,7 +4790,9 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
   window.joy={x:0,y:0,mag:0};
   window.touchRun=false;
   const syncOrient=()=>{
-    const portrait=window.matchMedia('(orientation: portrait)').matches && innerHeight>innerWidth;
+    const box=window.visualViewport;
+    const w=box?box.width:innerWidth, h=box?box.height:innerHeight;
+    const portrait=h>w+40;
     document.body.classList.toggle('portrait', IS_MOBILE && portrait);
   };
   syncOrient();
