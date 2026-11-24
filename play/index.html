@@ -266,8 +266,19 @@
   body.mobile.portrait #touch,body.mobile.portrait #hud{visibility:hidden}
   /* 微信网页锁在竖屏坐标里。手机横过来时，页面自己转 90 度铺满窗口。 */
   html.wx-stage{width:100%;height:100%;overflow:hidden;background:#05070f}
-  html.wx-stage body{position:fixed;top:0;left:var(--wx-h);margin:0;
+  html.wx-stage body{position:fixed;margin:0;
+    top:var(--wx-oy,0px);left:calc(var(--wx-ox, 0px) + var(--wx-h));
     width:var(--wx-w);height:var(--wx-h);transform:rotate(90deg);transform-origin:0 0}
+  html.wx-stage #game,html.wx-stage #title,html.wx-stage #hud,html.wx-stage #touch,
+  html.wx-stage #pause,html.wx-stage #finale,html.wx-stage #rotateGate,
+  html.wx-stage #vignetteStatic,html.wx-stage #flash,html.wx-stage #letterbox,html.wx-stage #origLightbox{
+    position:absolute;inset:0;width:100%;height:100%}
+  html.wx-stage #card,html.wx-stage #photoTip,html.wx-stage #frame{position:absolute}
+  html.wx-stage #title{justify-content:center;padding:8px 18px}
+  html.wx-stage #title h1{font-size:34px;margin-bottom:2px}
+  html.wx-stage #title .tag{margin-bottom:8px}
+  html.wx-stage #startBtn{padding:10px 26px}
+  html.wx-stage #title .keys{margin-top:8px}
   html.wx-stage body.mobile.portrait #rotateGate{display:none}
   html.wx-stage body.mobile.portrait #touch,html.wx-stage body.mobile.portrait #hud{visibility:visible}
   #joyZone,#lookZone{position:absolute;top:0;bottom:0;width:42%;pointer-events:auto;touch-action:none}
@@ -3684,7 +3695,9 @@ const blurMat=new THREE.ShaderMaterial({
 function disposeRT(){ for(const t of [rt,rtBright,rtBlurA,rtBlurB]){ if(t) t.dispose(); } }
 function resize(){
   const stage=document.documentElement.classList.contains('wx-stage');
-  const long=Math.max(innerWidth,innerHeight), short=Math.min(innerWidth,innerHeight);
+  const vv=window.visualViewport;
+  const vw=vv?vv.width:innerWidth, vh=vv?vv.height:innerHeight;
+  const long=Math.max(vw,vh), short=Math.min(vw,vh);
   const w=stage?long:innerWidth, h=stage?short:innerHeight;
   renderer.setPixelRatio(DPR); renderer.setSize(w,h);
   camera.aspect=w/h; camera.updateProjectionMatrix();
@@ -3780,6 +3793,7 @@ const player={ x:0, z:56, y:0, vx:0, vz:0, vy:0, yaw:0, pitch:-0.02, grounded:tr
 player.y=getHeight(player.x,player.z)+1.7;
 const keys={};
 let sens=1.0, state='title', dragLook=false, dragging=false;
+let uiOpenedAt=0;
 let nightCur=0.12, nightTarget=0.12, collected=0, finaleDone=false;
 let zoneNight=0, lockZoneNight=false;
 let photo=false, brushLevels=[0.7,1.2,1.9], brushIdx=1, baseFov=72;
@@ -3826,10 +3840,11 @@ addEventListener('keydown',e=>{
 addEventListener('keyup',e=>keys[e.code]=false);
 
 canvas.addEventListener('click',()=>{
+  if(IS_MOBILE && performance.now()-uiOpenedAt<450) return;
   if(state==='card'){ closeCard(); return; }
   if(state==='vantage'){ if(origOpen) closeOrig(); else closeVantage(); return; }
   if(state!=='play') return;
-  if(IS_MOBILE){ if(interactTarget) tryInteract(); return; }
+  if(IS_MOBILE) return;
   if(document.pointerLockElement===canvas || dragLook){
     if(interactTarget) tryInteract();
   } else lockPointer();
@@ -3891,6 +3906,7 @@ document.getElementById('setVol').oninput=e=>{ volume=parseFloat(e.target.value)
 const cardEl=document.getElementById('card');
 let cardTimer=null, nearEasel=null, activeNpc=null;
 function showCard(title,quote,desc,img){
+  uiOpenedAt=performance.now();
   document.getElementById('cardTitle').textContent=title;
   document.getElementById('cardQuote').textContent=quote;
   document.getElementById('cardDesc').textContent=desc||'';
@@ -3936,6 +3952,7 @@ function computeInteract(){
     if(d<3.0&&d<best){best=d;interactTarget={type:'npc',obj:w,label:npcName(w)};} }
 }
 function openVantage(v){
+  uiOpenedAt=performance.now();
   const dx=v.lx-v.x, dz=v.lz-v.z, dy=v.ly-(v.y+1.7);
   vantageView={v,prog:0,yaw:Math.atan2(-dx,-dz),pitch:Math.atan2(dy,Math.hypot(dx,dz)),t0:elapsed};
   if(!v.found){
@@ -3954,6 +3971,7 @@ function openVantage(v){
   pluck(659.25,0,0.18); pluck(880,0.18,0.14);
 }
 function openMirror(){
+  uiOpenedAt=performance.now();
   const m=STUDIO_MIRROR;
   const dx=m.x-player.x, dz=m.z-player.z, dy=(m.y+1.44)-player.y;
   vantageView={v:m,prog:0,yaw:Math.atan2(-dx,-dz),pitch:Math.atan2(dy,Math.max(0.5,Math.hypot(dx,dz))),t0:elapsed};
@@ -3984,6 +4002,7 @@ function closeVantage(){
 let origOpen=false;
 const origLightbox=document.getElementById('origLightbox'), origBox=document.getElementById('origBox');
 function openOrig(url,title){
+  uiOpenedAt=performance.now();
   const im=document.getElementById('origBoxImg');
   im.src=url; im.alt=title||L('梵高原作 · 高清还原','Van Gogh Original · HD');
   document.getElementById('obtTitle').textContent=title||L('梵高原作 · 高清还原','Van Gogh Original · HD');
@@ -4005,7 +4024,7 @@ document.getElementById('journal').addEventListener('click',e=>{
   openOrig(getOriginal(kind),paintTitle(kind)||L('梵高原作 · 高清还原','Van Gogh Original · HD'));
 });
 /* 点击任意处（含图片本身）关闭灯箱 */
-origLightbox.addEventListener('click',()=>closeOrig());
+origLightbox.addEventListener('click',()=>{ if(performance.now()-uiOpenedAt<450) return; closeOrig(); });
 function tryInteract(){
   if(state==='vantage'){ if(origOpen) closeOrig(); else closeVantage(); return; }
   const it=interactTarget; if(!it) return;
@@ -4808,16 +4827,23 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
   window.touchRun=false;
   const wx=IS_WECHAT;
   let forceStage=false;
+  const stageBox=()=>{
+    const vv=window.visualViewport;
+    const width=vv?vv.width:innerWidth, height=vv?vv.height:innerHeight;
+    const left=vv?vv.offsetLeft:0, top=vv?vv.offsetTop:0;
+    return {width,height,left,top,tall:height>width+40};
+  };
   const applyStage=()=>{
-    const tall=innerHeight>innerWidth+40;
-    const on=(wx && tall) || forceStage;
+    const box=stageBox();
+    const on=(wx && box.tall) || forceStage;
     document.documentElement.classList.toggle('wx-stage', on);
     if(on){
-      const long=Math.max(innerWidth,innerHeight), short=Math.min(innerWidth,innerHeight);
-      document.documentElement.style.setProperty('--wx-w', long+'px');
-      document.documentElement.style.setProperty('--wx-h', short+'px');
+      document.documentElement.style.setProperty('--wx-w', Math.max(box.width,box.height)+'px');
+      document.documentElement.style.setProperty('--wx-h', Math.min(box.width,box.height)+'px');
+      document.documentElement.style.setProperty('--wx-ox', box.left+'px');
+      document.documentElement.style.setProperty('--wx-oy', box.top+'px');
     }
-    document.body.classList.toggle('portrait', IS_MOBILE && tall && !(wx && tall));
+    document.body.classList.toggle('portrait', IS_MOBILE && box.tall && !on);
     resize();
   };
   const localPoint=(clientX,clientY)=>{
