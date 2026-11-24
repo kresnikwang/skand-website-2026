@@ -6,7 +6,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="x5-orientation" content="portrait">
+<meta name="screen-orientation" content="landscape">
+<meta name="x5-orientation" content="landscape">
 <meta name="x5-fullscreen" content="true">
 <meta name="full-screen" content="yes">
 <title>梵高世界 · Starry Wanderer</title>
@@ -254,29 +255,12 @@
   #rotateGate .phone i{position:absolute;left:50%;top:8px;width:18px;height:3px;margin-left:-9px;border-radius:2px;background:rgba(242,193,78,.7)}
   #rotateGate h2{font-size:22px;color:var(--gold);letter-spacing:.18em;font-weight:700}
   #rotateGate p{max-width:280px;font-size:14px;line-height:1.7;color:#c5d0ea}
-  #rotatePlay{margin-top:6px;cursor:pointer;border:1px solid rgba(242,193,78,.7);background:rgba(242,193,78,.14);
-    color:var(--gold);font-family:inherit;font-size:16px;letter-spacing:.2em;padding:12px 28px;border-radius:999px}
   @keyframes tiltPhone{0%,18%{transform:rotate(0)} 48%,100%{transform:rotate(-90deg)}}
   @media (prefers-reduced-motion:reduce){ #rotateGate .phone{animation:none;transform:rotate(-90deg)} }
 
   #touch{display:none}
   body.mobile #touch{display:block;position:fixed;inset:0;z-index:24;pointer-events:none}
   body.mobile.portrait #touch,body.mobile.portrait #hud{visibility:hidden}
-  /* 微信网页锁在竖屏坐标里。手机横过来时，页面自己转 90 度铺满窗口。 */
-  html.wx-stage{width:100%;height:100%;overflow:hidden;background:#05070f}
-  html.wx-stage body{margin:0;background:#05070f}
-  html.wx-stage body.mobile{width:var(--wx-w);height:var(--wx-h)}
-  #wxRotation{position:fixed;top:0;left:0;width:var(--wx-w);height:var(--wx-h);
-    transform:rotate(90deg);transform-origin:0 0;background:#05070f}
-  html.wx-stage #wxRotation{display:none}
-  html.wx-stage #title{justify-content:center;padding:12px 20px;transform:translateY(var(--wx-oy,0px))}
-  html.wx-stage #title h1{font-size:30px;margin-bottom:2px;letter-spacing:.12em;text-indent:.12em}
-  html.wx-stage #title .tag,html.wx-stage #title .keys{display:none}
-  html.wx-stage #startBtn{margin-top:12px;padding:12px 28px}
-  html.wx-stage #title .note{margin-top:10px}
-  html.wx-stage body.mobile.portrait #rotateGate{display:none}
-  html.wx-stage body.mobile.portrait #touch,html.wx-stage body.mobile.portrait #hud{visibility:visible}
-  html.wx-stage body.mobile.portrait{transform:rotate(90deg) translateY(calc(-1 * var(--wx-h)));transform-origin:0 0}
   #joyZone,#lookZone{position:absolute;top:0;bottom:0;width:42%;pointer-events:auto;touch-action:none}
   #joyZone{left:0} #lookZone{right:0;width:58%}
   #joyBase{position:absolute;width:118px;height:118px;margin:-59px 0 0 -59px;border-radius:50%;
@@ -301,7 +285,6 @@
 </style>
 </head>
 <body>
-<div id="wxRotation"></div>
 <script>
 /* 进游戏脚本前就标记手机，避免标题页先按桌面排版闪一下 */
 (function(){
@@ -312,11 +295,7 @@
     if(/MicroMessenger/i.test(navigator.userAgent)) document.body.classList.add('wechat');
     var pageW=document.documentElement.clientWidth||innerWidth;
     var pageH=document.documentElement.clientHeight||innerHeight;
-    if(/MicroMessenger/i.test(navigator.userAgent) && pageH>pageW+40){
-      document.documentElement.classList.add('wx-stage');
-      document.documentElement.style.setProperty('--wx-w', pageH+'px');
-      document.documentElement.style.setProperty('--wx-h', pageW+'px');
-    } else if(pageH>pageW+40){
+    if(pageH>pageW+40){
       document.body.classList.add('portrait');
     }
   }
@@ -382,7 +361,6 @@
   <div class="phone" aria-hidden="true"><i></i></div>
   <h2 id="rotateTitle">横过来玩</h2>
   <p class="sans" id="rotateCopy">把手机转到横屏，画面会铺满。</p>
-  <button type="button" id="rotatePlay">先这样玩</button>
 </div>
 <div id="touch" aria-hidden="true">
   <div id="joyZone"></div>
@@ -3693,10 +3671,7 @@ const blurMat=new THREE.ShaderMaterial({
 });
 function disposeRT(){ for(const t of [rt,rtBright,rtBlurA,rtBlurB]){ if(t) t.dispose(); } }
 function resize(){
-  const stage=document.documentElement.classList.contains('wx-stage');
-  const rootStyle=getComputedStyle(document.documentElement);
-  const w=stage?(parseFloat(rootStyle.getPropertyValue('--wx-w'))||innerHeight):innerWidth;
-  const h=stage?(parseFloat(rootStyle.getPropertyValue('--wx-h'))||innerWidth):innerHeight;
+  const w=innerWidth, h=innerHeight;
   renderer.setPixelRatio(DPR); renderer.setSize(w,h);
   camera.aspect=w/h; camera.updateProjectionMatrix();
   const rw=Math.max(2,Math.floor(w*DPR*renderScale)), rh=Math.max(2,Math.floor(h*DPR*renderScale));
@@ -4593,7 +4568,6 @@ function applyLang(){
   if(IS_MOBILE) set('titleNote', en?'Landscape · Sound on · Online for first launch':'请横屏 · 开启声音 · 首次需联网');
   set('rotateTitle', en?'Turn sideways':'横过来玩');
   set('rotateCopy', en?'Turn the phone sideways so the canvas can fill the screen.':'把手机转到横屏，画面会铺满。');
-  set('rotatePlay', en?'Play anyway':'先这样玩');
   set('btnRun', en?'Run':'跑');
   set('btnJump', en?'Hop':'跳');
   // HUD
@@ -4823,41 +4797,16 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
 (function mobileTouch(){
   window.joy={x:0,y:0,mag:0};
   window.touchRun=false;
-  const wx=IS_WECHAT;
-  let forceStage=false;
-  const applyStage=()=>{
-    const width=document.documentElement.clientWidth||innerWidth;
-    const height=document.documentElement.clientHeight||innerHeight;
-    const tall=height>width+40;
-    const on=(wx && tall) || forceStage;
-    document.documentElement.classList.toggle('wx-stage', on);
-    if(on){
-      const root=document.documentElement.style;
-      root.setProperty('--wx-w', height+'px');
-      root.setProperty('--wx-h', width+'px');
-    }
-    document.body.classList.toggle('portrait', IS_MOBILE && tall && !on);
-    resize();
-  };
-  const localPoint=(clientX,clientY)=>{
-    if(!document.documentElement.classList.contains('wx-stage')) return {x:clientX,y:clientY};
-    const short=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--wx-h'))||innerWidth;
-    return {x:clientY, y:short-clientX};
-  };
   const syncOrient=()=>{
-    applyStage();
+    document.body.classList.toggle('portrait', IS_MOBILE && innerHeight>innerWidth+40);
+    resize();
   };
   syncOrient();
   addEventListener('resize',syncOrient);
   addEventListener('orientationchange',()=>setTimeout(syncOrient,80));
   if(window.visualViewport) visualViewport.addEventListener('resize',syncOrient);
-  document.getElementById('rotatePlay').onclick=()=>{
-    forceStage=true;
-    applyStage();
-  };
   window.requestLandscape=function(){
     if(!IS_MOBILE) return;
-    if(wx){ applyStage(); return; }
     const el=document.documentElement;
     const req=el.requestFullscreen||el.webkitRequestFullscreen||el.webkitEnterFullscreen;
     try{ const p=req&&req.call(el,{navigationUI:'hide'}); if(p&&p.catch) p.catch(()=>{}); }catch(_){}
@@ -4895,25 +4844,22 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
   zone.addEventListener('pointerdown',e=>{
     if(joyId!=null||state!=='play') return;
     joyId=e.pointerId; zone.setPointerCapture(e.pointerId);
-    const p=localPoint(e.clientX,e.clientY);
-    origin={x:p.x,y:p.y};
-    base.style.left=p.x+'px'; base.style.top=p.y+'px';
-    base.classList.add('on'); setJoy(p.x,p.y);
+    origin={x:e.clientX,y:e.clientY};
+    base.style.left=e.clientX+'px'; base.style.top=e.clientY+'px';
+    base.classList.add('on'); setJoy(e.clientX,e.clientY);
   });
-  zone.addEventListener('pointermove',e=>{ if(e.pointerId===joyId){ const p=localPoint(e.clientX,e.clientY); setJoy(p.x,p.y); } });
+  zone.addEventListener('pointermove',e=>{ if(e.pointerId===joyId) setJoy(e.clientX,e.clientY); });
   zone.addEventListener('pointerup',e=>{ if(e.pointerId===joyId) endJoy(); });
   zone.addEventListener('pointercancel',e=>{ if(e.pointerId===joyId) endJoy(); });
   look.addEventListener('pointerdown',e=>{
     if(e.target.closest('.tbtn')||state!=='play') return;
-    const p=localPoint(e.clientX,e.clientY);
-    lookId=e.pointerId; lastX=p.x; lastY=p.y;
+    lookId=e.pointerId; lastX=e.clientX; lastY=e.clientY;
     look.setPointerCapture(e.pointerId);
   });
   look.addEventListener('pointermove',e=>{
     if(e.pointerId!==lookId||state!=='play') return;
-    const p=localPoint(e.clientX,e.clientY);
-    const dx=p.x-lastX, dy=p.y-lastY;
-    lastX=p.x; lastY=p.y;
+    const dx=e.clientX-lastX, dy=e.clientY-lastY;
+    lastX=e.clientX; lastY=e.clientY;
     player.yaw-=dx*0.0046*sens;
     player.pitch-=dy*0.0036*sens;
     player.pitch=Math.max(-1.15,Math.min(1.15,player.pitch));
