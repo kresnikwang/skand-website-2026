@@ -259,10 +259,11 @@
   @media (prefers-reduced-motion:reduce){ #rotateGate .phone{animation:none;transform:rotate(-90deg)} }
 
   #wxView{display:contents}
-  body.wechat-landscape #wxView{position:fixed;left:var(--wx-short);top:0;
+  /* display:contents 没有盒子，position/transform 全部失效，必须显式改回 block 才能旋转 */
+  body.wechat-landscape #wxView{display:block;position:fixed;left:var(--wx-short);top:0;
     width:var(--wx-long);height:var(--wx-short);transform:rotate(90deg);transform-origin:0 0;
     background:#05070f;overflow:hidden}
-  body.wechat-landscape #wxView > *{position:absolute}
+  body.wechat-landscape #wxView > *{position:absolute!important}
   body.wechat-landscape #game,body.wechat-landscape #vignetteStatic,body.wechat-landscape #flash,
   body.wechat-landscape #hud,body.wechat-landscape #touch,body.wechat-landscape #title{inset:0;width:100%;height:100%}
   body.wechat-landscape #wxView #game{inset:0;width:var(--wx-long);height:var(--wx-short)}

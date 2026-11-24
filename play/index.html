@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="vg-build" content="20261124085813-38449000-e4f50077">
+<meta name="vg-build" content="20261124100551-44396000-938916ea">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +14,7 @@
 <title>梵高世界 · Starry Wanderer</title>
 <meta name="description" content="梵高世界 · Starry Wanderer — 走进梵高画布的第一人称开放世界探索游戏 | SKAND STUDIO">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="/play/vendor/fonts/noto-sc.css?v=20261124085813-38449000-e4f50077">
+<link rel="stylesheet" href="/play/vendor/fonts/noto-sc.css?v=20261124100551-44396000-938916ea">
 <style>
   :root{
     --gold:#f2c14e; --deep:#0b1026; --ink:#1c2340; --paper:#f4ead2;
@@ -262,10 +262,11 @@
   @media (prefers-reduced-motion:reduce){ #rotateGate .phone{animation:none;transform:rotate(-90deg)} }
 
   #wxView{display:contents}
-  body.wechat-landscape #wxView{position:fixed;left:var(--wx-short);top:0;
+  /* display:contents 没有盒子，position/transform 全部失效，必须显式改回 block 才能旋转 */
+  body.wechat-landscape #wxView{display:block;position:fixed;left:var(--wx-short);top:0;
     width:var(--wx-long);height:var(--wx-short);transform:rotate(90deg);transform-origin:0 0;
     background:#05070f;overflow:hidden}
-  body.wechat-landscape #wxView > *{position:absolute}
+  body.wechat-landscape #wxView > *{position:absolute!important}
   body.wechat-landscape #game,body.wechat-landscape #vignetteStatic,body.wechat-landscape #flash,
   body.wechat-landscape #hud,body.wechat-landscape #touch,body.wechat-landscape #title{inset:0;width:100%;height:100%}
   body.wechat-landscape #wxView #game{inset:0;width:var(--wx-long);height:var(--wx-short)}
@@ -448,7 +449,7 @@ const REGION_NAME={
 };
 
 let THREE;
-try { THREE = await import('/play/vendor/three/three.module.min.js?v=20261124085813-38449000-e4f50077'); }
+try { THREE = await import('/play/vendor/three/three.module.min.js?v=20261124100551-44396000-938916ea'); }
 catch(e1){
   try { THREE = await import('https://cdnjs.cloudflare.com/ajax/libs/three.js/0.187.0/three.module.min.js'); }
   catch(e2){
