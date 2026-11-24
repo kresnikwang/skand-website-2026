@@ -4836,10 +4836,20 @@ window.__vg={player, teleport(x,z,yaw=0,pitch=0,y=null){
     const on=(wx && box.tall) || forceStage;
     document.documentElement.classList.toggle('wx-stage', on);
     if(on){
-      document.documentElement.style.setProperty('--wx-w', Math.max(box.width,box.height)+'px');
-      document.documentElement.style.setProperty('--wx-h', Math.min(box.width,box.height)+'px');
-      document.documentElement.style.setProperty('--wx-ox', box.left+'px');
-      document.documentElement.style.setProperty('--wx-oy', box.top+'px');
+      const root=document.documentElement.style;
+      root.setProperty('--wx-w', Math.max(box.width,box.height)+'px');
+      root.setProperty('--wx-h', Math.min(box.width,box.height)+'px');
+      root.setProperty('--wx-ox', box.left+'px');
+      root.setProperty('--wx-oy', box.top+'px');
+      requestAnimationFrame(()=>{
+        const r=document.body.getBoundingClientRect();
+        const dx=Math.max(0,-r.left), dy=Math.max(0,-r.top);
+        if(dx>1||dy>1){
+          root.setProperty('--wx-w', Math.max(120, r.width-dx)+'px');
+          root.setProperty('--wx-h', Math.max(120, r.height-dy)+'px');
+          resize();
+        }
+      });
     }
     document.body.classList.toggle('portrait', IS_MOBILE && box.tall && !on);
     resize();
