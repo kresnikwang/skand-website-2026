@@ -264,13 +264,15 @@
   body.mobile.portrait #touch,body.mobile.portrait #hud{visibility:hidden}
   /* 微信网页锁在竖屏坐标里。手机横过来时，页面自己转 90 度铺满窗口。 */
   html.wx-stage{width:100%;height:100%;overflow:hidden;background:#05070f}
-  html.wx-stage body{position:fixed;margin:0;top:0;left:var(--wx-h);
-    width:var(--wx-w);height:var(--wx-h);transform:rotate(90deg);transform-origin:0 0}
+  html.wx-stage body{margin:0;background:#05070f}
+  #wxRotation{position:fixed;top:0;left:0;width:var(--wx-w);height:var(--wx-h);
+    transform:rotate(90deg);transform-origin:0 0;background:#05070f}
+  html.wx-stage #wxRotation{display:block}
+  html.wx-stage body > :not(#wxRotation){position:absolute}
   html.wx-stage #game,html.wx-stage #title,html.wx-stage #hud,html.wx-stage #touch,
   html.wx-stage #pause,html.wx-stage #finale,html.wx-stage #rotateGate,
   html.wx-stage #vignetteStatic,html.wx-stage #flash,html.wx-stage #letterbox,html.wx-stage #origLightbox{
-    position:absolute;inset:0;width:100%;height:100%}
-  html.wx-stage #card,html.wx-stage #photoTip,html.wx-stage #frame{position:absolute}
+    position:absolute;inset:0;width:var(--wx-w);height:var(--wx-h)}
   html.wx-stage #title{justify-content:center;padding:12px 20px}
   html.wx-stage #title h1{font-size:30px;margin-bottom:2px;letter-spacing:.12em;text-indent:.12em}
   html.wx-stage #title .tag,html.wx-stage #title .keys{display:none}
@@ -302,6 +304,7 @@
 </style>
 </head>
 <body>
+<div id="wxRotation"></div>
 <script>
 /* 进游戏脚本前就标记手机，避免标题页先按桌面排版闪一下 */
 (function(){
