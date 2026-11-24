@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="vg-build" content="20261124155843-00128000-938916ea">
+<meta name="vg-build" content="20261124162359-11222000-95a97243">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +14,7 @@
 <title>梵高世界 · Starry Wanderer</title>
 <meta name="description" content="梵高世界 · Starry Wanderer — 走进梵高画布的第一人称开放世界探索游戏 | SKAND STUDIO">
 <link rel="icon" type="image/png" href="/favicon.png">
-<link rel="stylesheet" href="/play/vendor/fonts/noto-sc.css?v=20261124155843-00128000-938916ea">
+<link rel="stylesheet" href="/play/vendor/fonts/noto-sc.css?v=20261124162359-11222000-95a97243">
 <style>
   :root{
     --gold:#f2c14e; --deep:#0b1026; --ink:#1c2340; --paper:#f4ead2;
@@ -244,6 +244,40 @@
   body.mobile #title .note{position:static;margin-top:8px;font-size:11px;padding:0 16px}
   body.mobile #langToggle{top:max(10px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right))}
   body.mobile #pause .panel{max-height:min(86dvh,520px);padding:16px 22px}
+  /* 手机横屏（高度很矮）：面板收成两列、收紧间距，保证一屏看全 */
+  body.mobile #pause .settings{display:contents}
+  @media (max-height:520px){
+    body.mobile #pause .panel{width:min(700px,94vw);max-height:96dvh;padding:10px 20px;display:grid;
+      grid-template-columns:1fr 1fr;column-gap:26px;align-items:start;text-align:left;row-gap:2px;
+      grid-template-areas:"head head" "btn btn" "set set" "tools tools" "keys keys"}
+    body.mobile #pause h2{grid-area:head;font-size:17px;margin-bottom:0;align-self:center}
+    body.mobile #pause .ps{grid-area:head;align-self:center;justify-self:end;font-size:11px;margin-bottom:0;text-align:right}
+    body.mobile #resumeBtn{grid-area:btn;justify-self:center;font-size:14px;padding:6px 30px;margin-bottom:6px}
+    body.mobile #pause .settings{grid-area:set;display:grid;grid-template-columns:1fr 1fr;column-gap:22px}
+    body.mobile #pause .setting{margin:5px 0;font-size:12.5px}
+    body.mobile #pause .setting label{width:72px}
+    body.lang-en #pause .setting label{width:100px}
+    body.mobile #pause .panel > div[style]{grid-area:tools;justify-content:center;margin-top:2px}
+    body.mobile #pause .panel > div[style] button{font-size:11.5px;padding:4px 14px;margin-bottom:2px}
+    body.mobile #journal{grid-column:1/-1;max-height:34dvh}
+    body.mobile #pause .keys2{grid-area:keys;margin-top:4px;font-size:11px;line-height:1.5;text-align:center}
+  }
+  /* 微信竖屏里旋转出的横屏舞台：vh/vw 仍按竖屏算，必须用舞台高度（--wx-short）来限高 */
+  body.wechat-landscape #pause .panel{width:min(700px,calc(var(--wx-long) - 48px));max-height:calc(var(--wx-short) - 12px);
+    padding:10px 20px;display:grid;grid-template-columns:1fr 1fr;column-gap:26px;align-items:start;text-align:left;row-gap:2px;
+    grid-template-areas:"head head" "btn btn" "set set" "tools tools" "keys keys"}
+  body.wechat-landscape #pause h2{grid-area:head;font-size:17px;margin-bottom:0;align-self:center}
+  body.wechat-landscape #pause .ps{grid-area:head;align-self:center;justify-self:end;font-size:11px;margin-bottom:0;text-align:right}
+  body.wechat-landscape #resumeBtn{grid-area:btn;justify-self:center;font-size:14px;padding:6px 30px;margin-bottom:6px}
+  body.wechat-landscape #pause .settings{grid-area:set;display:grid;grid-template-columns:1fr 1fr;column-gap:22px}
+  body.wechat-landscape #pause .setting{margin:5px 0;font-size:12.5px}
+  body.wechat-landscape #pause .setting label{width:72px}
+  body.lang-en.wechat-landscape #pause .setting label{width:100px}
+  body.wechat-landscape #pause .panel > div[style]{grid-area:tools;justify-content:center;margin-top:2px}
+  body.wechat-landscape #pause .panel > div[style] button{font-size:11.5px;padding:4px 14px;margin-bottom:2px}
+  body.wechat-landscape #journal{grid-column:1/-1;max-height:calc(var(--wx-short) * .45)}
+  body.wechat-landscape #pause .keys2{grid-area:keys;margin-top:4px;font-size:11px;line-height:1.5;text-align:center}
+  body.wechat-landscape #pause .panel::-webkit-scrollbar{width:4px}
   body.mobile #card{bottom:max(8%,env(safe-area-inset-bottom));padding:14px 16px;gap:12px}
   body.mobile #card img{width:78px;height:78px}
   body.mobile #card .q{font-size:15px;line-height:1.6}
@@ -365,12 +399,14 @@
   <div class="panel">
     <h2 id="pauseTitle">小憩片刻</h2><div class="ps sans" id="pauseStats"></div>
     <button id="resumeBtn">回到画布</button>
+    <div class="settings">
     <div class="setting"><label id="lblLang">语言</label><select id="setLang"><option value="zh">中文</option><option value="en">English</option></select></div>
     <div class="setting"><label id="lblQuality">画质</label><select id="setQuality"><option value="0.55" id="optQualLow">流畅</option><option value="0.8" id="optQualMid" selected>均衡</option><option value="1" id="optQualHigh">细腻</option></select></div>
     <div class="setting"><label id="lblBrush">笔触浓度</label><input type="range" id="setBrush" min="0.4" max="2.2" step="0.1" value="1.2"></div>
     <div class="setting"><label id="lblSens">鼠标灵敏度</label><input type="range" id="setSens" min="0.3" max="2.5" step="0.1" value="1"></div>
     <div class="setting"><label id="lblFov">视野</label><input type="range" id="setFov" min="62" max="96" step="1" value="72"></div>
     <div class="setting"><label id="lblVol">音量</label><input type="range" id="setVol" min="0" max="1" step="0.05" value="0.7"></div>
+    </div>
     <div style="display:flex;justify-content:center;align-items:center;flex-wrap:wrap">
       <button id="journalBtn">旅 途 图 鉴</button><button id="resetBtn">回到村口</button><button id="wipeBtn">重新开始</button>
     </div>
@@ -449,7 +485,7 @@ const REGION_NAME={
 };
 
 let THREE;
-try { THREE = await import('/play/vendor/three/three.module.min.js?v=20261124155843-00128000-938916ea'); }
+try { THREE = await import('/play/vendor/three/three.module.min.js?v=20261124162359-11222000-95a97243'); }
 catch(e1){
   try { THREE = await import('https://cdnjs.cloudflare.com/ajax/libs/three.js/0.187.0/three.module.min.js'); }
   catch(e2){
@@ -3846,7 +3882,7 @@ addEventListener('keydown',e=>{
 addEventListener('keyup',e=>keys[e.code]=false);
 
 canvas.addEventListener('click',()=>{
-  if(IS_MOBILE && performance.now()-uiOpenedAt<450) return;
+  if(IS_MOBILE && performance.now()-uiOpenedAt<700) return;
   if(state==='card'){ closeCard(); return; }
   if(state==='vantage'){ if(origOpen) closeOrig(); else closeVantage(); return; }
   if(state!=='play') return;
@@ -3871,6 +3907,12 @@ addEventListener('mousemove',e=>{
 });
 addEventListener('mousedown',()=>dragging=true);
 addEventListener('mouseup',()=>dragging=false);
+/* 手机上触控合成的 click 一律拦截：交互都走 pointerdown，避免“按下→弹层弹出→松开”把刚打开的弹层关掉 */
+if(IS_MOBILE){
+  addEventListener('click',e=>{
+    if(performance.now()-uiOpenedAt<700){ e.stopPropagation(); e.preventDefault(); }
+  },true);
+}
 
 function syncHud(){ const on=(state==='play'||state==='card'); document.getElementById('hud').classList.toggle('on',on); }
 function updatePauseStats(){
@@ -3929,12 +3971,16 @@ function closeCard(){
   cardEl.classList.remove('show');
   if(state==='card'){ state='play'; lockPointer(); syncHud(); }
 }
+/* 只有“卡片出现之后才按下”的那次点击才算关闭；手指按住提示再松手时合成的 click 不能把刚弹出的卡片关掉 */
+let cardPressAt=0;
+cardEl.addEventListener('pointerdown',()=>{ cardPressAt=performance.now(); });
 cardEl.onclick=e=>{
   if(e.target.id==='cardImg'&&e.target.src){
     e.stopPropagation();
     openOrig(e.target.src,e.target.alt||L('梵高原作 · 高清还原','Van Gogh Original · HD'));
     return;
   }
+  if(!cardPressAt||cardPressAt<uiOpenedAt+350) return;
   e.stopPropagation(); closeCard();
 };
 function flash(color){
