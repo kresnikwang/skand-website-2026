@@ -42,5 +42,13 @@ async function main() {
     .jpeg({quality:68,progressive:false,mozjpeg:false,chromaSubsampling:'4:2:0'})
     .toFile(path.join(out,card));
   console.log(card,(await fs.stat(path.join(out,card))).size,'bytes');
+  // Landing-page backdrop: just the sky, with no baked-in title.
+  const sky = 'vgworld-sky.jpg';
+  const meta = await sharp(path.join(root, 'scripts/share/src/starry-night.jpg')).metadata();
+  await sharp(path.join(root, 'scripts/share/src/starry-night.jpg'))
+    .extract({ left: 0, top: 0, width: meta.width, height: Math.round(meta.height * 0.67) })
+    .resize(900).jpeg({ quality: 72, progressive: false, mozjpeg: false })
+    .toFile(path.join(out, sky));
+  console.log(sky,(await fs.stat(path.join(out, sky))).size,'bytes');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

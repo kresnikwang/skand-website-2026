@@ -8,7 +8,7 @@ test('matches the official JS-SDK signature example', () => {
 test('rejects foreign, insecure and non-homepage URLs; preserves query bytes', () => {
   for (const url of ['https://skandstudio.com.evil.test/', 'http://skandstudio.com/', 'https://user@skandstudio.com/', 'https://skandstudio.com:8888/', 'https://skandstudio.com/private', 'https://skandstudio.com/#work', 'https://skandstudio.com/\n']) assert.throws(()=>validateUrl(url));
   const url='https://skandstudio.com/?lang=zh&from=singlemessage&x=%2f';assert.equal(validateUrl(url),url);
-  for (const play of ['https://skandstudio.com/play/','https://skandstudio.com/play/?v=abc','https://skandstudio.com/play/index.html']) assert.equal(validateUrl(play),play);
+  for (const play of ['https://skandstudio.com/play/','https://skandstudio.com/play/?v=abc','https://skandstudio.com/play/index.html','https://skandstudio.com/play/share/']) assert.equal(validateUrl(play),play);
   for (const other of ['https://skandstudio.com/play/other','https://skandstudio.com/play','https://skandstudio.com/play/#auto']) assert.throws(()=>validateUrl(other));
 });
 test('coalesces concurrent token/ticket requests and refreshes before expiry', async () => {

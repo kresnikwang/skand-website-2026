@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN"
+  data-share-title-zh="梵高世界 · Starry Wanderer｜走进梵高的画布"
+  data-share-desc-zh="SKAND 把阿尔勒做成了一个可以走进去的世界：找回五管失落的颜料，踏上画家的取景地，在黄房子门前的镜中遇见《自画像》。手机横屏即可游玩。"
+  data-share-title-en="Starry Wanderer｜Step Inside Van Gogh's Canvas"
+  data-share-desc-en="An explorable Arles by SKAND: recover five lost pigments, stand where the painter stood, and meet the Self-Portrait in the Yellow House mirror. Play in landscape."
+  data-share-link="https://skandstudio.com/play/share/"
+  data-share-image="https://skandstudio.com/images/share/vgworld-card-v2.jpg?v=2">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>梵高世界 · Starry Wanderer｜走进梵高的画布</title>
+    <meta name="description" content="SKAND 把阿尔勒做成了一个可以走进去的世界：找回五管失落的颜料，踏上画家的取景地，在黄房子门前的镜中遇见《自画像》。手机横屏即可游玩。">
+    <meta property="og:title" content="梵高世界 · Starry Wanderer｜走进梵高的画布">
+    <meta property="og:description" content="SKAND 把阿尔勒做成了一个可以走进去的世界：找回五管失落的颜料，踏上画家的取景地，在黄房子门前的镜中遇见《自画像》。手机横屏即可游玩。">
+    <meta property="og:image" content="https://skandstudio.com/images/share/vgworld-card-v2.jpg?v=2">
+    <meta property="og:image:secure_url" content="https://skandstudio.com/images/share/vgworld-card-v2.jpg?v=2">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="400">
+    <meta property="og:image:height" content="400">
+    <meta property="og:site_name" content="SKAND Creative Studio">
+    <meta property="og:url" content="https://skandstudio.com/play/share/">
+    <meta property="og:type" content="website">
+    <meta name="wechat-share-endpoint" content="/api/wechat/signature">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      html,body{height:100%;background:#070b18;color:#e8e2cf;
+        font-family:"Noto Serif SC","Songti SC","STSong",Georgia,serif;
+        -webkit-user-select:none;user-select:none}
+      body{display:flex;align-items:center;justify-content:center;overflow:hidden}
+      /* Only the sky (top of the square) is used; the title baked into the card must not show. */
+      .bg{position:fixed;inset:0;background:url("/images/share/vgworld-sky.jpg") center top/cover no-repeat;
+        filter:saturate(.9) brightness(.5)}
+      .veil{position:fixed;inset:0;background:
+        linear-gradient(to bottom,rgba(7,11,24,.1) 0%,rgba(7,11,24,.55) 34%,#070b18 50%),
+        radial-gradient(ellipse at center,rgba(7,11,24,.15),rgba(7,11,24,.6) 80%)}
+      .wrap{position:relative;text-align:center;padding:0 28px;max-width:520px}
+      h1{font-size:clamp(34px,9vw,56px);font-weight:900;letter-spacing:.18em;text-indent:.18em;color:#f2c14e;
+        text-shadow:0 0 34px rgba(242,193,78,.45),0 2px 0 rgba(0,0,0,.4);margin-bottom:10px}
+      .sub{font-size:13px;letter-spacing:.42em;text-indent:.42em;color:#cfd8ef;opacity:.9;margin-bottom:28px}
+      .enter{display:inline-block;border:1px solid rgba(242,193,78,.65);background:rgba(242,193,78,.10);color:#f2c14e;
+        font-family:inherit;font-size:16px;letter-spacing:.35em;text-indent:.35em;padding:13px 40px;border-radius:999px;
+        text-decoration:none;backdrop-filter:blur(3px);transition:background .3s}
+      .enter:hover,.enter:active{background:rgba(242,193,78,.28)}
+      .status{margin-top:22px;font-size:12px;letter-spacing:.14em;color:#9fb0d8;font-family:"Noto Sans SC","PingFang SC",sans-serif}
+      .status i{display:inline-block;width:5px;height:5px;border-radius:50%;background:#f2c14e;margin:0 4px 2px;
+        animation:pulse 1.2s ease-in-out infinite}
+      .status i:nth-child(2){animation-delay:.2s}.status i:nth-child(3){animation-delay:.4s}
+      @keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+      @media (prefers-reduced-motion:reduce){.status i{animation:none;opacity:.8}}
+    </style>
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true"></div>
+    <div class="veil" aria-hidden="true"></div>
+    <main class="wrap">
+      <h1>梵高世界</h1>
+      <div class="sub">STARRY&nbsp;WANDERER</div>
+      <a class="enter" href="/play/">进 入 画 布</a>
+      <div class="status" id="status" aria-live="polite"><i></i><i></i><i></i> 正在铺开画布</div>
+    </main>
+    <script>
+      (function(){
+        var target='/play/';
+        // Preserve the query (build version) so the game page bypasses WeChat's cache.
+        var search=location.search||'';
+        if(search) target+=search;
+        // Give the frame a beat to paint, then hand over to the game.
+        var go=function(){ location.replace(target); };
+        if(document.visibilityState==='prerender'){
+          addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') setTimeout(go,250); });
+        }else{
+          setTimeout(go,450);
+        }
+        document.getElementById('status').addEventListener('click',go);
+      })();
+    </script>
+    <script src="/scripts/share/wechat.js?v=4" defer></script>
+  </body>
+</html>
