@@ -30,9 +30,17 @@ async function main() {
   </svg>`;
   const out = path.join(root, 'images/share');
   await fs.mkdir(out,{recursive:true});
-  for (const [name,svg] of [['wechat-cover-v1.jpg',square],['social-cover-v1.jpg',landscape],['vgworld-cover-v1.jpg',vgworld]]) {
+  for (const [name,svg] of [['wechat-cover-v1.jpg',square],['social-cover-v1.jpg',landscape]]) {
     await sharp(Buffer.from(svg)).jpeg({quality:92,mozjpeg:true}).toFile(path.join(out,name));
     console.log(name,(await fs.stat(path.join(out,name))).size,'bytes');
   }
+  // WeChat fetches the share thumbnail itself and silently gives up on large or
+  // progressive JPEGs, so the card gets a small baseline copy (plain libjpeg,
+  // no mozjpeg) instead.
+  const card = 'vgworld-card-v2.jpg';
+  await sharp(Buffer.from(vgworld)).resize(400,400).blur(0.6)
+    .jpeg({quality:68,progressive:false,mozjpeg:false,chromaSubsampling:'4:2:0'})
+    .toFile(path.join(out,card));
+  console.log(card,(await fs.stat(path.join(out,card))).size,'bytes');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
