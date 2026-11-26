@@ -6,7 +6,7 @@ const ALLOWED_ORIGINS = new Set(['https://skandstudio.com', 'https://www.skandst
 function validateUrl(raw) {
   if (typeof raw !== 'string' || raw.length > 4096 || /[\x00-\x20\x7f]/.test(raw)) throw new Error('Invalid URL');
   const url = new URL(raw);
-  if (!ALLOWED_ORIGINS.has(url.origin) || url.username || url.password || url.hash || !['/', '/index.html'].includes(url.pathname)) {
+  if (!ALLOWED_ORIGINS.has(url.origin) || url.username || url.password || url.hash || !['/', '/index.html', '/play/', '/play/index.html'].includes(url.pathname)) {
     throw new Error('Invalid URL');
   }
   return raw; // Sign the original bytes; URL serialization can change the signature.

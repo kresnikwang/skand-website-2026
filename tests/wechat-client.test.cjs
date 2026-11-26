@@ -3,9 +3,10 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const code = fs.readFileSync(require.resolve('../scripts/share/wechat.js'),'utf8');
-async function setup({ua='Safari',endpoint='/api/wechat/signature',fail=false}={}) {
+async function setup({ua='Safari',endpoint='/api/wechat/signature',fail=false,attrs={}}={}) {
   const metas=new Map(),events={},calls={fetch:[],config:[],friends:[],timeline:[],warnings:[]};
-  const document={documentElement:{lang:'en'},querySelector:selector=>{
+  const documentElement={lang:'en',getAttribute:name=>attrs[name]??null};
+  const document={documentElement,querySelector:selector=>{
     if(selector==='meta[name="wechat-share-endpoint"]')return {content:endpoint};
     if(!metas.has(selector))metas.set(selector,{content:''});return metas.get(selector);
   }};
@@ -16,8 +17,20 @@ async function setup({ua='Safari',endpoint='/api/wechat/signature',fail=false}={
     fetch:async(url,options)=>{calls.fetch.push(JSON.parse(options.body).url);return {ok:!fail,json:async()=>({appId:'public-app-id',timestamp:1770000000,nonceStr:'nonce',signature:'a'.repeat(40)})};}
   };
   vm.runInNewContext(code,sandbox);await new Promise(setImmediate);
-  return {calls,document,metas,events,location};
+  return {calls,document,documentElement,metas,events,location};
 }
+test('a page with data-share-* attributes shares its own title, copy, link and image',async()=>{
+  const s=await setup({ua:'Android MicroMessenger',attrs:{
+    'data-share-title-zh':'梵高世界｜走进梵高的画布','data-share-desc-zh':'可以走进去的世界。',
+    'data-share-link':'https://skandstudio.com/play/','data-share-image':'https://skandstudio.com/images/share/vgworld-cover-v1.jpg'}});
+  s.documentElement.lang='zh-CN';await s.events['skand:lang']();
+  const friend=s.calls.friends.at(-1),timeline=s.calls.timeline.at(-1);
+  assert.equal(friend.title,'梵高世界｜走进梵高的画布');assert.equal(friend.desc,'可以走进去的世界。');
+  assert.equal(friend.link,'https://skandstudio.com/play/');assert(friend.imgUrl.endsWith('vgworld-cover-v1.jpg'));
+  assert.equal(timeline.link,'https://skandstudio.com/play/');
+  assert.equal(s.metas.get('meta[property="og:title"]').content,'梵高世界｜走进梵高的画布');
+  assert.equal(s.metas.get('meta[property="og:url"]').content,'https://skandstudio.com/play/');
+});
 test('ordinary browsers update metadata without fetching WeChat configuration',async()=>{
   const s=await setup();assert.equal(s.calls.fetch.length,0);assert.equal(s.metas.get('meta[property="og:title"]').content,'SKAND｜Create For More');
 });

@@ -40,6 +40,7 @@ rsync -az --delete --delay-updates \
   --exclude='server/' \
   --exclude='tests/' \
   --exclude='scripts/share/build-covers.cjs' \
+  --exclude='scripts/share/src/' \
   --exclude='scripts/portfolio/catalog.json' \
   --exclude='scripts/portfolio/build.js' \
   --exclude='scripts/skand-brawler/' \

@@ -9,7 +9,26 @@
   let sdkPromise, generation = 0, configuredUrl = '', ready = false, pending;
 
   function data() {
-    const language = document.documentElement.lang === 'zh' ? 'zh' : 'en';
+    const language = /^zh\b/i.test(document.documentElement.lang || '') ? 'zh' : 'en';
+    /* Pages can declare their own share (e.g. the game) via data-share-* on <html>.
+       Otherwise fall back to the agency homepage copy. */
+    const root = document.documentElement;
+    const pick = (name, fallback) => root.getAttribute('data-share-' + name + '-' + language)
+      || root.getAttribute('data-share-' + name) || fallback;
+    const page = {
+      title: pick('title', ''),
+      desc: pick('desc', ''),
+      link: pick('link', ''),
+      image: pick('image', '')
+    };
+    if (page.title && page.desc) {
+      return {
+        title: page.title,
+        desc: page.desc,
+        link: page.link || location.href.split('#')[0],
+        imgUrl: page.image || 'https://skandstudio.com/images/share/wechat-cover-v1.jpg'
+      };
+    }
     return {
       title: 'SKAND｜Create For More',
       desc: language === 'zh'
